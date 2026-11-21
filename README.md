@@ -31,11 +31,11 @@ When you play against the chart, the hand is replayed from that moment as if you
 
 ```bash
 npm install
-npm test             # every simulation, 300 hands each
-npm run test:quick   # 60 hands each
-HANDS=2000 npm test  # deeper run
-npm test -- history  # only files whose path contains "history"
-CHROME=/path/to/chrome npm run screens   # screenshots in tests/visual/out
+npm test                      # every simulation, 300 hands each
+npm run test:quick            # 60 hands each
+npm test -- --hands=2000      # deeper run
+npm test -- history           # only files whose path contains "history"
+npm run screens               # screenshots in tests/visual/out (finds Chrome; or set CHROME)
 ```
 
 The simulations load each app in jsdom, play through its own UI and check the numbers: money adds up on every hand, the rule replay reproduces real results exactly, the reverse martingale follows its rule, the history matches the stats, both games agree on basic strategy for every hand, and Fast Blackjack's provably-fair cards match Node's crypto.

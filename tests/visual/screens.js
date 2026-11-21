@@ -1,11 +1,12 @@
 // Screenshots of the apps at desktop, large and phone sizes, for eyeballing layout changes.
-// Needs Chrome or Chromium: CHROME=/path/to/chrome npm run screens   (output: tests/visual/out/*.png)
+// Needs Chrome or Chromium. Found automatically on macOS, Windows and Linux; otherwise set CHROME to its path.
+// npm run screens   (output: tests/visual/out/*.png)
 const path = require('path');
 const fs = require('fs');
 const puppeteer = require('puppeteer-core');
 const { APPS } = require('../_util');
 
-const CHROME = process.env.CHROME || ['/usr/bin/google-chrome', '/usr/bin/chromium', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(p => fs.existsSync(p));
+const CHROME = process.env.CHROME || ['/usr/bin/google-chrome', '/usr/bin/chromium', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'].find(p => fs.existsSync(p));
 const OUT = path.join(__dirname, 'out');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const SIZES = [['desktop', 1440, 900], ['large', 2576, 1360], ['phone', 390, 844]];

@@ -1,5 +1,5 @@
 // Runs every *.test.js under tests/ one after another and prints a summary.
-// HANDS=<n> sets how many hands each simulation plays (default 300).
+// --hands=<n> (or HANDS=<n>) sets how many hands each simulation plays (default 300).
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -13,7 +13,11 @@ const files = [];
   }
 })(__dirname);
 
-const only = process.argv.slice(2);
+// Options: --hands=N (hands per simulation), any other argument filters test files by path.
+const args = process.argv.slice(2);
+const handsArg = args.find(a => a.startsWith('--hands='));
+if (handsArg) process.env.HANDS = handsArg.split('=')[1];
+const only = args.filter(a => !a.startsWith('--'));
 let failed = 0;
 for (const f of files) {
   const rel = path.relative(__dirname, f);

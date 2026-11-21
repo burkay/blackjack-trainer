@@ -29,4 +29,14 @@ const snap = o => Object.assign({ hi: 0, pos: 0, rc: 0, bank: 1000, orig: 100, i
   const c = snap({ shoe: H('6♣', 'J♥', '9♠'), me: [{ cards: H('4♥', '10♣', '2♦'), bet: 100 }], up: C('K♣'), dealer: H('K♣', '3♠'), after: [[{ cards: H('3♦', '9♥'), bet: 10 }]] });
   check('16 vs 10: hitting takes the 6 and busts', cfRun(c, 'H').net === -100);
 }
+// 9,A (soft 20) vs 4 (hole 4), rule Stand, played Double and drew an A (21). Player 1 (7,5) already stood; Player 2 (3,8) plays after you.
+// Shoe continues A 3 5 K. By the rule the A goes to Player 2's double, the dealer draws 3 5 K and busts.
+{
+  const c = snap({ shoe: H('A♦', '3♣', '5♥', 'K♣', '9♠'), me: [{ cards: H('9♦', 'A♦'), bet: 100 }], up: C('4♥'), dealer: H('4♥', '4♦'),
+    before: [[{ cards: H('7♣', '5♣'), bet: 20, done: true }]], after: [[{ cards: H('3♦', '8♣'), bet: 10 }]] });
+  const rule = cfRun(c, 'S'), mine = cfRun(c, 'D');
+  check('soft 20 vs 4: standing wins €100 (dealer 4,4,3,5,K busts)', rule.net === 100 && rule.d.map(k => k.r).join() === '4,4,3,5,K', [rule.net, rule.d.map(k => k.r).join()]);
+  check('soft 20 vs 4: your double wins €200 (bet €200, win €400)', mine.net === 200 && mine.me[0].bet === 200, mine.net);
+  check('soft 20 vs 4: breaking the rule = €100 more profit', mine.net - rule.net === 100);
+}
 done();
