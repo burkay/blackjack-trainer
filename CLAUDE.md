@@ -28,6 +28,8 @@ Keep each app a single file. After changing an app, run `npm test` (or `npm run 
 - "You vs the rule": `cfSnap()` snapshots the round at the first off-chart move, `cfRun()` replays it in real card order (other players and the dealer replay too), `seatNet()` settles your seat. Burkay chose real card order explicitly — do not switch to a fixed dealer hand.
 - Hand history: `S.hlog`, newest first, capped at 1000. Rule-breaking totals: `S.cf`. Per-hand text: `cfText()`.
 - Deck colour alternates blue/red on every `newShoe()` (`G.deckCol`, `:root[data-deck]`).
+- Phone layout lives at the end of the CSS: `max-width:600px` (portrait: rail height from `100svh`, one-line coach strip `#coachP` above the controls, tap to expand; messages with buttons never collapse) and `orientation:landscape and max-height:520px` (table left, dock right, dock scrolls). Safe areas via `env(safe-area-inset-*)`; keyboard hints use `.kh`/`kbd`, hidden on `pointer:coarse`.
+- Check phone sizes with puppeteer at 430×739 (Pro Max Safari), 390×664, 932×380 and 844×330 landscape.
 - Card faces and the card back are drawn in SVG here (classic casino look). Do not copy real brand designs (Bicycle Rider Back, Bee, etc.).
 
 ## Open ideas Burkay has seen
