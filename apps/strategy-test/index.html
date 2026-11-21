@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blackjack Strateji Testi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday learning: a focused drill, quick to read
+   IDEA a blackjack table: green felt, dealt cards, printed arcs, chip-like action buttons
+   PICTURE the felt with the dealer's upcard + hole card and the player's two cards, answer panel beside it
+   COLOUR felt green ground, card white, suit red, gold accent; chart cells keep the source chart's yellow/green/teal
+   TYPE Barlow Condensed 700 + Barlow
+   LAYOUT laptop: felt band with table left, actions + feedback right; below, settings | full chart. Phone: title, table, actions, feedback */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0c110f);--ink:light-dark(#111614,#e7ece8);--mute:light-dark(#56625b,#9ba8a0);--panel:light-dark(#f2f5f2,#151d19);--line:light-dark(#d5ddd7,#29342f);--acc:light-dark(#0b5d36,#2fb466);--accink:light-dark(#ffffff,#08130d);--felt:#0b5d36;--felt2:#063f24;--chalk:#eaf3ec;--chalk2:#c4ddcc;--gold:#f2c14e;--red:#c8102e;--kg:#2fb466;--kt:#3cbcb3;--ky:#f2c511;--coral:#f28b6b}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.cn,.act b,.stat b,.verdict,.ask{font-family:"Barlow Condensed",Barlow,system-ui,sans-serif}
+h1,h2,h3{margin:0;font-weight:700;line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+.wrap{max-width:1180px;margin:0 auto}
+.felt{background:radial-gradient(130% 100% at 30% 15%,#10764a,var(--felt) 45%,var(--felt2));color:var(--chalk);padding:clamp(20px,3vw,36px) max(4vw,16px) clamp(24px,3vw,40px)}
+.top{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between}
+h1{font-size:clamp(32px,4.6vw,48px)}
+.sub{margin:6px 0 0;color:var(--chalk2);max-width:52ch}
+.stats{display:flex;flex-wrap:wrap;gap:6px 24px}
+.stat{display:grid}
+.stat b{font-size:30px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat span{font-size:13px;color:var(--chalk2)}
+.play{display:grid;gap:clamp(16px,2.5vw,32px);margin-top:clamp(16px,2.4vw,28px)}
+@media(min-width:900px){.play{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}}
+.rail{position:relative;border:2px solid rgba(255,255,255,.16);border-radius:28px;padding:20px 16px;background:rgba(0,0,0,.1);display:grid;align-content:center;justify-items:center;gap:4px;box-shadow:inset 0 0 0 8px rgba(0,0,0,.07)}
+.zone{display:grid;justify-items:center;gap:8px}
+.zl{font-size:14px;color:var(--chalk2)}
+.hand{display:flex;gap:12px;justify-content:center}
+.hl{font-weight:600;font-size:18px}
+.tag{position:absolute;top:12px;right:14px;background:var(--gold);color:#111;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600}
+.card{width:clamp(60px,15vw,92px);aspect-ratio:5/7;background:#fdfdfb;color:#15181a;border-radius:9px;position:relative;box-shadow:0 5px 0 rgba(0,0,0,.22),0 10px 18px rgba(0,0,0,.18);animation:deal .32s ease-out both;animation-delay:calc(var(--i)*70ms)}
+.card.red{color:var(--red)}
+.card.back::after{content:"";position:absolute;inset:5px;border-radius:6px;background:repeating-linear-gradient(45deg,#9c1427 0 5px,#b81d33 5px 10px)}
+.hand.p .card:first-child{rotate:-4deg}
+.hand.p .card:last-child{rotate:4deg}
+.cn{position:absolute;left:7px;top:5px;font-weight:700;font-size:clamp(17px,3.6vw,22px);line-height:.95;display:grid;justify-items:center}
+.cn i{font-style:normal;font-size:.8em}
+.cn.b{left:auto;top:auto;right:7px;bottom:5px;transform:rotate(180deg)}
+.pip{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(28px,6.5vw,42px)}
+@keyframes deal{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
+.print{width:min(100%,400px);height:auto;display:block;margin:6px 0}
+.print text{fill:var(--gold);opacity:.8;font:600 15px "Barlow Condensed",sans-serif;letter-spacing:.12em}
+.ask{margin:0 0 10px;font-size:28px;font-weight:700;line-height:1.1}
+.acts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.act{grid-column:span 2;min-height:60px;border:0;border-radius:14px;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:6px;text-align:left;color:#111;cursor:pointer;font:inherit;box-shadow:0 4px 0 rgba(0,0,0,.3);transition:transform .08s}
+.act:nth-child(n+4){grid-column:span 3}
+.act b{font-size:22px;line-height:1}
+.act span{grid-column:1;font-size:13px;line-height:1.2;opacity:.8}
+.act kbd{grid-row:1/3;grid-column:2;font:700 13px Barlow,sans-serif;border:1.5px solid rgba(0,0,0,.35);border-radius:6px;padding:1px 6px}
+.a-H{background:#fdfdfb}
+.a-S{background:var(--ky)}
+.a-D{background:var(--kg)}
+.a-P{background:var(--kt)}
+.a-R{background:var(--coral)}
+.act:hover:not(:disabled){transform:translateY(-2px)}
+.act:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.act:focus-visible,.next:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.act:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
+.done .act{cursor:default}
+.act.right{outline:3px solid #fff;outline-offset:3px}
+.act.wrong{background:#3b0d15;color:#ffd9de;animation:shake .3s}
+.act.wrong kbd{border-color:rgba(255,255,255,.4)}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.fb{margin-top:16px;padding:16px;border-radius:16px;background:rgba(0,0,0,.24);min-height:176px;--cw:#fdfdfb;--cwi:#111;--cl:rgba(0,0,0,.35);--hlc:#111}
+.hint{margin:0;color:var(--chalk2)}
+.verdict{margin:0;font-size:26px;font-weight:700;line-height:1.1}
+.verdict.good{color:#9ef0b9}
+.verdict.bad{color:#ffb4a6}
+.why{margin:6px 0 12px}
+.why b{color:var(--gold)}
+.next{margin-top:12px;min-height:44px;padding:8px 18px;border-radius:999px;border:2px solid var(--gold);background:transparent;color:var(--chalk);font:600 16px Barlow,sans-serif;cursor:pointer}
+.next:hover{background:rgba(242,193,78,.15)}
+.chart{border-collapse:collapse;width:100%;font-size:14px;text-align:center;font-variant-numeric:tabular-nums}
+.chart th,.chart td{border:1px solid var(--cl);padding:5px 2px;line-height:1.2}
+.chart th{font-weight:600}
+.chart tbody th{text-align:left;padding-left:6px;white-space:nowrap}
+.k-w{background:var(--cw);color:var(--cwi)}
+.k-g{background:var(--kg);color:#0d1a12}
+.k-t{background:var(--kt);color:#0b1a19}
+.k-y{background:var(--ky);color:#1a1503}
+.chart td.hl{box-shadow:inset 0 0 0 3px var(--hlc);font-weight:800}
+.chart th.on,.chart tr.on th{background:var(--gold);color:#111}
+.scroll{overflow-x:auto}
+.lower{padding:clamp(28px,4vw,56px) max(4vw,16px);--cw:var(--bg);--cwi:var(--ink);--cl:var(--line);--hlc:var(--ink)}
+.cols{display:grid;gap:clamp(28px,3.5vw,48px)}
+@media(min-width:900px){.cols{grid-template-columns:minmax(0,350px) minmax(0,1fr)}}
+h2{font-size:clamp(28px,3vw,36px);margin-bottom:14px}
+h3{font-size:21px;margin:22px 0 6px}
+.tb h3{margin-top:0}
+fieldset{border:0;margin:0 0 16px;padding:0}
+legend{font-weight:600;margin-bottom:6px;padding:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:inline-flex;align-items:center;min-height:44px;padding:6px 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--bg);font-weight:500;white-space:nowrap}
+.seg input:checked+span{background:var(--acc);border-color:var(--acc);color:var(--accink)}
+.seg input:focus-visible+span{outline:3px solid var(--gold);outline-offset:2px}
+.chk{display:flex;gap:10px;align-items:center;min-height:44px;cursor:pointer}
+.chk input{width:20px;height:20px;accent-color:var(--acc);margin:0;flex:none}
+.sr{display:grid;grid-template-columns:6.2em minmax(0,1fr) 3em 3.6em;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.bar{height:10px;background:var(--panel);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mute{color:var(--mute);font-size:14px}
+.reset{margin-top:12px;min-height:44px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:500 15px Barlow,sans-serif;cursor:pointer}
+.reset:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.ml{list-style:none;margin:0;padding:0}
+.ml li{padding:8px 0;border-bottom:1px solid var(--line)}
+.ml li span{color:var(--mute);font-size:14px}
+.fb .ml{margin-top:8px;max-height:220px;overflow:auto}
+.fb .ml li{border-color:rgba(255,255,255,.15)}
+.fb .ml li span{color:var(--chalk2)}
+.tables{display:grid;gap:24px 26px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.key{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:14px;margin:18px 0 0}
+.key i{display:inline-block;min-width:2.6em;text-align:center;font-style:normal;font-weight:700;border-radius:4px;padding:0 4px;margin-right:5px;border:1px solid var(--line)}
+.note{background:var(--panel);border-radius:14px;padding:14px 16px;margin-top:20px}
+.note p{margin:0 0 8px}
+.note p:last-child{margin:0}
+.phr{display:grid;gap:8px}
+.po{display:flex;gap:10px;align-items:flex-start;text-align:left;min-height:52px;padding:10px 12px;border:0;border-radius:12px;background:#fdfdfb;color:#111;font:500 16px/1.35 Barlow,sans-serif;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.po kbd{flex:none;font:700 13px Barlow,sans-serif;border:1.5px solid rgba(0,0,0,.35);border-radius:6px;padding:1px 6px;margin-top:1px}
+.po:hover:not(:disabled){transform:translateY(-1px)}
+.po:disabled{cursor:default}
+.po.right{outline:3px solid var(--gold);outline-offset:2px}
+.po.wrong{background:#3b0d15;color:#ffd9de}
+.po:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.rule{margin:10px 0 0;padding:8px 12px;background:rgba(0,0,0,.22);border-radius:10px}
+.rule b{color:var(--gold)}
+.plist{display:grid;gap:18px 26px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));margin-top:10px}
+.plist h3{margin:0 0 6px}
+.plist ul{margin:0;padding-left:18px}
+.plist li{margin:5px 0}
+.ph2{margin-top:34px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sync{font-size:14px;color:var(--mute);margin:-6px 0 4px}
+.sync b{color:var(--acc)}
+.wsum{margin:0 0 6px}
+.weak{list-style:none;margin:0;padding:0}
+.weak li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.go2{margin-top:12px;min-height:44px;padding:8px 18px;border-radius:999px;border:0;background:var(--acc);color:var(--accink);font:600 15px Barlow,sans-serif;cursor:pointer}
+.go2:disabled{opacity:.4;cursor:not-allowed}
+.go2:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.h-n{background:var(--cw);color:var(--mute)}
+.h-g{background:var(--kg);color:#0d1a12}
+.h-y{background:var(--ky);color:#1a1503}
+.h-r{background:var(--coral);color:#2a0d06}
+.heat .chart td{font-size:13px;padding:5px 1px;white-space:nowrap}
+@media(max-width:600px){.card{width:clamp(56px,17vw,80px)}.rail{padding:18px 10px}.act b{font-size:20px}.stat b{font-size:26px}.chart{font-size:13px}.sr{grid-template-columns:5.6em minmax(0,1fr) 2.8em 3.4em}}
+@media(prefers-reduced-motion:reduce){.card,.act.wrong{animation:none}.act{transition:none}}
+</style>
+</head>
+<body>
+<section class="felt">
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Blackjack temel strateji testi</h1>
+        <p class="sub">Eli gör, hamleni seç. Yanlış yaptığın eller birkaç el sonra yeniden karşına gelir.</p>
+      </div>
+      <div class="stats">
+        <div class="stat" id="st-prog" hidden><b id="s-prog">1/20</b><span>Test</span></div>
+        <div class="stat"><b id="s-ok">0/0</b><span>Doğru</span></div>
+        <div class="stat"><b id="s-pct">–</b><span>İsabet</span></div>
+        <div class="stat"><b id="s-str">0</b><span>Seri</span></div>
+        <div class="stat"><b id="s-best">0</b><span>En iyi seri</span></div>
+      </div>
+    </div>
+    <div class="play">
+      <div class="rail">
+        <span class="tag" id="tag" hidden>Tekrar</span>
+        <div class="zone"><span class="zl">Krupiye</span><div class="hand" id="dealer"></div></div>
+        <svg class="print" viewBox="0 0 400 86" aria-hidden="true">
+          <defs><path id="arc1" d="M24 8 Q200 66 376 8"/><path id="arc2" d="M64 36 Q200 86 336 36"/></defs>
+          <text><textPath href="#arc1" startOffset="50%" text-anchor="middle">BLACKJACK 3:2 ÖDER</textPath></text>
+          <text><textPath href="#arc2" startOffset="50%" text-anchor="middle">SİGORTA 2:1 ÖDER</textPath></text>
+        </svg>
+        <div class="zone"><div class="hand p" id="player"></div><span class="hl" id="hand"></span></div>
+      </div>
+      <div>
+        <p class="ask" id="ask">Ne yaparsın?</p>
+        <div class="phr" id="phr" hidden></div>
+        <div class="acts" id="acts">
+          <button class="act a-H" id="b-H" data-a="H"><b>Hit</b><span>Kart çek</span><kbd>H</kbd></button>
+          <button class="act a-S" id="b-S" data-a="S"><b>Stand</b><span>Dur</span><kbd>S</kbd></button>
+          <button class="act a-D" id="b-D" data-a="D"><b>Double</b><span>İkiye katla</span><kbd>D</kbd></button>
+          <button class="act a-P" id="b-P" data-a="P"><b>Split</b><span>Böl</span><kbd>P</kbd></button>
+          <button class="act a-R" id="b-R" data-a="R"><b>Surrender</b><span>Teslim ol</span><kbd>R</kbd></button>
+        </div>
+        <div class="fb" id="fb" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lower">
+  <div class="wrap cols">
+    <div>
+      <h2>Çalışma ayarları</h2>
+      <fieldset class="seg"><legend>Konu</legend>
+        <label><input type="radio" name="mode" id="m-mix" value="mix"><span>Karışık</span></label>
+        <label><input type="radio" name="mode" id="m-pair" value="pair"><span>Çiftler</span></label>
+        <label><input type="radio" name="mode" id="m-soft" value="soft"><span>Soft eller</span></label>
+        <label><input type="radio" name="mode" id="m-hard" value="hard"><span>Hard eller</span></label>
+        <label><input type="radio" name="mode" id="m-surr" value="surr"><span>Surrender</span></label>
+        <label><input type="radio" name="mode" id="m-phr" value="phr"><span>Kural cümleleri</span></label>
+        <label><input type="radio" name="mode" id="m-weak" value="weak"><span>Zayıf ellerim</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Uzunluk</legend>
+        <label><input type="radio" name="len" id="l-0" value="0"><span>Serbest pratik</span></label>
+        <label><input type="radio" name="len" id="l-20" value="20"><span>20 soru</span></label>
+        <label><input type="radio" name="len" id="l-50" value="50"><span>50 soru</span></label>
+      </fieldset>
+      <fieldset><legend>Masa kuralları</legend>
+        <label class="chk"><input type="checkbox" id="r-das">Bölünce double serbest (DAS)</label>
+        <label class="chk"><input type="checkbox" id="r-dbl">Double serbest</label>
+        <label class="chk"><input type="checkbox" id="r-sur">Late surrender var</label>
+        <label class="chk"><input type="checkbox" id="r-auto">Doğru cevapta sonraki ele otomatik geç</label>
+      </fieldset>
+      <h2 class="ph2">İlerlemen</h2>
+      <p class="sync" id="sync">Kayıt: bu tarayıcıda.</p>
+      <h3>Konulara göre isabet</h3>
+      <div id="cat"></div>
+      <h3>Zayıf noktaların</h3>
+      <p class="wsum" id="weaksum"></p>
+      <ul class="weak" id="weak"></ul>
+      <button class="go2" id="drill">Zayıf ellerimi çalış</button>
+      <h3>Son hataların</h3>
+      <ul class="ml" id="miss"></ul>
+      <button class="reset" id="reset">İstatistikleri sıfırla</button>
+    </div>
+    <div>
+      <h2>Strateji tablosu</h2>
+      <p class="mute">Cevap verdiğin el burada da işaretlenir: satır sarı, hücre çerçeveli. "Hata haritam" her hücrede kaç kez doğru bildiğini gösterir.</p>
+      <fieldset class="seg"><legend class="vh">Tablo görünümü</legend>
+        <label><input type="radio" name="view" id="v-chart" value="chart" checked><span>Strateji</span></label>
+        <label><input type="radio" name="view" id="v-heat" value="heat"><span>Hata haritam</span></label>
+      </fieldset>
+      <div class="tables" id="chart"></div>
+      <div class="key" id="heatkey" hidden>
+        <span><i class="h-g">3/3</i>Hep doğru</span>
+        <span><i class="h-y">2/3</i>%50 ve üstü</span>
+        <span><i class="h-r">0/2</i>%50'nin altı</span>
+        <span><i class="h-n">·</i>Henüz sorulmadı</span>
+      </div>
+      <div class="key" id="stkey">
+        <span><i class="k-g">Y</i>Böl</span>
+        <span><i class="k-t">Y/N</i>DAS varsa böl</span>
+        <span><i class="k-w">N</i>Bölme</span>
+        <span><i class="k-w">H</i>Kart çek</span>
+        <span><i class="k-y">S</i>Dur</span>
+        <span><i class="k-g">D</i>Double, yoksa kart çek</span>
+        <span><i class="k-t">Ds</i>Double, yoksa dur</span>
+        <span><i class="k-g">SUR</i>Teslim ol</span>
+      </div>
+      <div class="note">
+        <p><b>Karar sırası:</b> 1) Elin çiftse önce bölme tablosuna bak. 2) Bölmüyorsan ve elin hard 15 ya da 16 ise surrender satırına bak. 3) Sonra soft ya da hard tablosu. Hard 17 ve üstünde hep dur, 8 ve altında hep kart çek.</p>
+        <p><b>Sigorta ve even money: asla alma.</b> (Kart sayıyorsan tek istisna: true count +3 ve üstü.)</p>
+        <p>Sıradaki adım: <a href="https://claude.ai/artifact/VLFit8wmMasgiSFozyb8Aw">Hi-Lo kart sayma testi</a> · gerçek el oynamak için <a href="https://claude.ai/artifact/ETh4jv1MLrbsj7JMeusPP6">Blackjack masa simülasyonu</a>.</p>
+        <p class="mute">Tablo, gönderdiğin Blackjack Apprenticeship temel strateji tablosundan alındı. Testteki her el ilk iki kart; double ve surrender bu yüzden her zaman mümkün sayılır, kapatırsan tablonun “yoksa” kısmı uygulanır.</p>
+      </div>
+      <h2 class="ph2">Kural cümleleri</h2>
+      <p>Elinin toplamına bakıp kuralı krupiyeye bakmadan içinden söyle. Krupiyenin kartını gördüğünde karar zaten hazır olur. Surrender kuralları hard 15 ve 16'nın içinde.</p>
+      <p class="mute">Cümleler tablodan ve soldaki masa kurallarından üretilir; DAS'ı ya da double'ı kapatırsan ilgili cümleler de değişir.</p>
+      <div class="plist" id="phrases"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const UP=['2','3','4','5','6','7','8','9','10','A'];
+const PAIR={A:'YYYYYYYYYY',T:'NNNNNNNNNN','9':'YYYYYNYYNN','8':'YYYYYYYYYY','7':'YYYYYYNNNN','6':'dYYYYNNNNN','5':'NNNNNNNNNN','4':'NNNddNNNNN','3':'ddYYYYNNNN','2':'ddYYYYNNNN'};
+const PAIR_ROWS=['A','T','9','8','7','6','5','4','3','2'];
+const SOFT={9:'SSSSSSSSSS',8:'SSSSXSSSSS',7:'XXXXXSSHHH',6:'HDDDDHHHHH',5:'HHDDDHHHHH',4:'HHDDDHHHHH',3:'HHHDDHHHHH',2:'HHHDDHHHHH'};
+const SOFT_ROWS=[9,8,7,6,5,4,3,2];
+const HARD={17:'SSSSSSSSSS',16:'SSSSSHHHHH',15:'SSSSSHHHHH',14:'SSSSSHHHHH',13:'SSSSSHHHHH',12:'HHSSSHHHHH',11:'DDDDDDDDDD',10:'DDDDDDDDHH',9:'HDDDDHHHHH',8:'HHHHHHHHHH'};
+const HARD_ROWS=[17,16,15,14,13,12,11,10,9,8];
+const SURR={16:'-------RRR',15:'--------R-',14:'----------'};
+const ACT={H:['Hit','kart çek'],S:['Stand','dur'],D:['Double','ikiye katla'],P:['Split','böl'],R:['Surrender','teslim ol']};
+let S={das:true,dbl:true,sur:true};
+const v=x=>x==='A'?11:x;
+const nm=x=>x==='A'?'A':String(x);
+function handLabel(q){
+  const {a,b}=q;
+  if(a===b) return a==='A'?'A,A çifti · soft 12':`${nm(a)},${nm(b)} çifti · ${a*2}`;
+  if(a==='A'||b==='A'){const x=a==='A'?b:a;return `Soft ${11+x} (A,${x})`}
+  return `Hard ${a+b}`;
+}
+function solve(q){
+  const {a,b,ui}=q, up=UP[ui], pre=[];
+  if(a===b){
+    const k=a==='A'?'A':a===10?'T':String(a), c=PAIR[k][ui], l=k==='T'?'10,10':`${k},${k}`;
+    if(c==='Y') return {act:'P',tab:'pair',row:k,ui,why:`${l} – krupiye ${up}: tabloda <b>Y</b>, çifti böl.`};
+    if(c==='d'){
+      if(S.das) return {act:'P',tab:'pair',row:k,ui,why:`${l} – krupiye ${up}: tabloda <b>Y/N</b>. DAS serbest olduğu için böl.`};
+      pre.push(`${l} – krupiye ${up}: <b>Y/N</b> ama DAS kapalı, bölme; toplam olarak oyna.`);
+    } else pre.push(`${l} – krupiye ${up}: <b>N</b>, bölme; toplam olarak oyna.`);
+  }
+  const p=pre.length?pre.join(' ')+' ':'';
+  if((a==='A')!==(b==='A')){
+    const x=a==='A'?b:a, c=SOFT[x][ui];
+    const act=c==='H'?'H':c==='S'?'S':S.dbl?'D':(c==='D'?'H':'S');
+    const m={H:'<b>H</b>, kart çek.',S:'<b>S</b>, dur.',D:'<b>D</b>, double yap; double yoksa kart çek.',X:'<b>Ds</b>, double yap; double yoksa dur.'}[c];
+    const tail=(!S.dbl&&(c==='D'||c==='X'))?` Double kapalı olduğu için: ${ACT[act][1]}.`:'';
+    return {act,tab:'soft',row:x,ui,why:`${p}Soft ${11+x} (A,${x}) – krupiye ${up}: ${m}${tail}`};
+  }
+  const t=v(a)+v(b);
+  let sp='';
+  if(SURR[t]&&SURR[t][ui]==='R'){
+    if(S.sur) return {act:'R',tab:'surr',row:t,ui,why:`${p}Hard ${t} – krupiye ${up}: tabloda <b>SUR</b>. Teslim ol, bahsin yarısı geri gelir.`};
+    sp='Surrender kapalı, bu yüzden hard tablosu: ';
+  }
+  const row=t>=17?17:t<=8?8:t, c=HARD[row][ui];
+  const act=c==='D'?(S.dbl?'D':'H'):c;
+  const rn=t>17?' (17 ve üstü satırı)':t<8?' (8 ve altı satırı)':'';
+  const m={H:'<b>H</b>, kart çek.',S:'<b>S</b>, dur.',D:S.dbl?'<b>D</b>, double yap.':'<b>D</b>, ama double kapalı: kart çek.'}[c];
+  return {act,tab:'hard',row,ui,why:`${p}${sp}Hard ${t}${rn} – krupiye ${up}: ${m}`};
+}
+const VERB={H:'kart çek',S:'dur',D:'double yap',P:'böl',R:'teslim ol'};
+const SUF={'2':"'ye",'3':"'e",'4':"'e",'5':"'e",'6':"'ya",'7':"'ye",'8':"'e",'9':"'a",'10':"'a",'A':"'ya"};
+function runs(ix){const r=[];ix.forEach(i=>{const l=r[r.length-1];if(l&&l[1]===i-1)l[1]=i;else r.push([i,i])});return r}
+function lab(ix){
+  const rs=runs(ix).map(([a,b])=>a===b?UP[a]:`${UP[a]}–${UP[b]}`);
+  const txt=rs.length>1?rs.slice(0,-1).join(', ')+' ve '+rs[rs.length-1]:rs[0];
+  return txt+SUF[UP[ix[ix.length-1]]];
+}
+function describe(acts){
+  const def=acts[9];
+  if(acts.every(a=>a===def)) return `her zaman ${VERB[def]}`;
+  const order=[];acts.forEach(a=>{if(a!==def&&!order.includes(a))order.push(a)});
+  const parts=order.map(a=>{
+    const ix=acts.map((x,i)=>x===a?i:-1).filter(i=>i>-1);
+    const lo=ix[0],hi=ix[ix.length-1],holes=[];
+    for(let i=lo;i<=hi;i++) if(acts[i]!==a) holes.push(i);
+    if(order.length===1&&holes.length===1&&hi-lo>=3) return `${UP[lo]}–${UP[hi]}${SUF[UP[hi]]} karşı ${VERB[a]} (${UP[holes[0]]} hariç)`;
+    return `${lab(ix)} karşı ${VERB[a]}`;
+  });
+  return parts.join(', ')+`, diğerlerinde ${VERB[def]}`;
+}
+function actsFor(a,b,noSur){const keep=S.sur;if(noSur)S.sur=false;const r=UP.map((_,ui)=>solve({a,b,ui}).act);S.sur=keep;return r}
+function phraseInfo(a,b){
+  if(a===b){
+    const k=a==='A'?'A':a===10?'T':String(a), n=k==='T'?'10':k, acts=actsFor(a,b), title=`Çift ${n} (${n},${n})`;
+    if(!acts.includes('P')) return {key:'pair:'+k,cat:'pair',title,body:`asla bölme; ${a==='A'?12:a*2} gibi oyna: ${describe(acts)}`};
+    return {key:'pair:'+k,cat:'pair',title,body:describe(acts)};
+  }
+  if((a==='A')!==(b==='A')){const x=a==='A'?b:a;return {key:'soft:'+x,cat:'soft',title:`Soft ${11+x} (A,${x})`,body:describe(actsFor(a,b))}}
+  const t=v(a)+v(b), row=t>=17?17:t<=8?8:t, title=t>=17?'Hard 17 ve üstü':t<=8?'Hard 8 ve altı':`Hard ${t}`, acts=actsFor(a,b);
+  if(acts.includes('R')){const ix=acts.map((x,i)=>x==='R'?i:-1).filter(i=>i>-1);return {key:'hard:'+row,cat:'hard',title,body:`${lab(ix)} karşı teslim ol; yoksa ${describe(actsFor(a,b,true))}`}}
+  return {key:'hard:'+row,cat:'hard',title,body:describe(acts)};
+}
+const PH_ROWS=[...PAIR_ROWS.map(k=>{const x=k==='A'?'A':k==='T'?10:+k;return [x,x]}),...SOFT_ROWS.map(x=>['A',x]),[7,10],[6,10],[5,10],[4,10],[3,10],[2,10],[2,9],[2,8],[2,7],[2,6]];
+/*END-LOGIC*/
+const cap=s=>s.charAt(0).toLocaleUpperCase('tr')+s.slice(1);
+const TXT={Y:'Y',d:'Y/N',N:'N',H:'H',S:'S',D:'D',X:'Ds',R:'SUR','-':''};
+const K={Y:'k-g',d:'k-t',N:'k-w',H:'k-w',S:'k-y',D:'k-g',X:'k-t',R:'k-g','-':'k-w'};
+const TABN={pair:'Çift',soft:'Soft',hard:'Hard',surr:'SUR'};
+const CATN={pair:'Çiftler',soft:'Soft eller',hard:'Hard eller',surr:'Surrender',phr:'Kural cümlesi'};
+const SUITS=['♠','♥','♦','♣'];
+const KEY='bj-strateji-v1';
+const DEF={mode:'mix',len:0,das:true,dbl:true,sur:true,auto:true,best:0,stats:{pair:[0,0],soft:[0,0],hard:[0,0],surr:[0,0],phr:[0,0]},miss:[],cells:{},pcells:{}};
+const store={get(k){try{const x=localStorage.getItem(k);return x?JSON.parse(x):null}catch(e){return null}},set(k,x){try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}}};
+const save=()=>{store.set(KEY,S);queueSync()};
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)];
+let q=null,sol=null,answered=false,ended=false,timer=0,last='',qn=0,queue=[],stage='act',phq=null,view='chart',curKey=null,weakEmpty=false,lastW='';
+/* progress persistence: localStorage always, plus the artifact db (progress/<uid>) when this view offers it */
+let ref=null,writing=false,dirty=false,syncT=0;
+const total=s=>Object.values(s.stats||{}).reduce((a,x)=>a+(Array.isArray(x)?+x[1]||0:0),0);
+function normalize(src){
+  const s=Object.assign(JSON.parse(JSON.stringify(DEF)),src&&typeof src==='object'?src:{});
+  if(!s.stats||typeof s.stats!=='object') s.stats={};
+  for(const k in DEF.stats) if(!Array.isArray(s.stats[k])) s.stats[k]=[0,0];
+  for(const f of ['cells','pcells']) if(!s[f]||typeof s[f]!=='object'||Array.isArray(s[f])) s[f]={};
+  if(!Array.isArray(s.miss)) s.miss=[];
+  delete s.updatedAt;
+  return s;
+}
+function setSync(st){
+  const el=document.getElementById('sync');if(!el) return;
+  el.innerHTML={wait:'Kayıt: bu tarayıcıda. Hesabına bağlanılıyor…',ok:'<b>Kayıt: Claude hesabında.</b> Telefonda ve bilgisayarda aynı ilerlemeyi görürsün; istersen Claude da okuyup yorumlayabilir.',local:'Kayıt: yalnızca bu tarayıcıda. Hesap kaydı bu görünümde kullanılamıyor.',err:'Kayıt: son değişiklik hesaba yazılamadı, birazdan tekrar denenecek.'}[st];
+}
+function queueSync(){if(!ref) return;dirty=true;clearTimeout(syncT);syncT=setTimeout(flush,1200)}
+async function flush(){
+  if(!ref||writing||!dirty) return;
+  writing=true;dirty=false;
+  try{await ref.set(Object.assign(JSON.parse(JSON.stringify(S)),{updatedAt:new Date().toISOString()}));setSync('ok')}
+  catch(e){
+    const c=e&&e.code;
+    if(['invalid_argument','revoked','not_granted','capability_disabled','capability_removed','quota_exceeded','transform_error'].includes(c)){ref=null;setSync('local')}
+    else{dirty=true;setSync('err')}
+  }
+  writing=false;
+  if(dirty&&ref) syncT=setTimeout(flush,3000);
+}
+async function connect(){
+  const c=window.claude;
+  if(!c||typeof c.use!=='function'){setSync('local');return}
+  setSync('wait');
+  let done=false;const to=setTimeout(()=>{if(!done)setSync('local')},10000);
+  try{
+    const [d,u]=await Promise.all([c.use('db'),c.use('user')]);
+    const id=d&&u?await u.id():null;
+    if(!id){done=true;clearTimeout(to);setSync('local');return}
+    const r=d.doc('progress/'+id), snap=await r.get();
+    done=true;clearTimeout(to);ref=r;
+    const rem=snap.exists?normalize(snap.data()):null;
+    if(rem&&total(rem)>total(S)){
+      S=rem;store.set(KEY,S);syncControls();
+      if(q&&!answered&&!ended){sol=solve(q);setBtns()}
+      renderAll();
+    } else if(total(S)>(rem?total(rem):0)){dirty=true;flush()}
+    setSync('ok');
+  }catch(e){done=true;clearTimeout(to);ref=null;setSync('local')}
+}
+let ses={ok:0,n:0,streak:0}, test={n:0,ok:0,miss:[]};
+
+const combos=t=>{const r=[];for(let a=2;a<=10;a++)for(let b=a+1;b<=10;b++)if(a+b===t)r.push([a,b]);return r};
+const HARD_W=[];for(let t=5;t<=19;t++){const w=t>=8&&t<=17?3:1;for(let i=0;i<w;i++)HARD_W.push(t)}
+const gHard=(t,cat)=>{const [a,b]=pick(combos(t));return {cat:cat||'hard',a,b,ui:rnd(10)}};
+const GEN={
+  pair:()=>{const k=pick(PAIR_ROWS),x=k==='A'?'A':k==='T'?10:+k;return {cat:'pair',a:x,b:x,ui:rnd(10)}},
+  soft:()=>({cat:'soft',a:'A',b:pick(SOFT_ROWS),ui:rnd(10)}),
+  hard:()=>gHard(pick(HARD_W)),
+  surr:()=>{const g=gHard(pick([14,15,15,16,16,16]),'surr');g.ui=pick([4,5,6,7,7,8,8,8,9,9]);return g}
+};
+const MIXW=['pair','pair','pair','soft','soft','soft','hard','hard','hard','hard','surr'];
+const keyOf=x=>`${x.a}|${x.b}|${x.ui}`;
+function handFromKey(k){
+  const [tab,row,uis]=k.split('|'),u=+uis;
+  if(tab==='pair'){const x=row==='A'?'A':row==='T'?10:+row;return {cat:'pair',a:x,b:x,ui:u}}
+  if(tab==='soft') return {cat:'soft',a:'A',b:+row,ui:u};
+  let t=+row;
+  if(tab==='hard'&&t===17) t=pick([17,17,18,19]);
+  if(tab==='hard'&&t===8) t=pick([5,6,7,8,8]);
+  const g=gHard(t,tab==='surr'?'surr':'hard');g.ui=u;return g;
+}
+function keyLabel(k){
+  const [tab,row,uis]=k.split('|');
+  const h=tab==='pair'?(row==='T'?'10,10':`${row},${row}`):tab==='soft'?`Soft ${11+(+row)} (A,${row})`:tab==='hard'&&row==='17'?'Hard 17+':tab==='hard'&&row==='8'?'Hard ≤8':`Hard ${row}`;
+  return `${h} – krupiye ${UP[+uis]}`;
+}
+/* a cell is weak while it has a wrong answer and fewer than 3 correct in a row since */
+function weakList(){
+  return Object.entries(S.cells).filter(([k,c])=>/^(pair|soft|hard|surr)\|[^|]+\|\d$/.test(k)&&Array.isArray(c)&&c[1]>c[0]&&(c[2]||0)<3)
+    .map(([k,c])=>{const w=c[1]-c[0];return {k,o:c[0],n:c[1],w,run:c[2]||0,sc:w/c[1]+w*.05-(c[2]||0)*.1}})
+    .sort((a,b)=>b.sc-a.sc||b.w-a.w);
+}
+function gen(){
+  weakEmpty=false;
+  if(S.mode==='weak'){
+    const W=weakList().slice(0,12);
+    if(W.length){let it,i=0;do{it=W[Math.floor(Math.random()**2*W.length)]}while(W.length>1&&it.k===lastW&&++i<10);lastW=it.k;return handFromKey(it.k)}
+    weakEmpty=true;
+  }
+  let g,i=0;do{g=GEN[['mix','phr','weak'].includes(S.mode)?pick(MIXW):S.mode]()}while(keyOf(g)===last&&++i<10);return g;
+}
+
+function card(x){return {r:x==='A'?'A':x===10?pick(['10','J','Q','K']):String(x),s:pick(SUITS)}}
+function cardHTML(c,i){
+  if(!c) return `<div class="card back" style="--i:${i}" aria-label="Kapalı kart"></div>`;
+  const red=c.s==='♥'||c.s==='♦';
+  return `<div class="card${red?' red':''}" style="--i:${i}" aria-label="${c.r}${c.s}"><span class="cn">${c.r}<i>${c.s}</i></span><span class="pip">${c.s}</span><span class="cn b">${c.r}<i>${c.s}</i></span></div>`;
+}
+const rowCodes=(tab,row)=>tab==='pair'?PAIR[row]:tab==='soft'?SOFT[row]:tab==='hard'?HARD[row]:SURR[row];
+const rowLabel=(tab,row)=>tab==='pair'?`${row},${row}`:tab==='soft'?`A,${row}`:tab==='hard'?(row===17?'17+':row===8?'≤8':String(row)):String(row);
+function miniRow(s){
+  const c=[...rowCodes(s.tab,s.row)];
+  return `<div class="scroll"><table class="chart"><thead><tr><th>${TABN[s.tab]}</th>${UP.map((u,i)=>`<th class="${i===s.ui?'on':''}">${u}</th>`).join('')}</tr></thead><tbody><tr><th>${rowLabel(s.tab,s.row)}</th>${c.map((x,i)=>`<td class="${K[x]}${i===s.ui?' hl':''}">${TXT[x]}</td>`).join('')}</tr></tbody></table></div>`;
+}
+function renderChart(){
+  const T=[['pair','Çift bölme',PAIR_ROWS],['soft','Soft toplamlar',SOFT_ROWS],['hard','Hard toplamlar',HARD_ROWS],['surr','Late surrender',[16,15,14]]];
+  const heat=view==='heat';
+  $('#chart').classList.toggle('heat',heat);
+  const td=(tab,r,x,i,on)=>{
+    if(!heat) return `<td class="${K[x]}${on&&i===sol.ui?' hl':''}">${TXT[x]}</td>`;
+    const k=`${tab}|${r}|${i}`, c=S.cells[k], hl=answered&&curKey===k?' hl':'';
+    if(!Array.isArray(c)||!c[1]) return `<td class="h-n${hl}">·</td>`;
+    const p=c[0]/c[1];
+    return `<td class="${p===1?'h-g':p>=.5?'h-y':'h-r'}${hl}" title="${TXT[x]||'—'}: ${c[0]}/${c[1]} doğru">${c[0]}/${c[1]}</td>`;
+  };
+  $('#chart').innerHTML=T.map(([tab,title,rows])=>`<div class="tb"><h3>${title}</h3><div class="scroll"><table class="chart"><thead><tr><th></th>${UP.map(u=>`<th>${u}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>{
+    const on=heat?!!(answered&&curKey&&curKey.startsWith(`${tab}|${r}|`)):!!(answered&&sol&&sol.tab===tab&&String(sol.row)===String(r));
+    return `<tr class="${on?'on':''}"><th>${rowLabel(tab,r)}</th>${[...rowCodes(tab,r)].map((x,i)=>td(tab,r,x,i,on)).join('')}</tr>`;
+  }).join('')}</tbody></table></div></div>`).join('');
+}
+function renderWeak(){
+  const W=weakList();
+  const cats=['pair','soft','hard','surr'].map(k=>({k,o:S.stats[k][0],n:S.stats[k][1]})).filter(x=>x.n>=5);
+  let sum;
+  if(cats.length>=2){cats.sort((a,b)=>a.o/a.n-b.o/b.n);const w=cats[0];sum=`En zayıf konun: <b>${CATN[w.k]}</b> (%${Math.round(w.o/w.n*100)}, ${w.n} soru).`}
+  else sum='Konuları karşılaştırmak için en az iki konuda 5\'er soru çöz.';
+  $('#weaksum').innerHTML=sum;
+  $('#weak').innerHTML=W.length?W.slice(0,8).map(x=>{const s=solve(handFromKey(x.k));return `<li><span><b>${keyLabel(x.k)}</b><br><span class="mute">Doğrusu: ${ACT[s.act][0]} (${ACT[s.act][1]})${x.run?` · ${x.run} kez üst üste doğru`:''}</span></span><span class="num">${x.o}/${x.n}</span></li>`}).join(''):'<li class="mute">Şu an zayıf el yok. Yanlış yaptığın her el, 3 kez üst üste doğru bilene kadar burada kalır.</li>';
+  $('#drill').disabled=!W.length;
+}
+function renderAll(){renderStats();renderMiss();renderWeak();renderChart();renderPhrases();top()}
+function syncControls(){
+  const m=$('#m-'+S.mode);if(m)m.checked=true;else{S.mode='mix';$('#m-mix').checked=true}
+  const l=$('#l-'+S.len);if(l)l.checked=true;else{S.len=0;$('#l-0').checked=true}
+  $('#r-das').checked=S.das;$('#r-dbl').checked=S.dbl;$('#r-sur').checked=S.sur;$('#r-auto').checked=S.auto;
+}
+function renderStats(){
+  $('#cat').innerHTML=Object.keys(CATN).map(k=>{const [o,n]=S.stats[k],pc=n?Math.round(o/n*100):0;
+    return `<div class="sr"><span>${CATN[k]}</span><div class="bar"><i style="width:${pc}%"></i></div><span class="num">${n?'%'+pc:'–'}</span><span class="num mute">${o}/${n}</span></div>`}).join('');
+}
+const missLi=m=>`<li><b>${m.label}</b> – krupiye ${m.up}<br><span>Senin cevabın: ${ACT[m.pick][0]} · Doğrusu: ${ACT[m.act][0]} (${ACT[m.act][1]})</span></li>`;
+function renderMiss(){$('#miss').innerHTML=S.miss.length?S.miss.slice(0,10).map(missLi).join(''):'<li class="mute">Henüz hata yok.</li>'}
+function top(){
+  $('#s-ok').textContent=`${ses.ok}/${ses.n}`;
+  $('#s-pct').textContent=ses.n?'%'+Math.round(ses.ok/ses.n*100):'–';
+  $('#s-str').textContent=ses.streak;
+  $('#s-best').textContent=S.best;
+  $('#st-prog').hidden=!S.len;
+  if(S.len) $('#s-prog').textContent=`${Math.min(test.n+(answered||ended?0:1),S.len)}/${S.len}`;
+}
+function setBtns(){
+  $('#b-P').disabled=!(q&&q.a===q.b);
+  $('#b-D').disabled=!S.dbl;
+  $('#b-R').disabled=!S.sur;
+  document.querySelectorAll('.act').forEach(b=>b.classList.remove('right','wrong'));
+  $('#acts').classList.toggle('done',answered||ended);
+}
+function fbIdle(){
+  const w=S.mode!=='weak'?'':weakEmpty?'<p class="hint"><b>Zayıf el kalmadı.</b> Yanlış yaptığın her eli 3 kez üst üste doğru bildin; şimdilik karışık sorular geliyor.</p>':'<p class="hint"><b>Zayıf ellerin:</b> yanlış yaptığın bir el, 3 kez üst üste doğru bilene kadar burada sorulur.</p>';
+  $('#fb').innerHTML=w+'<p class="hint">Elin ve krupiyenin açık kartına bak, bir hamle seç.</p><p class="hint">Klavye: H, S, D, P, R. Cevaptan sonra Enter ile sonraki el.</p>';
+}
+function next(){
+  clearTimeout(timer);answered=false;ended=false;
+  const i=queue.findIndex(x=>x.due<=qn&&(['mix','phr','weak'].includes(S.mode)||x.q.cat===S.mode));
+  q=i>-1?{...queue.splice(i,1)[0].q,review:true}:gen();
+  last=keyOf(q);sol=solve(q);
+  const u=UP[q.ui]==='A'?'A':+UP[q.ui];
+  q.upc=card(u);
+  $('#dealer').innerHTML=S.mode==='phr'?cardHTML(null,0)+cardHTML(null,1):cardHTML(q.upc,0)+cardHTML(null,1);
+  const pc=[card(q.a),card(q.b)];if(Math.random()<.5)pc.reverse();
+  $('#player').innerHTML=pc.map((c,j)=>cardHTML(c,j+2)).join('');
+  $('#hand').textContent=handLabel(q);
+  $('#tag').hidden=!q.review;
+  setBtns();fbIdle();renderChart();top();
+  if(S.mode==='phr') showPhrase();
+  else {stage='act';$('#phr').hidden=true;$('#acts').hidden=false;$('#ask').textContent='Ne yaparsın?'}
+}
+function showPhrase(){
+  stage='phrase';
+  const info=phraseInfo(q.a,q.b);
+  const pool=PH_ROWS.map(([a,b])=>phraseInfo(a,b)).filter(p=>p.cat===info.cat);
+  const ci=pool.findIndex(p=>p.key===info.key);
+  const seen=new Set([info.body]),ds=[];
+  pool.map((p,i)=>[p,Math.abs(i-ci)+Math.random()*.9]).sort((x,y)=>x[1]-y[1]).forEach(([p])=>{if(ds.length<3&&!seen.has(p.body)){seen.add(p.body);ds.push(p.body)}});
+  const opts=[info.body,...ds].sort(()=>Math.random()-.5);
+  phq={info,opts,ci:opts.indexOf(info.body)};
+  $('#ask').textContent=`${info.title} için kural hangisi?`;
+  $('#acts').hidden=true;$('#phr').hidden=false;
+  $('#phr').innerHTML=opts.map((o,j)=>`<button class="po" data-i="${j}"><kbd>${j+1}</kbd><span>${cap(o)}.</span></button>`).join('');
+  $('#fb').innerHTML='<p class="hint">Krupiyenin kartına bakmadan, sadece eline göre kuralı hatırla. Doğru cümleyi seçince krupiyenin kartı açılır ve hamleni yaparsın.</p><p class="hint">Klavye: 1, 2, 3, 4.</p>';
+}
+function answerPhrase(j){
+  if(stage!=='phrase'||!phq) return;
+  stage='act';
+  const ok=j===phq.ci, st=S.stats.phr;st[1]++;if(ok)st[0]++;
+  const pc=Array.isArray(S.pcells[phq.info.key])?S.pcells[phq.info.key]:(S.pcells[phq.info.key]=[0,0]);pc[1]++;if(ok)pc[0]++;
+  save();renderStats();
+  document.querySelectorAll('#phr .po').forEach((b,k)=>{b.disabled=true;if(k===phq.ci)b.classList.add('right');else if(k===j)b.classList.add('wrong')});
+  $('#dealer').innerHTML=cardHTML(q.upc,0)+cardHTML(null,1);
+  $('#ask').textContent=`Krupiye ${UP[q.ui]} gösteriyor. Ne yaparsın?`;
+  $('#phr').hidden=true;$('#acts').hidden=false;
+  $('#fb').innerHTML=`<p class="verdict ${ok?'good':'bad'}">${ok?'Kural doğru':'Kural yanlış'}</p><p class="why"><b>${phq.info.title}:</b> ${phq.info.body}.</p><p class="hint">Şimdi hamleni seç: H, S, D, P, R.</p>`;
+  if(fine()) {const b=document.querySelector('#acts .act:not(:disabled)');if(b)b.focus({preventScroll:true})}
+}
+function renderPhrases(){
+  const G=[['pair','Çiftler'],['soft','Soft eller'],['hard','Hard eller (surrender dahil)']];
+  const all=PH_ROWS.map(([a,b])=>phraseInfo(a,b));
+  $('#phrases').innerHTML=G.map(([c,t])=>`<div><h3>${t}</h3><ul>${all.filter(p=>p.cat===c).map(p=>`<li><b>${p.title}:</b> ${p.body}.</li>`).join('')}</ul></div>`).join('');
+}
+const fine=()=>window.matchMedia&&matchMedia('(pointer:fine)').matches;
+function goNext(){clearTimeout(timer);if(S.len&&test.n>=S.len){showEnd();return}next()}
+function newTest(){test={n:0,ok:0,miss:[]};next()}
+function showEnd(){
+  ended=true;answered=false;setBtns();
+  const pc=Math.round(test.ok/S.len*100);
+  const say=pc>=95?'Tablo artık sende. Karışık modda hızlanmaya çalış.':pc>=80?'İyi gidiyor. Kaçırdığın ellere aşağıdan bak.':'Zorlandığın konuyu seçip ayrıca çalış, sonra testi tekrarla.';
+  $('#fb').innerHTML=`<p class="verdict">Test bitti: ${test.ok}/${S.len} (%${pc})</p><p class="why">${say}</p>${test.miss.length?`<ul class="ml">${test.miss.map(missLi).join('')}</ul>`:'<p class="why">Hiç hata yok.</p>'}<button class="next" id="again">Yeni test</button>`;
+  top();
+}
+function answer(act){
+  if(answered||ended||!q||stage!=='act') return;
+  const b=$('#b-'+act);if(b.disabled) return;
+  answered=true;qn++;
+  const ok=act===sol.act, st=S.stats[q.cat];
+  st[1]++;ses.n++;
+  curKey=q.a===q.b?`pair|${q.a==='A'?'A':q.a===10?'T':q.a}|${q.ui}`:`${sol.tab}|${sol.row}|${q.ui}`;
+  const cell=Array.isArray(S.cells[curKey])?S.cells[curKey]:(S.cells[curKey]=[0,0,0]);
+  cell[1]++;if(ok){cell[0]++;cell[2]=(cell[2]||0)+1}else cell[2]=0;
+  if(ok){st[0]++;ses.ok++;ses.streak++;S.best=Math.max(S.best,ses.streak)}
+  else{
+    ses.streak=0;
+    queue.push({q:{cat:q.cat,a:q.a,b:q.b,ui:q.ui},due:qn+3});
+    const m={label:handLabel(q),up:UP[q.ui],pick:act,act:sol.act,k:curKey,t:new Date().toISOString()};
+    S.miss.unshift(m);S.miss=S.miss.slice(0,30);
+    if(S.len) test.miss.push(m);
+  }
+  if(S.len){test.n++;if(ok)test.ok++}
+  save();setBtns();
+  $('#b-'+sol.act).classList.add('right');
+  if(!ok) b.classList.add('wrong');
+  const lastQ=S.len&&test.n>=S.len;
+  $('#fb').innerHTML=`<p class="verdict ${ok?'good':'bad'}">${ok?'Doğru':`Yanlış · doğrusu: ${ACT[sol.act][0]} (${ACT[sol.act][1]})`}</p><p class="why">${sol.why}</p>${miniRow(sol)}<p class="rule"><b>Kural</b> · ${(p=>`${p.title}: ${p.body}`)(phraseInfo(q.a,q.b))}.</p><button class="next" id="next">${lastQ?'Sonuçları gör':'Sonraki el (Enter)'}</button>`;
+  if(document.activeElement&&document.activeElement.classList.contains('act')) $('#next').focus({preventScroll:true});
+  renderChart();renderStats();renderMiss();renderWeak();top();
+  if(ok&&S.auto) timer=setTimeout(goNext,1400);
+}
+function bind(){
+  $('#acts').addEventListener('click',e=>{const b=e.target.closest('.act');if(b)answer(b.dataset.a)});
+  $('#phr').addEventListener('click',e=>{const b=e.target.closest('.po');if(b&&!b.disabled)answerPhrase(+b.dataset.i)});
+  $('#fb').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='next')goNext();if(b.id==='again')newTest()});
+  document.querySelectorAll('input[name=mode]').forEach(el=>el.addEventListener('change',()=>{S.mode=el.value;save();test={n:0,ok:0,miss:[]};next()}));
+  document.querySelectorAll('input[name=len]').forEach(el=>el.addEventListener('change',()=>{S.len=+el.value;save();test={n:0,ok:0,miss:[]};next()}));
+  [['das','#r-das'],['dbl','#r-dbl'],['sur','#r-sur']].forEach(([k,id])=>$(id).addEventListener('change',e=>{S[k]=e.target.checked;save();renderPhrases();if(q&&!answered&&!ended){sol=solve(q);setBtns();if(stage==='phrase')showPhrase()}}));
+  $('#r-auto').addEventListener('change',e=>{S.auto=e.target.checked;save()});
+  let armed=false;const rb=$('#reset');
+  rb.addEventListener('click',()=>{
+    if(!armed){armed=true;rb.textContent='Emin misin? Tekrar tıkla';setTimeout(()=>{armed=false;rb.textContent='İstatistikleri sıfırla'},3000);return}
+    armed=false;rb.textContent='İstatistikleri sıfırla';
+    S.stats=JSON.parse(JSON.stringify(DEF.stats));S.miss=[];S.cells={};S.pcells={};S.best=0;ses={ok:0,n:0,streak:0};queue=[];
+    save();renderAll();
+  });
+  document.querySelectorAll('input[name=view]').forEach(el=>el.addEventListener('change',()=>{view=el.value;$('#stkey').hidden=view==='heat';$('#heatkey').hidden=view!=='heat';renderChart()}));
+  $('#drill').addEventListener('click',()=>{S.mode='weak';$('#m-weak').checked=true;save();test={n:0,ok:0,miss:[]};next();window.scrollTo({top:0,behavior:'smooth'})});
+  document.addEventListener('keydown',e=>{
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    const t=e.target, k=e.key.toLowerCase();
+    if(t&&t.tagName==='INPUT') return;
+    if(stage==='phrase'&&!answered&&!ended){if(['1','2','3','4'].includes(k)){e.preventDefault();answerPhrase(+k-1)}return}
+    const map={h:'H',s:'S',d:'D',p:'P',r:'R'};
+    if(map[k]&&!answered&&!ended){e.preventDefault();answer(map[k]);return}
+    if((k==='enter'||k===' ')&&(answered||ended)){
+      if(t&&t.tagName==='BUTTON'&&!t.classList.contains('act')) return;
+      e.preventDefault();ended?newTest():goNext();
+    }
+  });
+}
+function start(data){
+  const src=data&&data.stats?data:store.get(KEY);
+  S=normalize(src);
+  syncControls();
+  bind();renderStats();renderMiss();renderWeak();renderPhrases();next();
+  connect();
+}
+const hot=window.claude&&window.claude.hot;
+if(hot&&hot.snapshot) hot.snapshot(()=>S);
+if(hot&&hot.ready) hot.ready(start); else start(hot&&hot.data?hot.data:{});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "blackjack-trainer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Blackjack training apps: table simulator with Hi-Lo counting, Stake-style fast blackjack, basic strategy and Hi-Lo drills. Each app is one self-contained HTML file.",
+  "scripts": {
+    "test": "node tests/run.js",
+    "test:quick": "HANDS=60 node tests/run.js",
+    "screens": "node tests/visual/screens.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3",
+    "puppeteer-core": "^22.15.0"
+  }
+}

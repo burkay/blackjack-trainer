@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hi-Lo Kart Sayma Testi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday learning: a drill, then the lesson behind it
+   IDEA the same blackjack felt as the strategy test: cards dealt one by one, discard tray, count plaque, chips
+   PICTURE the felt rail: flashing cards, the discard tray, the true-count plaque with dealer and player hands, a chip stack
+   COLOUR felt green ground, card white, suit red, gold accent; +1 green, 0 white, −1 coral
+   TYPE Barlow Condensed 700 + Barlow
+   LAYOUT laptop: felt band with mode tabs, rail left, question + feedback right; below, settings | roadmap + lesson. Phone: stacked */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0c110f);--ink:light-dark(#111614,#e7ece8);--mute:light-dark(#56625b,#9ba8a0);--panel:light-dark(#f2f5f2,#151d19);--line:light-dark(#d5ddd7,#29342f);--acc:light-dark(#0b5d36,#2fb466);--accink:light-dark(#ffffff,#08130d);--felt:#0b5d36;--felt2:#063f24;--chalk:#eaf3ec;--chalk2:#c4ddcc;--gold:#f2c14e;--red:#c8102e;--kg:#2fb466;--kt:#3cbcb3;--ky:#f2c511;--coral:#f28b6b}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.cn,.opt b,.act b,.stat b,.verdict,.ask,.plaque b{font-family:"Barlow Condensed",Barlow,system-ui,sans-serif}
+h1,h2,h3{margin:0;font-weight:700;line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+a{color:inherit;text-underline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto}
+.felt{background:radial-gradient(130% 100% at 30% 15%,#10764a,var(--felt) 45%,var(--felt2));color:var(--chalk);padding:clamp(20px,3vw,36px) max(4vw,16px) clamp(24px,3vw,40px)}
+.top{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between}
+h1{font-size:clamp(32px,4.6vw,48px)}
+.sub{margin:6px 0 0;color:var(--chalk2);max-width:54ch}
+.stats{display:flex;flex-wrap:wrap;gap:6px 24px}
+.stat{display:grid}
+.stat b{font-size:30px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat span{font-size:13px;color:var(--chalk2)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.tabs button{min-height:44px;padding:6px 16px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35);background:transparent;color:var(--chalk);font:600 16px Barlow,sans-serif;cursor:pointer;white-space:nowrap}
+.tabs button[aria-pressed=true]{background:var(--gold);border-color:var(--gold);color:#111}
+.tabs button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.play{display:grid;gap:clamp(16px,2.5vw,32px);margin-top:clamp(14px,2vw,22px)}
+@media(min-width:900px){.play{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}}
+.rail{border:2px solid rgba(255,255,255,.16);border-radius:28px;padding:20px 16px;background:rgba(0,0,0,.1);box-shadow:inset 0 0 0 8px rgba(0,0,0,.07);min-height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
+.rail.tap{cursor:pointer;user-select:none;-webkit-user-select:none}
+.cap{margin:0;font-size:15px;color:var(--chalk2);font-variant-numeric:tabular-nums}
+.hand{display:flex;gap:14px;justify-content:center}
+.hand.p .card:first-child{rotate:-4deg}
+.hand.p .card:last-child{rotate:4deg}
+.hl{margin:8px 0 0;font-weight:600;font-size:18px}
+.row2{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;justify-content:center}
+.badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.badge{font-size:13px;font-weight:600;border:1.5px solid rgba(255,255,255,.4);border-radius:999px;padding:2px 10px;color:var(--chalk)}
+.card{width:clamp(60px,15vw,88px);aspect-ratio:5/7;background:#fdfdfb;color:#15181a;border-radius:9px;position:relative;box-shadow:0 5px 0 rgba(0,0,0,.22),0 10px 18px rgba(0,0,0,.18);flex:none}
+.card.big{width:clamp(88px,22vw,128px);border-radius:12px}
+.card.anim{animation:deal .28s ease-out both}
+.card.red{color:var(--red)}
+.card.back::after{content:"";position:absolute;inset:5px;border-radius:6px;background:repeating-linear-gradient(45deg,#9c1427 0 5px,#b81d33 5px 10px)}
+.cn{position:absolute;left:7px;top:5px;font-weight:700;font-size:clamp(17px,3.6vw,22px);line-height:.95;display:grid;justify-items:center}
+.big .cn{font-size:clamp(22px,4.6vw,30px);left:9px;top:7px}
+.cn i{font-style:normal;font-size:.8em}
+.cn.b{left:auto;top:auto;right:7px;bottom:5px;transform:rotate(180deg)}
+.big .cn.b{right:9px;bottom:7px}
+.pip{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(28px,6.5vw,42px)}
+.big .pip{font-size:clamp(40px,9vw,60px)}
+@keyframes deal{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+.plaque{display:grid;justify-items:center;gap:2px;padding:14px 26px;border:2px solid var(--gold);border-radius:18px;background:rgba(0,0,0,.25);min-width:180px}
+.plaque b{font-size:clamp(50px,8vw,68px);line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
+.plaque.sm{padding:10px 18px;min-width:130px}
+.plaque.sm b{font-size:clamp(40px,6vw,52px)}
+.plaque span{font-size:15px;color:var(--chalk2)}
+.tcw{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:18px 28px}
+.tray{width:150px;height:auto;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:36px;align-items:center;max-width:300px}
+.chip{width:34px;height:34px;border-radius:50%;background:var(--red);border:5px dashed #fdfdfb;box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.ask{margin:0 0 10px;font-size:28px;font-weight:700;line-height:1.1}
+.opts{display:grid;gap:8px}
+.opts.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.opts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.opt,.act{min-height:64px;border:0;border-radius:14px;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:6px;text-align:left;color:#111;cursor:pointer;font:inherit;box-shadow:0 4px 0 rgba(0,0,0,.3);transition:transform .08s}
+.opt b{font-size:26px;line-height:1}
+.act b{font-size:22px;line-height:1}
+.opt span,.act span{grid-column:1;font-size:13px;line-height:1.2;opacity:.8}
+.opt kbd,.act kbd{grid-row:1/3;grid-column:2;font:700 13px Barlow,sans-serif;border:1.5px solid rgba(0,0,0,.35);border-radius:6px;padding:1px 6px}
+.o2,.a-D{background:var(--kg)}
+.o1,.a-H{background:#fdfdfb}
+.o0,.a-R{background:var(--coral)}
+.a-S{background:var(--ky)}
+.a-P{background:var(--kt)}
+.acts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.act{grid-column:span 2;min-height:60px}
+.act:nth-child(n+4){grid-column:span 3}
+.opt:hover:not(:disabled),.act:hover:not(:disabled){transform:translateY(-2px)}
+.opt:active:not(:disabled),.act:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.act:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
+.right{outline:3px solid #fff;outline-offset:3px}
+.opt.wrong,.act.wrong{background:#3b0d15;color:#ffd9de;animation:shake .3s}
+.wrong kbd{border-color:rgba(255,255,255,.4)}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.stepw{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.step{display:flex;align-items:stretch;border-radius:14px;overflow:hidden;background:#fdfdfb;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+.sb{width:56px;min-height:60px;border:0;background:#e6ece7;color:#111;font:700 28px "Barlow Condensed",sans-serif;cursor:pointer}
+.sb:active{background:#d2dbd4}
+#ans{width:104px;border:0;text-align:center;font:700 30px "Barlow Condensed",sans-serif;color:#111;background:#fdfdfb;-moz-appearance:textfield;appearance:textfield}
+#ans::-webkit-inner-spin-button,#ans::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.go{min-height:60px;padding:8px 22px;border:0;border-radius:14px;background:var(--gold);color:#111;font:700 20px "Barlow Condensed",sans-serif;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+.go.ghost{background:transparent;color:var(--chalk);border:2px solid rgba(255,255,255,.4);box-shadow:none}
+.opt:focus-visible,.act:focus-visible,.go:focus-visible,.sb:focus-visible,.next:focus-visible,#ans:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.fb{margin-top:16px;padding:16px;border-radius:16px;background:rgba(0,0,0,.24);min-height:150px}
+.hint{margin:0 0 6px;color:var(--chalk2)}
+.hint:last-child{margin-bottom:0}
+.verdict{margin:0;font-size:26px;font-weight:700;line-height:1.1}
+.verdict.good{color:#9ef0b9}
+.verdict.bad{color:#ffb4a6}
+.why{margin:6px 0 10px}
+.why b{color:var(--gold)}
+.next{margin-top:10px;min-height:44px;padding:8px 18px;border-radius:999px;border:2px solid var(--gold);background:transparent;color:var(--chalk);font:600 16px Barlow,sans-serif;cursor:pointer}
+.next:hover{background:rgba(242,193,78,.15)}
+.scroll{overflow-x:auto}
+.bd{display:flex;gap:4px;padding:2px 0 6px}
+.bdc{display:grid;justify-items:center;min-width:42px;padding:4px 3px;border-radius:7px;background:#fdfdfb;color:#111;line-height:1.15;flex:none;border:1px solid rgba(0,0,0,.12)}
+.bdc b{font:700 17px "Barlow Condensed",sans-serif;white-space:nowrap}
+.bdc b.r{color:var(--red)}
+.bdc i{font-style:normal;font-size:13px;color:#4a554f}
+.bdc em{font-style:normal;font-weight:700;font-size:14px}
+.lower{padding:clamp(28px,4vw,56px) max(4vw,16px)}
+.cols{display:grid;gap:clamp(28px,3.5vw,48px)}
+@media(min-width:900px){.cols{grid-template-columns:minmax(0,340px) minmax(0,1fr)}}
+h2{font-size:clamp(28px,3vw,36px);margin-bottom:14px}
+h3{font-size:22px;margin:0 0 6px}
+.side h3{margin-top:22px}
+fieldset{border:0;margin:0 0 14px;padding:0}
+legend{font-weight:600;margin-bottom:6px;padding:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:inline-flex;align-items:center;min-height:44px;padding:6px 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--bg);font-weight:500;white-space:nowrap}
+.seg input:checked+span{background:var(--acc);border-color:var(--acc);color:var(--accink)}
+.seg input:focus-visible+span{outline:3px solid var(--gold);outline-offset:2px}
+.chk{display:flex;gap:10px;align-items:center;min-height:44px;cursor:pointer}
+.chk input{width:20px;height:20px;accent-color:var(--acc);margin:0;flex:none}
+.sr{display:grid;grid-template-columns:7.6em minmax(0,1fr) 3em 3.6em;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.bar{height:10px;background:var(--panel);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mute{color:var(--mute);font-size:14px}
+.reset{margin-top:12px;min-height:44px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:500 15px Barlow,sans-serif;cursor:pointer}
+.road{display:grid;gap:8px;margin-bottom:34px}
+.rd{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--panel)}
+.rd .n{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:var(--accink);font:700 22px "Barlow Condensed",sans-serif}
+.rd p{margin:0}
+.rd .st{font-size:14px;color:var(--mute)}
+.rd .ok{color:var(--acc);font-weight:600}
+.rd button,.rd a.btn{min-height:44px;padding:6px 16px;border-radius:999px;border:1.5px solid var(--acc);background:transparent;color:var(--ink);font:600 15px Barlow,sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+.lesson{display:grid;gap:14px;margin:0;padding:0;list-style:none}
+.ls{display:grid;gap:14px 24px;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));align-items:center;padding:18px;border-radius:16px;background:var(--panel)}
+.ls.wide{grid-template-columns:minmax(0,1fr)}
+.ls p{margin:0}
+.ls p+p{margin-top:8px}
+.grps{display:grid;gap:8px}
+.gr{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mc{display:inline-grid;place-items:center;width:30px;height:40px;border-radius:5px;background:#fdfdfb;color:#111;border:1px solid rgba(0,0,0,.18);font:700 16px "Barlow Condensed",sans-serif}
+.mc.r{color:var(--red)}
+.vb{margin-left:auto;min-width:3em;text-align:center;font:700 18px "Barlow Condensed",sans-serif;border-radius:999px;padding:2px 10px;color:#111}
+.eq{font:700 26px/1.2 "Barlow Condensed",sans-serif;margin-top:6px;font-variant-numeric:tabular-nums}
+.lt{display:flex;align-items:center;gap:14px}
+.ramp{display:grid;gap:4px}
+.rr{display:grid;grid-template-columns:5.4em minmax(0,1fr) 4.6em;gap:8px;align-items:center;font-size:14px}
+.rr .bar{height:12px;background:var(--bg)}
+.rr .bar i{background:var(--gold)}
+.dt{width:100%;border-collapse:collapse;font-size:15px}
+.dt th,.dt td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.dt th{font-weight:600}
+.dt .num{text-align:right}
+.dt th.on{color:var(--acc)}
+.dt tr.on td{background:color-mix(in srgb,var(--gold) 40%,transparent)}
+.dt tr.fab td:first-child{color:var(--acc);font-weight:600}
+.note{background:var(--panel);border-radius:14px;padding:14px 16px;margin-top:14px}
+.note p{margin:0 0 8px}
+.note p:last-child{margin:0}
+@media(max-width:600px){.rail{min-height:320px;padding:16px 10px}.opt b{font-size:22px}.act b{font-size:19px}.stat b{font-size:26px}.sr{grid-template-columns:6.6em minmax(0,1fr) 2.8em 3.4em}.ls{padding:14px}.dt{font-size:13px}.dt th,.dt td{padding:5px 4px}.rd{grid-template-columns:40px minmax(0,1fr)}.rd>:last-child{grid-column:2}}
+@media(prefers-reduced-motion:reduce){.card.anim,.wrong{animation:none}.opt,.act{transition:none}}
+</style>
+</head>
+<body>
+<section class="felt">
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Hi-Lo kart sayma testi</h1>
+        <p class="sub">Kart değerinden deste saymaya, true count'tan sapmalara ve bahis aralığına kadar her beceriyi ayrı çalış.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="s-ok">0/0</b><span>Doğru</span></div>
+        <div class="stat"><b id="s-pct">–</b><span>İsabet</span></div>
+        <div class="stat"><b id="s-str">0</b><span>Seri</span></div>
+        <div class="stat" id="st-t"><b id="s-t">–</b><span>Ort. süre</span></div>
+        <div class="stat" id="st-d"><b id="s-d">–</b><span>En iyi deste</span></div>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Çalışma modu">
+      <button data-m="val" aria-pressed="false">Kart değeri</button>
+      <button data-m="rc" aria-pressed="false">Running count</button>
+      <button data-m="deck" aria-pressed="false">Deste sayma</button>
+      <button data-m="tc" aria-pressed="false">True count</button>
+      <button data-m="dev" aria-pressed="false">Sapmalar</button>
+      <button data-m="bet" aria-pressed="false">Bahis aralığı</button>
+    </nav>
+    <div class="play">
+      <div class="rail" id="rail"></div>
+      <div>
+        <div id="q"></div>
+        <div class="fb" id="fb" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lower">
+  <div class="wrap cols">
+    <div class="side">
+      <h2>Ayarlar</h2>
+      <fieldset class="seg"><legend>Deste sayma</legend>
+        <label><input type="radio" name="pace" id="pc-self" value="self"><span>Kendi hızım</span></label>
+        <label><input type="radio" name="pace" id="pc-auto" value="auto"><span>Otomatik hız</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Otomatik kart hızı</legend>
+        <label><input type="radio" name="speed" id="sp-1.5" value="1.5"><span>1,5 sn</span></label>
+        <label><input type="radio" name="speed" id="sp-1" value="1"><span>1 sn</span></label>
+        <label><input type="radio" name="speed" id="sp-0.7" value="0.7"><span>0,7 sn</span></label>
+        <label><input type="radio" name="speed" id="sp-0.5" value="0.5"><span>0,5 sn</span></label>
+        <label><input type="radio" name="speed" id="sp-0.35" value="0.35"><span>0,35 sn</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Running count turu</legend>
+        <label><input type="radio" name="n" id="n-10" value="10"><span>10 kart</span></label>
+        <label><input type="radio" name="n" id="n-20" value="20"><span>20 kart</span></label>
+        <label><input type="radio" name="n" id="n-30" value="30"><span>30 kart</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Gösterim</legend>
+        <label><input type="radio" name="two" id="tw-0" value="0"><span>Tek tek</span></label>
+        <label><input type="radio" name="two" id="tw-1" value="1"><span>İkişer</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Sabot</legend>
+        <label><input type="radio" name="shoe" id="sh-6" value="6"><span>6 deste</span></label>
+        <label><input type="radio" name="shoe" id="sh-8" value="8"><span>8 deste</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Krupiye soft 17'de</legend>
+        <label><input type="radio" name="rule" id="ru-h17" value="h17"><span>Çeker (H17)</span></label>
+        <label><input type="radio" name="rule" id="ru-s17" value="s17"><span>Durur (S17)</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Bahis birimi</legend>
+        <label><input type="radio" name="unit" id="un-10" value="10"><span>10 €</span></label>
+        <label><input type="radio" name="unit" id="un-25" value="25"><span>25 €</span></label>
+        <label><input type="radio" name="unit" id="un-50" value="50"><span>50 €</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Bahis aralığı (spread)</legend>
+        <label><input type="radio" name="spread" id="spr-8" value="8"><span>1–8</span></label>
+        <label><input type="radio" name="spread" id="spr-12" value="12"><span>1–12</span></label>
+      </fieldset>
+      <label class="chk"><input type="checkbox" id="auto">Doğru cevapta otomatik devam et</label>
+      <h3>Modlara göre isabet</h3>
+      <div id="cat"></div>
+      <button class="reset" id="reset">İstatistikleri sıfırla</button>
+    </div>
+    <div>
+      <h2>Yol haritası</h2>
+      <div class="road" id="road"></div>
+      <h2>Hi-Lo nasıl çalışır?</h2>
+      <ol class="lesson">
+        <li class="ls">
+          <div><h3>Her karta bir değer ver</h3><p>2'den 6'ya kadar düşük kartlar <b>+1</b>, 7, 8 ve 9 nötr <b>0</b>, 10'lu kartlar ve As <b>−1</b>.</p><p>Düşük kartlar masaya çıktıkça sabotta 10 ve As oranı artar: daha çok blackjack (3:2 ödenir), daha güçlü double'lar ve krupiyenin daha sık patlaması.</p></div>
+          <div class="grps">
+            <div class="gr"><span class="mc">2</span><span class="mc r">3</span><span class="mc">4</span><span class="mc r">5</span><span class="mc">6</span><span class="vb" style="background:var(--kg)">+1</span></div>
+            <div class="gr"><span class="mc r">7</span><span class="mc">8</span><span class="mc r">9</span><span class="vb" style="background:#fdfdfb;border:1px solid rgba(0,0,0,.2)">0</span></div>
+            <div class="gr"><span class="mc">10</span><span class="mc r">J</span><span class="mc">Q</span><span class="mc r">K</span><span class="mc">A</span><span class="vb" style="background:var(--coral)">−1</span></div>
+          </div>
+        </li>
+        <li class="ls">
+          <div><h3>Running count'u tut, desteyi 25 saniyede bitir</h3><p>Yeni sabotta 0'dan başla ve masada açılan her kartı ekle: senin kartların, diğer oyuncularınki ve krupiyeninki.</p><p>Kartları ikişer say: K ile 5 birbirini götürür, 4 ile 6 ise +2 eder. Hız ölçüsü: 52 kartlık desteyi 25 saniyenin altında, hatasız saymak.</p></div>
+          <div><div class="scroll" id="ex-bd"></div><p class="mute">Üstte kart, ortada değeri, altta o ana kadarki running count.</p></div>
+        </li>
+        <li class="ls">
+          <div><h3>True count'a çevir</h3><p>Çok desteli oyunda aynı running count, kalan deste azaldıkça daha güçlü hale gelir. Bu yüzden running count'u kalan deste sayısına bölersin.</p><p>Kalan desteyi ıskarta tepsisine bakarak tahmin et, yarım desteye yuvarla.</p></div>
+          <div class="lt"><div id="ex-tray"></div><div><p class="mute">6 desteli sabot, 3 deste oynandı</p><p class="eq">+9 ÷ 3 = +3</p></div></div>
+        </li>
+        <li class="ls wide">
+          <div><h3>Sapmalar: Illustrious 18 ve Fab 4</h3><p>Sapma, true count belli bir eşiğe (indekse) gelince temel stratejiden ayrılmaktır. Kural tek: <b>true count indekse eşit ya da üstündeyse sapmayı yap, altındaysa diğer oyunu oyna.</b> Negatif indekslerde de aynı yön geçerli: 12–6 H17'de −3 ve üstünde dur, altında kart çek.</p><p>Illustrious 18 surrender olmayan masaya göredir. Late surrender varsa 16'yı 9, 10 ve As'a karşı her sayıda teslim edersin; Fab 4 ise 14 ve 15'te ne zaman teslim olacağını söyler. Sigorta da buradadır: +3 ve üstünde al.</p><p class="mute">H17 ile S17 arasında yalnızca 11–A, 10–A, 12–6 ve 15–A (surrender) indeksleri değişir. Seçili kural yeşil sütun.</p></div>
+          <div class="scroll" id="devt"></div>
+        </li>
+        <li class="ls">
+          <div><h3>Bahis aralığı (spread)</h3><p>Basit kural: <b>bahis birimi = true count − 1</b>. True count +1 ve altındaysa masa minimumunu (1 birim) bas. Spread, en büyük bahsin en küçüğe oranıdır; 1–8 spread'de ne kadar yükselirse yükselsin 8 birimde durursun.</p><p>True count'un her +1'i yaklaşık %0,5 avantaj ekler; kusursuz temel stratejiyle başlangıç yaklaşık %0,5 kasa lehine olduğu için +1 civarı başa baş noktasıdır.</p></div>
+          <div class="ramp" id="ramp"></div>
+        </li>
+      </ol>
+      <div class="note">
+        <p>Hi-Lo dengeli bir sayımdır: tam bir destenin toplamı 0'dır. Deste sayma testi bunu kullanır; 51 kartı sayınca kalan sayı, gizlenen kartın grubunu söyler.</p>
+        <p>İndeksler Hi-Lo ve 6 desteli oyun içindir; kaynaklar arasında bir puanlık farklar görebilirsin. Senin temel strateji tablon H17'ye göre (11–A double, A,7–2 Ds), o yüzden varsayılan H17.</p>
+        <p>Hepsini bir arada, gerçek el oynayarak dene: <a href="https://claude.ai/artifact/ETh4jv1MLrbsj7JMeusPP6">Blackjack masa simülasyonu</a>.</p>
+        <p>Kart saymak yasal ama kumarhaneler kart sayan oyuncuyu masadan alabilir. Her elden sonra karıştırılan online blackjack ve otomatik karıştırma makinelerinde (CSM) işe yaramaz.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const STRAT='https://claude.ai/artifact/L6E1KWosCZtRE7SNTECLZ6';
+const RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const SUITS=['♠','♥','♦','♣'];
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)];
+const hv=r=>['2','3','4','5','6'].includes(r)?1:['7','8','9'].includes(r)?0:-1;
+const sg=n=>n>0?'+'+n:n<0?'−'+(-n):'0';
+const dec=x=>String(x).replace('.',',');
+const f1=x=>x.toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const isRed=c=>c.s==='♥'||c.s==='♦';
+const GRP={1:'düşük',0:'nötr','-1':'yüksek'};
+const WHY={1:'2–6 düşük kartlar: çıktıkça kalan sabot senin lehine döner.',0:'7, 8, 9 nötr: sayıma dokunmaz.','-1':'10, J, Q, K ve As yüksek kartlar: çıktıkça kalan sabot kasa lehine döner.'};
+const MODEN={val:'Kart değeri',rc:'Running count',deck:'Deste sayma',tc:'True count',dev:'Sapmalar',bet:'Bahis aralığı'};
+const ACTN={H:['Hit','kart çek'],S:['Stand','dur'],D:['Double','double yap'],P:['Split','böl'],R:['Surrender','teslim ol'],I:['Sigorta al','sigorta al'],N:['Alma','sigorta alma']};
+/* Illustrious 18 + Fab 4, Hi-Lo, 6 deste. ix: [H17, S17]. TC >= ix -> play, otherwise base. */
+const DEV=[
+  {id:'ins',n:1,h:'ins',up:'A',play:'I',base:'N',ix:[3,3]},
+  {id:'16v10',n:2,h:16,up:'10',play:'S',base:'H',ix:[0,0]},
+  {id:'15v10',n:3,h:15,up:'10',play:'S',base:'H',ix:[4,4]},
+  {id:'TTv5',n:4,h:'TT',up:'5',play:'P',base:'S',ix:[5,5]},
+  {id:'TTv6',n:5,h:'TT',up:'6',play:'P',base:'S',ix:[4,4]},
+  {id:'10v10',n:6,h:10,up:'10',play:'D',base:'H',ix:[4,4]},
+  {id:'12v3',n:7,h:12,up:'3',play:'S',base:'H',ix:[2,2]},
+  {id:'12v2',n:8,h:12,up:'2',play:'S',base:'H',ix:[3,3]},
+  {id:'11vA',n:9,h:11,up:'A',play:'D',base:'H',ix:[-1,1]},
+  {id:'9v2',n:10,h:9,up:'2',play:'D',base:'H',ix:[1,1]},
+  {id:'10vA',n:11,h:10,up:'A',play:'D',base:'H',ix:[3,4]},
+  {id:'9v7',n:12,h:9,up:'7',play:'D',base:'H',ix:[3,3]},
+  {id:'16v9',n:13,h:16,up:'9',play:'S',base:'H',ix:[5,5]},
+  {id:'13v2',n:14,h:13,up:'2',play:'S',base:'H',ix:[-1,-1]},
+  {id:'12v4',n:15,h:12,up:'4',play:'S',base:'H',ix:[0,0]},
+  {id:'12v5',n:16,h:12,up:'5',play:'S',base:'H',ix:[-2,-2]},
+  {id:'12v6',n:17,h:12,up:'6',play:'S',base:'H',ix:[-3,-1]},
+  {id:'13v3',n:18,h:13,up:'3',play:'S',base:'H',ix:[-2,-2]},
+  {id:'14v10s',n:'F1',h:14,up:'10',play:'R',base:'H',ix:[3,3],sur:true},
+  {id:'15v9s',n:'F2',h:15,up:'9',play:'R',base:'H',ix:[2,2],sur:true},
+  {id:'15v10s',n:'F3',h:15,up:'10',play:'R',base:'H',ix:[0,0],sur:true},
+  {id:'15vAs',n:'F4',h:15,up:'A',play:'R',base:'H',ix:[-1,1],sur:true}
+];
+const COMB={16:[[10,6],[9,7]],15:[[10,5],[9,6],[8,7]],14:[[10,4],[9,5],[8,6]],13:[[10,3],[9,4],[8,5],[7,6]],12:[[10,2],[9,3],[8,4],[7,5]],11:[[9,2],[8,3],[7,4],[6,5]],10:[[8,2],[7,3],[6,4]],9:[[7,2],[6,3],[5,4]],TT:[[10,10]],ins:[[10,8],[10,7],[9,8],[10,9],[10,5],[8,6]]};
+const KEY='bj-hilo-v1';
+const DEF={mode:'val',speed:1,n:20,two:false,shoe:6,pace:'self',rule:'h17',unit:25,spread:8,auto:true,best:0,bestDeck:null,stats:{val:[0,0],rc:[0,0],deck:[0,0],tc:[0,0],dev:[0,0],bet:[0,0]}};
+const store={get(k){try{const x=localStorage.getItem(k);return x?JSON.parse(x):null}catch(e){return null}},set(k,x){try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}}};
+let S=JSON.parse(JSON.stringify(DEF)), cur=null, phase='ask', tok=0, timer=0, iv=0, ses={ok:0,n:0,streak:0}, times=[], devHL=null;
+const save=()=>store.set(KEY,S);
+const rcard=()=>({r:pick(RANKS),s:pick(SUITS)});
+const vcard=v=>({r:v==='A'?'A':v===10||v==='10'?pick(['10','J','Q','K']):String(v),s:pick(SUITS)});
+const fine=()=>window.matchMedia&&matchMedia('(pointer:fine)').matches;
+const ixOf=d=>d.ix[S.rule==='h17'?0:1];
+
+function cardHTML(c,i,cls){
+  const k=cls?' '+cls:'';
+  if(!c) return `<div class="card back${k}" aria-label="Kapalı kart"></div>`;
+  return `<div class="card${isRed(c)?' red':''}${k}" style="animation-delay:${i*60}ms" aria-label="${c.r}${c.s}"><span class="cn">${c.r}<i>${c.s}</i></span><span class="pip">${c.s}</span><span class="cn b">${c.r}<i>${c.s}</i></span></div>`;
+}
+function tray(shoe,used,id){
+  const top=10,h=220,x=40,w=64,per=h/shoe,fh=used*per;
+  let ticks='';
+  for(let d=0;d<=shoe;d++){const y=top+h-d*per;ticks+=`<line x1="${x+w}" x2="${x+w+8}" y1="${y}" y2="${y}" stroke="currentColor" stroke-opacity=".6"/>`+(d>0?`<text x="${x+w+12}" y="${y+5}" font-size="14" fill="currentColor" fill-opacity=".8">${d}</text>`:'')}
+  return `<svg class="tray" viewBox="0 0 140 250" role="img" aria-label="Iskarta tepsisi: ${dec(used)} deste oynandı"><defs><pattern id="cp${id}" width="10" height="4" patternUnits="userSpaceOnUse"><rect width="10" height="4" fill="#f4f1e8"/><rect y="3" width="10" height="1" fill="#b9b19b"/></pattern></defs><rect x="${x}" y="${top}" width="${w}" height="${h}" rx="6" fill="rgba(0,0,0,.18)" stroke="currentColor" stroke-opacity=".45" stroke-width="2"/><rect x="${x+4}" y="${top+h-fh}" width="${w-8}" height="${fh}" fill="url(#cp${id})"/>${ticks}<text x="${x+w/2}" y="246" font-size="13" text-anchor="middle" fill="currentColor" fill-opacity=".8">oynanan deste</text></svg>`;
+}
+function breakdown(cards){
+  let s=0;
+  return `<div class="bd">${cards.map(c=>{s+=hv(c.r);return `<span class="bdc"><b class="${isRed(c)?'r':''}">${c.r}${c.s}</b><i>${sg(hv(c.r))}</i><em>${sg(s)}</em></span>`}).join('')}</div>`;
+}
+function stepper(label,def,step){
+  step=step||1;
+  return `<p class="ask">${label}</p><div class="stepw"><div class="step"><button class="sb" data-d="-1" aria-label="Azalt">−</button><input id="ans" type="number" step="${step}" data-step="${step}" value="${def}" aria-label="${label}"><button class="sb" data-d="1" aria-label="Artır">+</button></div><button class="go" id="check">Kontrol et</button></div>`;
+}
+const optBtn=(v,b,s,k)=>`<button class="opt o${v+1}" data-v="${v}"><b>${b}</b>${s?`<span>${s}</span>`:''}<kbd>${k}</kbd></button>`;
+const actBtn=(a,k,dis)=>`<button class="act a-${a}" data-a="${a}"${dis?' disabled':''}><b>${ACTN[a][0]}</b><span>${ACTN[a][1]}</span><kbd>${k}</kbd></button>`;
+const verdict=(ok,extra)=>`<p class="verdict ${ok?'good':'bad'}">${ok?'Doğru':'Yanlış'}${!ok&&extra?' · '+extra:''}</p>`;
+const nextBtn=l=>`<button class="next" id="next">${l}</button>`;
+const rail=h=>{$('#rail').innerHTML=h}, setQ=h=>{$('#q').innerHTML=h}, fb=h=>{$('#fb').innerHTML=h};
+function stop(){tok++;clearTimeout(timer);clearInterval(iv);$('#rail').classList.remove('tap')}
+function record(ok){
+  const st=S.stats[S.mode];st[1]++;ses.n++;
+  if(ok){st[0]++;ses.ok++;ses.streak++;S.best=Math.max(S.best,ses.streak)}else ses.streak=0;
+  save();top();renderStats();renderRoad();
+}
+function mark(attr,v,want){
+  document.querySelectorAll(`#q [data-${attr}]`).forEach(b=>{const x=attr==='v'?+b.dataset.v:b.dataset.a;if(x===want)b.classList.add('right');else if(x===v)b.classList.add('wrong')});
+}
+function finish(ok,delay){
+  phase='done';
+  const a=document.activeElement;
+  if(a&&$('#q').contains(a)&&$('#next')) $('#next').focus({preventScroll:true});
+  if(ok&&S.auto&&delay){const my=tok;timer=setTimeout(()=>{if(my===tok&&phase==='done')newQ()},delay)}
+}
+function flash(cards,onEnd){
+  const my=++tok, step=S.two?2:1, ms=S.speed*1000*(S.two?1.4:1);let i=0;
+  phase='show';
+  setQ(`<p class="ask">Say…</p><button class="go ghost" id="abort">Durdur</button>`);
+  fb('<p class="hint">Sayıyı aklında tut. Kartlar bitince cevabı soracağım.</p>');
+  const tick=()=>{
+    if(my!==tok) return;
+    if(i>=cards.length){onEnd();return}
+    const g=cards.slice(i,i+step);i+=g.length;
+    rail(`<p class="cap">${i} / ${cards.length}</p><div class="hand">${g.map((c,j)=>cardHTML(c,j,'big')).join('')}</div>`);
+    timer=setTimeout(tick,ms);
+  };
+  tick();
+}
+const edgeTxt=T=>{if(T>6)return '';const e=.5*T-.5;return ' Avantaj: '+(e>0?`oyuncu lehine yaklaşık %${f1(e)}.`:e<0?`kasa lehine yaklaşık %${f1(-e)}.`:'yaklaşık başa baş.')};
+
+const M={
+  val:{
+    newQ(){
+      cur={c:rcard(),t0:performance.now()};phase='ask';
+      rail(`<div class="hand">${cardHTML(cur.c,0,'big anim')}</div>`);
+      setQ(`<p class="ask">Bu kartın Hi-Lo değeri?</p><div class="opts three">${optBtn(1,'+1','Düşük','1')}${optBtn(0,'0','Nötr','0')}${optBtn(-1,'−1','Yüksek','−')}</div>`);
+      fb('<p class="hint">Klavye: 1 ya da + → +1, 0 → 0, − → −1.</p><p class="hint">Hedef: düşünmeden, yarım saniyenin altında cevap vermek.</p>');
+    },
+    answer(v){
+      if(phase!=='ask') return;
+      const ms=performance.now()-cur.t0, want=hv(cur.c.r), ok=v===want;
+      times.push(ms);times=times.slice(-20);
+      record(ok);mark('v',v,want);
+      fb(verdict(ok,`doğrusu ${sg(want)}`)+`<p class="why">${cur.c.r}${cur.c.s} ${GRP[want]} kart: <b>${sg(want)}</b>. ${WHY[want]}</p><p class="hint">Süre: ${f1(ms/1000)} sn</p>`+nextBtn('Sonraki kart (Enter)'));
+      finish(ok,650);
+    }
+  },
+  rc:{
+    newQ(){
+      cur={cards:Array.from({length:S.n},rcard)};phase='ready';
+      rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap">${S.n} kart · kart başına ${dec(S.speed)} sn${S.two?' · ikişer':''}</p>`);
+      setQ(`<p class="ask">Kartları say, sonunda running count'u yaz.</p><button class="go" id="start">Başlat (Enter)</button>`);
+      fb('<p class="hint">Hız, kart sayısı ve ikişer gösterim aşağıdaki ayarlarda. Rahat başla, sonra hızlan.</p>');
+    },
+    start(){
+      if(phase!=='ready') return;
+      flash(cur.cards,()=>{
+        phase='ask';
+        rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap">${cur.cards.length} kart bitti</p>`);
+        setQ(stepper("Running count kaç?",0));
+        fb('<p class="hint">−/+ ile ayarla ya da yaz, Enter ile kontrol et.</p>');
+        if(fine()) $('#ans').focus({preventScroll:true});
+      });
+    },
+    answer(v){
+      if(phase!=='ask') return;
+      const want=cur.cards.reduce((s,c)=>s+hv(c.r),0), ok=v===want;
+      record(ok);
+      fb(verdict(ok,`doğrusu ${sg(want)}`)+`<p class="why">Running count: <b>${sg(want)}</b>${ok?'':` (senin cevabın ${sg(v)})`}.</p><div class="scroll">${breakdown(cur.cards)}</div><p class="hint">Üstte kart, ortada değeri, altta o ana kadarki running count.</p>`+nextBtn('Yeni tur (Enter)'));
+      finish(ok,0);
+    }
+  },
+  deck:{
+    newQ(){
+      phase='ready';cur=null;
+      const self=S.pace==='self';
+      rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap">52 kartlık deste · 1 kart gizlenecek</p>`);
+      setQ(`<p class="ask">${self?'Desteyi kendi hızında çevir, gizlenen kartı bul.':'Kalan 51 kartı say, gizlenen kartın grubunu bul.'}</p><button class="go" id="start">Başlat (Enter)</button>`);
+      fb(`<p class="hint">Tam deste 0'a döner. Sonda running count +1 ise eksik kart yüksek, −1 ise düşük, 0 ise nötrdür.</p><p class="hint">${self?'Hedef: 25 saniyenin altında, hatasız. Boşluk tuşu ya da karta dokunarak çevirirsin.':`Otomatik hız: kart başına ${dec(S.speed)} sn. Süre hedefi için "Kendi hızım" ayarını seç.`}</p>`);
+    },
+    start(){
+      if(phase!=='ready') return;
+      const d=[];RANKS.forEach(r=>SUITS.forEach(s=>d.push({r,s})));
+      for(let i=d.length-1;i>0;i--){const j=rnd(i+1);[d[i],d[j]]=[d[j],d[i]]}
+      const miss=d.pop();
+      cur={cards:d,miss,i:0,t0:0,self:S.pace==='self'};
+      if(!cur.self){cur.t0=performance.now();flash(d,()=>M.deck.ask());return}
+      stop();phase='show';
+      $('#rail').classList.add('tap');
+      rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap" id="dcap">0 / 51 · 0,0 sn</p>`);
+      setQ(`<p class="ask">Kendi hızında çevir.</p><div class="stepw"><button class="go" id="flip">Sonraki kart (boşluk)</button><button class="go ghost" id="abort">Durdur</button></div>`);
+      fb('<p class="hint">Süre ilk kartla başlar. 51. karttan sonra bir kez daha bas, süre durur.</p><p class="hint">Telefonda kart alanına dokunabilirsin.</p>');
+      if(fine()) $('#flip').focus({preventScroll:true});
+    },
+    flip(){
+      if(S.mode!=='deck'||phase!=='show'||!cur||!cur.self) return;
+      const now=performance.now();
+      if(cur.i===0){
+        cur.t0=now;const my=tok;
+        iv=setInterval(()=>{if(my!==tok){clearInterval(iv);return}const c=$('#dcap');if(c)c.textContent=`${cur.i} / 51 · ${f1((performance.now()-cur.t0)/1000)} sn`},100);
+      }
+      if(cur.i>=cur.cards.length){clearInterval(iv);cur.t=now-cur.t0;$('#rail').classList.remove('tap');M.deck.ask();return}
+      const c=cur.cards[cur.i++];
+      rail(`<div class="hand">${cardHTML(c,0,'big')}</div><p class="cap" id="dcap">${cur.i} / 51 · ${f1((now-cur.t0)/1000)} sn</p>`);
+    },
+    ask(){
+      phase='ask';
+      if(!cur.self) cur.t=performance.now()-cur.t0;
+      rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap">51 kart bitti · ${f1(cur.t/1000)} sn</p>`);
+      setQ(`<p class="ask">Gizlenen kart hangi grupta?</p><div class="opts three">${optBtn(1,'Düşük','2–6','D')}${optBtn(0,'Nötr','7–9','N')}${optBtn(-1,'Yüksek','10–A','Y')}</div>`);
+      fb('<p class="hint">Klavye: D, N, Y.</p>');
+    },
+    answer(v){
+      if(phase!=='ask') return;
+      const want=hv(cur.miss.r), ok=v===want, t=cur.t/1000;
+      let rec='';
+      if(cur.self&&ok&&(!S.bestDeck||t<S.bestDeck)){S.bestDeck=t;rec=' Yeni rekor!'}
+      record(ok);mark('v',v,want);
+      rail(`<div class="hand">${cardHTML(cur.miss,0,'big anim')}</div><p class="cap">Gizlenen kart</p>`);
+      const tl=cur.self?(t<25?' · 25 sn hedefinin altında.':' · Hedef: 25 sn altı.'):` (otomatik, ${dec(S.speed)} sn/kart)`;
+      fb(verdict(ok,`gizlenen kart ${GRP[want]}`)+`<p class="why">51 kartın running count'u ${sg(-want)}, yani eksik kart <b>${GRP[want]}</b>: ${cur.miss.r}${cur.miss.s}.</p><p class="hint">Süre: ${f1(t)} sn${tl}${rec}</p>`+nextBtn('Yeni deste (Enter)'));
+      finish(ok,0);
+    }
+  },
+  tc:{
+    newQ(){
+      const D0=[];for(let d=1;d<=S.shoe-1;d+=.5)D0.push(d);
+      let D,T,R,i=0;
+      do{D=pick(D0);T=pick([-3,-2,-1,1,1,2,2,3,3,4,4,5,6,7]);R=T*D}while(!Number.isInteger(R)&&++i<50);
+      if(!Number.isInteger(R)){D=2;R=T*2}
+      cur={D,T,R};phase='ask';
+      rail(`<div class="tcw">${tray(S.shoe,S.shoe-D,'q')}<div class="plaque"><span>Running count</span><b>${sg(R)}</b><span>Kalan deste: ${dec(D)}</span></div></div>`);
+      setQ(stepper('True count kaç?',0));
+      fb(`<p class="hint">True count = running count ÷ kalan deste. ${S.shoe} desteli sabot, tepside ${dec(S.shoe-D)} deste var.</p>`);
+      if(fine()) $('#ans').focus({preventScroll:true});
+    },
+    answer(v){
+      if(phase!=='ask') return;
+      const {D,T,R}=cur, ok=v===T;
+      record(ok);
+      fb(verdict(ok,`doğrusu ${sg(T)}`)+`<p class="why">${sg(R)} ÷ ${dec(D)} = <b>${sg(T)}</b>.</p>`+nextBtn('Sonraki soru (Enter)'));
+      finish(ok,1200);
+    }
+  },
+  dev:{
+    newQ(){
+      const it=pick(DEV), ix=ixOf(it), T=ix+pick([-2,-1,-1,0,0,1,1,2]);
+      const pc=pick(COMB[it.h]).map(vcard);if(Math.random()<.5)pc.reverse();
+      const label=it.h==='TT'?'10,10 çifti':`Hard ${pc.reduce((s,c)=>s+(c.r==='A'?11:['J','Q','K','10'].includes(c.r)?10:+c.r),0)}`;
+      cur={it,ix,T,label,want:T>=ix?it.play:it.base};phase='ask';devHL=null;renderDev();
+      const upv=it.up==='A'?'A':+it.up;
+      rail(`<div class="row2"><div><p class="cap">Krupiye</p><div class="hand">${cardHTML(vcard(upv),0,'anim')}${cardHTML(null,1)}</div></div><div class="plaque sm"><span>True count</span><b>${sg(T)}</b></div></div><div><div class="hand p">${pc.map((c,j)=>cardHTML(c,j+2,'anim')).join('')}</div><p class="hl">${label}</p></div><div class="badges"><span class="badge">${S.rule.toUpperCase()}</span><span class="badge">${it.sur?'Late surrender var':'Surrender yok'}</span></div>`);
+      if(it.play==='I'){
+        setQ(`<p class="ask">Krupiye As gösteriyor. Sigorta alır mısın?</p><div class="opts two"><button class="opt o2" data-a="I"><b>Sigorta al</b><kbd>E</kbd></button><button class="opt o0" data-a="N"><b>Alma</b><kbd>H</kbd></button></div>`);
+        fb('<p class="hint">Klavye: E evet, H hayır.</p>');
+      } else {
+        setQ(`<p class="ask">Bu sayıda ne yaparsın?</p><div class="acts">${actBtn('H','H')}${actBtn('S','S')}${actBtn('D','D')}${actBtn('P','P',it.h!=='TT')}${actBtn('R','R',!it.sur)}</div>`);
+        fb('<p class="hint">Klavye: H, S, D, P, R. True count indekse eşit ya da üstündeyse sapma, altındaysa diğer oyun.</p>');
+      }
+    },
+    answer(a){
+      if(phase!=='ask') return;
+      const b=document.querySelector(`#q [data-a="${a}"]`);if(!b||b.disabled) return;
+      const {it,ix,T,label,want}=cur, ok=a===want;
+      record(ok);mark('a',a,want);devHL=it.id;renderDev();
+      let why;
+      if(it.play==='I') why=`Sigorta indeksi <b>${sg(ix)}</b>: true count ${sg(ix)} ve üstünde sigorta al, altında alma. Şu an ${sg(T)} → <b>${want==='I'?'al':'alma'}</b>.`;
+      else why=`${label} – krupiye ${it.up}, ${S.rule.toUpperCase()}: indeks <b>${sg(ix)}</b>. True count ${sg(ix)} ve üstünde ${ACTN[it.play][1]}, altında ${ACTN[it.base][1]}. Şu an ${sg(T)} → <b>${ACTN[want][1]}</b>.`;
+      if(!it.sur&&it.h===16) why+=' Late surrender olsaydı 16\'yı bu karta karşı her sayıda teslim ederdin.';
+      fb(verdict(ok,`doğrusu ${ACTN[want][0]}`)+`<p class="why">${why}</p>`+nextBtn('Sonraki el (Enter)'));
+      finish(ok,1600);
+    }
+  },
+  bet:{
+    newQ(){
+      const T=pick([-2,-1,0,1,1,2,3,3,4,4,5,5,6,6,7,8,9,10,11,12,13,14]);
+      const money=Math.random()<.5, units=Math.min(S.spread,Math.max(1,T-1));
+      cur={T,money,units};phase='ask';
+      rail(`<div class="plaque"><span>True count</span><b>${sg(T)}</b></div><p class="cap">1 birim = ${S.unit} € · spread 1–${S.spread}</p><div class="chips" id="chips"></div>`);
+      setQ(stepper(money?'Kaç € basarsın?':'Kaç birim basarsın?',money?S.unit:1,money?S.unit:1));
+      fb(`<p class="hint">Bahis = true count − 1 birim; en az 1, en çok ${S.spread} birim (spread 1–${S.spread}).</p>`);
+      if(fine()) $('#ans').focus({preventScroll:true});
+    },
+    answer(v){
+      if(phase!=='ask') return;
+      const {T,money,units}=cur, want=money?units*S.unit:units, ok=v===want;
+      record(ok);
+      let w=T<=1?`True count ${sg(T)}: +1 ve altında masa minimumu, ${units} birim`:T-1>S.spread?`${sg(T)} − 1 = ${T-1}, ama spread 1–${S.spread} olduğu için ${S.spread} birimde kalırsın`:`${sg(T)} − 1 = ${units} birim`;
+      w+=money?` × ${S.unit} € = <b>${want} €</b>.`:` → <b>${units} birim</b>.`;
+      $('#chips').innerHTML=Array.from({length:units},()=>'<i class="chip"></i>').join('');
+      fb(verdict(ok,`doğrusu ${money?want+' €':want+' birim'}`)+`<p class="why">${w}${edgeTxt(T)}</p>`+nextBtn('Sonraki soru (Enter)'));
+      finish(ok,1300);
+    }
+  }
+};
+
+function newQ(){stop();M[S.mode].newQ();top()}
+function submit(){
+  const el=$('#ans');if(!el||phase!=='ask') return;
+  const v=parseInt(String(el.value).replace('−','-'),10);
+  if(isNaN(v)){fb('<p class="hint">Bir sayı yaz ya da −/+ ile ayarla.</p>');return}
+  M[S.mode].answer(v);
+}
+function top(){
+  $('#s-ok').textContent=`${ses.ok}/${ses.n}`;
+  $('#s-pct').textContent=ses.n?'%'+Math.round(ses.ok/ses.n*100):'–';
+  $('#s-str').textContent=ses.streak;
+  $('#st-t').hidden=S.mode!=='val';
+  $('#s-t').textContent=times.length?f1(times.reduce((a,b)=>a+b,0)/times.length/1000)+' sn':'–';
+  $('#st-d').hidden=S.mode!=='deck';
+  $('#s-d').textContent=S.bestDeck?f1(S.bestDeck)+' sn':'–';
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===S.mode)));
+}
+function renderStats(){
+  $('#cat').innerHTML=Object.keys(MODEN).map(k=>{const [o,n]=S.stats[k],p=n?Math.round(o/n*100):0;
+    return `<div class="sr"><span>${MODEN[k]}</span><div class="bar"><i style="width:${p}%"></i></div><span class="num">${n?'%'+p:'–'}</span><span class="num mute">${o}/${n}</span></div>`}).join('');
+}
+function renderRoad(){
+  const pct=k=>{const [o,n]=S.stats[k];return n?`%${Math.round(o/n*100)} (${n} soru)`:'henüz yok'};
+  const bd=S.bestDeck;
+  const rows=[
+    ['Temel strateji','Her elde doğru hamle, düşünmeden.','Strateji testinde çalış.',`<a class="btn" href="${STRAT}">Testi aç</a>`],
+    ['Deste sayma','52 kartı 25 saniyenin altında, hatasız say.',bd?`En iyi süren: ${f1(bd)} sn${bd<25?' · <span class="ok">hedef tamam</span>':''}`:'Henüz kendi hızında süre yok.',`<button data-go="deck">Çalış</button>`],
+    ['True count ve sapmalar','Running count\'u böl; Illustrious 18 ve Fab 4\'ü bil.',`True count ${pct('tc')} · sapmalar ${pct('dev')}`,`<button data-go="dev">Çalış</button>`],
+    ['Bahis aralığı','True count\'a göre bahis, spread sınırıyla.',`İsabet ${pct('bet')}`,`<button data-go="bet">Çalış</button>`]
+  ];
+  $('#road').innerHTML=rows.map((r,i)=>`<div class="rd"><span class="n">${i+1}</span><div><p><b>${r[0]}</b> · ${r[1]}</p><p class="st">${r[2]}</p></div>${r[3]}</div>`).join('');
+}
+function renderDev(){
+  const h=S.rule==='h17';
+  $('#devt').innerHTML=`<table class="dt"><thead><tr><th>#</th><th>El</th><th>İndekste ve üstünde</th><th>Altında</th><th class="num${h?' on':''}">H17</th><th class="num${h?'':' on'}">S17</th></tr></thead><tbody>${DEV.map(d=>`<tr class="${d.sur?'fab':''}${devHL===d.id?' on':''}"><td>${d.n}</td><td>${d.play==='I'?'Sigorta (A)':`${d.h==='TT'?'10,10':d.h} – ${d.up}`}</td><td>${ACTN[d.play][0]}</td><td>${ACTN[d.base][0]}</td><td class="num">${sg(d.ix[0])}</td><td class="num">${sg(d.ix[1])}</td></tr>`).join('')}</tbody></table><p class="mute" style="margin:6px 0 0">F1–F4: Fab 4, yalnızca late surrender olan masada.</p>`;
+}
+function renderRamp(){
+  const rows=[['≤ +1',1]];
+  for(let t=2;t<=S.spread+1;t++) rows.push([sg(t)+(t===S.spread+1?' ve üstü':''),Math.min(S.spread,t-1)]);
+  $('#ramp').innerHTML=`<p class="mute" style="margin:0 0 4px">True count → bahis, spread 1–${S.spread}, 1 birim = ${S.unit} €</p>`+rows.map(([t,u])=>`<div class="rr"><span class="num" style="text-align:left">TC ${t}</span><div class="bar"><i style="width:${u/S.spread*100}%"></i></div><span class="num">${u*S.unit} €</span></div>`).join('');
+}
+function lesson(){
+  const ex=['K','5','3','9','A','6','4','10'].map((r,i)=>({r,s:SUITS[i%4]}));
+  $('#ex-bd').innerHTML=breakdown(ex);
+  $('#ex-tray').innerHTML=tray(6,3,'l');
+  renderDev();renderRamp();renderRoad();
+}
+function bind(){
+  $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.mode=b.dataset.m;save();newQ()});
+  $('#road').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!b)return;S.mode=b.dataset.go;save();newQ();window.scrollTo({top:0,behavior:'smooth'})});
+  $('#rail').addEventListener('click',()=>{if(S.mode==='deck'&&phase==='show')M.deck.flip()});
+  $('#q').addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b||b.disabled) return;
+    if(b.dataset.a) M[S.mode].answer(b.dataset.a);
+    else if(b.classList.contains('opt')) M[S.mode].answer(+b.dataset.v);
+    else if(b.classList.contains('sb')){const el=$('#ans');el.value=(parseInt(el.value,10)||0)+(+b.dataset.d)*(+el.dataset.step||1)}
+    else if(b.id==='check') submit();
+    else if(b.id==='start') M[S.mode].start();
+    else if(b.id==='flip') M.deck.flip();
+    else if(b.id==='abort') newQ();
+  });
+  $('#fb').addEventListener('click',e=>{if(e.target.closest('#next'))newQ()});
+  const radio=(name,fn)=>document.querySelectorAll(`input[name=${name}]`).forEach(el=>el.addEventListener('change',()=>{fn(el.value);save();renderRamp();renderDev();if(phase!=='show')newQ()}));
+  radio('speed',x=>S.speed=+x);radio('n',x=>S.n=+x);radio('two',x=>S.two=x==='1');radio('shoe',x=>S.shoe=+x);
+  radio('pace',x=>S.pace=x);radio('rule',x=>S.rule=x);radio('unit',x=>S.unit=+x);radio('spread',x=>S.spread=+x);
+  $('#auto').addEventListener('change',e=>{S.auto=e.target.checked;save()});
+  let armed=false;const rb=$('#reset');
+  rb.addEventListener('click',()=>{
+    if(!armed){armed=true;rb.textContent='Emin misin? Tekrar tıkla';setTimeout(()=>{armed=false;rb.textContent='İstatistikleri sıfırla'},3000);return}
+    armed=false;rb.textContent='İstatistikleri sıfırla';
+    S.stats=JSON.parse(JSON.stringify(DEF.stats));S.best=0;S.bestDeck=null;ses={ok:0,n:0,streak:0};times=[];save();renderStats();renderRoad();top();
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    const t=e.target,k=e.key;
+    if(t&&t.id==='ans'){if(k==='Enter'){e.preventDefault();submit()}return}
+    if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT')) return;
+    if(t&&t.tagName==='BUTTON'&&(k==='Enter'||k===' ')) return;
+    if(k==='Enter'||k===' '||k==='ArrowRight'){
+      if(phase==='show'&&S.mode==='deck'){e.preventDefault();M.deck.flip()}
+      else if(k==='ArrowRight') return;
+      else if(phase==='ready'){e.preventDefault();M[S.mode].start()}
+      else if(phase==='done'){e.preventDefault();newQ()}
+      return;
+    }
+    if(phase!=='ask') return;
+    const lk=k.toLowerCase();let v;
+    if(S.mode==='val') v={'1':1,'+':1,'=':1,'0':0,'-':-1,'−':-1}[k];
+    if(S.mode==='deck') v={d:1,n:0,y:-1}[lk];
+    if(S.mode==='dev') v=cur&&cur.it.play==='I'?{e:'I',h:'N'}[lk]:{h:'H',s:'S',d:'D',p:'P',r:'R'}[lk];
+    if(v!==undefined){e.preventDefault();M[S.mode].answer(v)}
+  });
+}
+function check(sel){const el=document.querySelector(sel);if(el)el.checked=true}
+function start(data){
+  const src=data&&data.stats?data:store.get(KEY);
+  S=Object.assign(JSON.parse(JSON.stringify(DEF)),src||{});
+  if(!S.stats) S.stats={};
+  for(const k in DEF.stats) if(!Array.isArray(S.stats[k])) S.stats[k]=[0,0];
+  if(!M[S.mode]) S.mode='val';
+  check(`[id="sp-${S.speed}"]`);check('#n-'+S.n);check('#tw-'+(S.two?1:0));check('#sh-'+S.shoe);
+  check('#pc-'+S.pace);check('#ru-'+S.rule);check('#un-'+S.unit);check('#spr-'+S.spread);
+  $('#auto').checked=S.auto;
+  bind();lesson();renderStats();newQ();
+}
+const hot=window.claude&&window.claude.hot;
+if(hot&&hot.snapshot) hot.snapshot(()=>S);
+if(hot&&hot.ready) hot.ready(start); else start(hot&&hot.data?hot.data:{});
+}
+</script>
+</body>
+</html>

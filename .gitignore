@@ -1,0 +1,3 @@
+node_modules/
+tests/visual/out/
+.DS_Store
