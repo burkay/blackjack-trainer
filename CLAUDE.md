@@ -11,16 +11,14 @@ Keep each app a single file. After changing an app, run `npm test` (or `npm run 
 
 ## Publishing as Claude artifacts
 
-Each app is also published as a claude.ai artifact (the version Burkay plays). Slugs:
+- Slugs, URLs and the `db`/`user` declaration live in `CLAUDE.local.md` (gitignored). Never commit artifact URLs or slugs: the repo is public.
+- Links between apps are relative (`../<app>/index.html`) so they work on GitHub Pages and from disk.
 
-| App | Slug | URL |
-|---|---|---|
-| Table Simulator | 6d00d4ca-689d-4731-bbce-8523248e4ac9 | https://claude.ai/artifact/ETh4jv1MLrbsj7JMeusPP6 |
-| Fast Blackjack | 948335c8-a05c-402a-89e0-73d609fd9a39 | https://claude.ai/artifact/KLfGTarZvwdqjt4M7cqStx |
-| Strategy test | 9a985e49-f747-4c95-8530-e71209927679 | https://claude.ai/artifact/L6E1KWosCZtRE7SNTECLZ6 |
-| Hi-Lo trainer | e5701640-b481-4572-9647-434524e4352c | https://claude.ai/artifact/VLFit8wmMasgiSFozyb8Aw |
+## GitHub Pages
 
-All four declare `db` + `user` with rules `progress` (read admin, write owner) and `progress/{self}` (read/write interact). Progress lives in localStorage and in the doc `progress/<userId>`; the newer `ts` wins on load. Republishing keeps the declaration.
+- Repo is public; Pages deploys `main` / root automatically on every push.
+- Apps: `https://burkay.github.io/blackjack-trainer/apps/<name>/`. No `window.claude` there, so progress stays in localStorage only (the code already guards for it).
+- Commits use the GitHub noreply email; GitHub blocks pushes that expose the real one.
 
 ## Table Simulator internals worth knowing
 

@@ -9,11 +9,11 @@ Four browser apps for learning blackjack: basic strategy first, then Hi-Lo card 
 | **Basic strategy test** (Turkish) | `apps/strategy-test/index.html` | Question-and-answer drill on the Blackjack Apprenticeship chart, the 30 phrases, and a heat map of weak spots. |
 | **Hi-Lo trainer** (Turkish) | `apps/hilo-trainer/index.html` | Card values, running count, deck countdown (25 s target), true count, Illustrious 18 + Fab 4 deviations, bet spread. |
 
-Open any file straight in a browser to play. The published versions also run as Claude artifacts, where progress syncs to the signed-in account:
-[Table Simulator](https://claude.ai/artifact/ETh4jv1MLrbsj7JMeusPP6) ·
-[Fast Blackjack](https://claude.ai/artifact/KLfGTarZvwdqjt4M7cqStx) ·
-[Strategy test](https://claude.ai/artifact/L6E1KWosCZtRE7SNTECLZ6) ·
-[Hi-Lo trainer](https://claude.ai/artifact/VLFit8wmMasgiSFozyb8Aw)
+Open any file straight in a browser to play, or play online on GitHub Pages:
+[Table Simulator](https://burkay.github.io/blackjack-trainer/apps/table-simulator/) ·
+[Fast Blackjack](https://burkay.github.io/blackjack-trainer/apps/fast-blackjack/) ·
+[Strategy test](https://burkay.github.io/blackjack-trainer/apps/strategy-test/) ·
+[Hi-Lo trainer](https://burkay.github.io/blackjack-trainer/apps/hilo-trainer/)
 
 ## Table rules (Table Simulator)
 
