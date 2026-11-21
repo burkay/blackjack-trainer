@@ -537,6 +537,57 @@ body{-webkit-tap-highlight-color:transparent}
 </aside>
 
 <script>
+/* ---------- game data log (Supabase) ----------
+   Each browser is an anonymous Supabase user; the four apps share it (same site, same localStorage).
+   Only game events are stored: no name, IP, location or device data. Events queue in localStorage
+   and go up in batches; any failure is silent and never touches the game. Off on file:// and localhost. */
+const CLOUD=(()=>{
+  const URL='https://irohhofzdjozpjyxzegv.supabase.co',KEY='sb_publishable_6Fpd6LSMXracrx2mBgTmJQ_Yxy8LsSA',APP='table',SK='bj-cloud-v1',QK='bj-cloud-q-'+APP,QMAX=300;
+  const on=typeof fetch==='function'&&location.protocol==='https:'&&!/^(localhost|127\.|\[::1\])/.test(location.hostname);
+  const rd=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+  let q=on?(rd(QK)||[]):[],tm=0,busy=false;
+  const hdr=at=>Object.assign({'Content-Type':'application/json',apikey:KEY},at?{Authorization:'Bearer '+at}:{});
+  async function auth(path,body){
+    const r=await fetch(URL+'/auth/v1/'+path,{method:'POST',headers:hdr(),body:JSON.stringify(body)});
+    if(!r.ok)throw new Error('auth '+r.status);
+    const j=await r.json();return {at:j.access_token,rt:j.refresh_token,exp:Date.now()+(j.expires_in||3600)*1000,uid:j.user&&j.user.id};
+  }
+  async function session(){
+    let s=rd(SK);
+    if(s&&s.at&&s.uid&&s.exp>Date.now()+60e3)return s;
+    if(s&&s.rt){
+      try{const n=await auth('token?grant_type=refresh_token',{refresh_token:s.rt});s=Object.assign(s,n);wr(SK,s);return s}
+      catch(e){const x=rd(SK);if(x&&x.exp>Date.now()+60e3)return x;if(!/auth 4/.test(e.message))throw e}
+    }
+    s=await auth('signup',{data:{}});s.player=false;wr(SK,s);return s;
+  }
+  const post=(s,path,body,prefer)=>fetch(URL+'/rest/v1/'+path,{method:'POST',headers:Object.assign(hdr(s.at),{Prefer:prefer||'return=minimal'}),body:JSON.stringify(body),keepalive:true});
+  function later(ms){if(!tm)tm=setTimeout(()=>{tm=0;flush()},ms)}
+  async function flush(){
+    if(!on||busy||!q.length)return;
+    busy=true;let wait=0;
+    try{
+      const s=await session();
+      if(!s.player){const r=await post(s,'players?on_conflict=id',{id:s.uid},'resolution=ignore-duplicates,return=minimal');if(!r.ok)throw new Error('player '+r.status);s.player=true;wr(SK,s)}
+      const n=Math.min(q.length,100),r=await post(s,'events',q.slice(0,n).map(e=>Object.assign({player_id:s.uid},e)));
+      if(r.status===401){s.exp=0;wr(SK,s);wait=2e3}
+      else if(r.ok||(r.status>=400&&r.status<500)){q.splice(0,n);wr(QK,q);wait=q.length?1e3:0}
+      else wait=30e3;
+    }catch(e){wait=30e3}
+    busy=false;if(wait&&q.length)later(wait);
+  }
+  function log(kind,data){
+    if(!on)return;
+    try{q.push({app:APP,kind,at:new Date().toISOString(),data:JSON.parse(JSON.stringify(data||{}))});if(q.length>QMAX)q.splice(0,q.length-QMAX);wr(QK,q);later(2e3)}catch(e){}
+  }
+  if(on){
+    if(q.length)later(3e3);
+    addEventListener('online',()=>flush());
+    addEventListener('pagehide',()=>flush());
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
+  }
+  return {log,flush};
+})();
 {
 const $=s=>document.querySelector(s);
 const RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -597,7 +648,7 @@ const fmtE=new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR',minimu
 const eur=n=>fmtE.format(Math.round(n*100)/100);
 const dec=x=>String(x);
 const KEY='bj-masa-v1';
-const DEF={mode:'train',s17:true,decks:8,sur:true,offer:true,cutPos:'mid',bots:2,cc:5,fast:false,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
+const DEF={mode:'train',s17:true,decks:8,sur:true,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
 const STN={dec:'Decisions',cnt:'Count',bet:'Bets',ins:'Insurance'};
 const store={get(k){try{const x=localStorage.getItem(k);return x?JSON.parse(x):null}catch(e){return null}},set(k,x){try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}}};
 function normalize(src){
@@ -1044,6 +1095,7 @@ function histRecord(bet,win,net,ins){
   if(ins)rec.i=ins;if(G.insD)rec.id=G.insD;if(G.bcD)rec.k=G.bcD;
   if(G.lastCF){const c=G.lastCF;rec.c=[c.pick,c.rule,c.you,c.ruleNet,c.rh,c.rd,c.yb||0,c.rb||0]}
   S.hlog.unshift(rec);if(S.hlog.length>1000)S.hlog.length=1000;
+  CLOUD.log('hand',Object.assign({mode:S.mode,bank:S.bank,decks:S.decks,s17:S.s17,sur:S.sur,bots:S.bots},rec));
   G.decs=null;G.insD=null;G.bcD=null;save();
   if(!$('#histPg').hidden)renderHist();
 }
@@ -1155,6 +1207,7 @@ function submitCheck(){
   const rc=parseInt($('#cc-rc').value,10),tc=parseInt($('#cc-tc').value,10);
   if(isNaN(rc)||isNaN(tc)) return;
   const trc=G.rc,ttc=tcNow(),dr=decksLeft(),ok=rc===trc&&tc===ttc;
+  CLOUD.log('count',{mode:S.mode,ok,rc,tc,trc,ttc,decks:dr});
   record('cnt',ok,ok?null:{type:'Count',desc:`${dec(dr)} decks left`,pick:`RC ${sg(rc)}, TC ${sg(tc)}`,act:`RC ${sg(trc)}, TC ${sg(ttc)}`});
   if(S.mode==='train'){coach(`<p class="head">${ok?'Count correct':'Count wrong'}</p><p>Running count <b>${sg(trc)}</b>${rc===trc?'':` (you said ${sg(rc)})`}. ${sg(trc)} ÷ ${dec(dr)} decks = <b>${sg(ttc)}</b> true count${tc===ttc?'':` (you said ${sg(tc)})`}.</p>`,ok?'good':'bad');SND.play(ok?'good':'error')}
   else coach('<p class="head">Count recorded</p><p>The answer is in the report at the end of the exam.</p>','');
@@ -1402,7 +1455,7 @@ function onIns(a){
 function startExam(){E={n:0,len:20,dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0],miss:[],net:0};coach('<p class="head">Exam started: 20 hands</p><p>No hints. Your plays, count and bets are recorded; the report comes at the end.</p>','')}
 function finishExam(){
   const r={t:new Date().toISOString(),len:E.len,dec:E.dec,cnt:E.cnt,bet:E.bet,ins:E.ins,net:E.net,miss:E.miss.slice(0,15)};
-  S.exams.unshift(r);S.exams=S.exams.slice(0,20);save();
+  S.exams.unshift(r);S.exams=S.exams.slice(0,20);save();CLOUD.log('exam',r);
   G.phase='report';render();renderRecord();
   const p=r.dec[1]?r.dec[0]/r.dec[1]:0;SND.play(p>=.9?'bj':p>=.7?'win':'push');
 }

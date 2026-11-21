@@ -2,7 +2,12 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b5d36">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Strateji">
 <title>Blackjack Strateji Testi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -159,6 +164,47 @@ legend{font-weight:600;margin-bottom:6px;padding:0}
 .heat .chart td{font-size:13px;padding:5px 1px;white-space:nowrap}
 @media(max-width:600px){.card{width:clamp(56px,17vw,80px)}.rail{padding:18px 10px}.act b{font-size:20px}.stat b{font-size:26px}.chart{font-size:13px}.sr{grid-template-columns:5.6em minmax(0,1fr) 2.8em 3.4em}}
 @media(prefers-reduced-motion:reduce){.card,.act.wrong{animation:none}.act{transition:none}}
+/* touch screens and phones */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+body{-webkit-tap-highlight-color:transparent}
+.felt{padding-top:max(clamp(20px,3vw,36px),env(safe-area-inset-top));padding-left:max(4vw,16px,env(safe-area-inset-left));padding-right:max(4vw,16px,env(safe-area-inset-right))}
+.lower{padding-left:max(4vw,16px,env(safe-area-inset-left));padding-right:max(4vw,16px,env(safe-area-inset-right));padding-bottom:max(clamp(28px,4vw,56px),env(safe-area-inset-bottom))}
+@media(hover:none){.act:hover:not(:disabled),.opt:hover:not(:disabled){transform:none}}
+@media(pointer:coarse){.act kbd,.opt kbd,.po kbd,.kh,.kb{display:none}}
+/* phone: the question, the cards, the answers and the next button fit on one screen */
+@media(max-width:600px){
+  .felt{padding-top:max(12px,env(safe-area-inset-top));padding-bottom:18px}
+  .top{gap:6px 16px;align-items:center}
+  h1{font-size:25px}.sub{display:none}
+  .stats{gap:4px 16px}.stat b{font-size:21px}.stat span{font-size:12px}
+  .play{margin-top:10px;gap:10px}
+  .rail{padding:12px 10px;border-radius:22px}
+  .print{margin:0}
+  .ask{font-size:21px;margin-bottom:8px}
+  .acts,.opts{gap:6px}
+  .act,.opt{min-height:52px;padding:6px 8px}
+  .fb{display:flex;flex-direction:column;align-items:flex-start;margin-top:10px;padding:12px;min-height:0}
+  .fb>*{align-self:stretch}
+  .fb .verdict{order:-2}.fb .next{order:-1;align-self:flex-start;margin:6px 0 4px}
+}
+/* phone, landscape: header in one line, table left, answers right */
+@media(orientation:landscape) and (max-height:520px){
+  .felt{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:14px}
+  .top{flex-wrap:nowrap;align-items:center;gap:8px 20px}
+  h1{font-size:24px}.sub{display:none}
+  .stats{flex-wrap:nowrap;gap:4px 16px}.stat b{font-size:20px}.stat span{font-size:12px}
+  .play{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;margin-top:8px;gap:14px}
+  .rail{padding:10px;border-radius:22px}
+  .print{margin:0}
+  .ask{font-size:21px;margin-bottom:8px}
+  .acts,.opts{gap:6px}
+  .act,.opt{min-height:46px;padding:6px 8px}
+  .fb{display:flex;flex-direction:column;align-items:flex-start;margin-top:8px;padding:10px 12px;min-height:0}
+  .fb>*{align-self:stretch}
+  .fb .verdict{order:-2}.fb .next{order:-1;align-self:flex-start;margin:6px 0 4px}
+}
+@media(max-width:600px){.card{width:clamp(50px,14.5vw,64px)}.cn{font-size:17px}.pip{font-size:28px}.hand{gap:10px}.print{width:min(100%,280px)}.hl{font-size:16px}.zl{font-size:13px}}
+@media(orientation:landscape) and (max-height:520px){.card{width:clamp(42px,calc((100svh - 150px)*.2),60px)}.cn{font-size:15px}.pip{font-size:24px}.print{width:min(100%,240px)}.hl{font-size:15px}.zl{font-size:12px}.zone{gap:4px}}
 </style>
 </head>
 <body>
@@ -279,6 +325,57 @@ legend{font-weight:600;margin-bottom:6px;padding:0}
 </section>
 
 <script>
+/* ---------- game data log (Supabase) ----------
+   Each browser is an anonymous Supabase user; the four apps share it (same site, same localStorage).
+   Only game events are stored: no name, IP, location or device data. Events queue in localStorage
+   and go up in batches; any failure is silent and never touches the game. Off on file:// and localhost. */
+const CLOUD=(()=>{
+  const URL='https://irohhofzdjozpjyxzegv.supabase.co',KEY='sb_publishable_6Fpd6LSMXracrx2mBgTmJQ_Yxy8LsSA',APP='strategy',SK='bj-cloud-v1',QK='bj-cloud-q-'+APP,QMAX=300;
+  const on=typeof fetch==='function'&&location.protocol==='https:'&&!/^(localhost|127\.|\[::1\])/.test(location.hostname);
+  const rd=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+  let q=on?(rd(QK)||[]):[],tm=0,busy=false;
+  const hdr=at=>Object.assign({'Content-Type':'application/json',apikey:KEY},at?{Authorization:'Bearer '+at}:{});
+  async function auth(path,body){
+    const r=await fetch(URL+'/auth/v1/'+path,{method:'POST',headers:hdr(),body:JSON.stringify(body)});
+    if(!r.ok)throw new Error('auth '+r.status);
+    const j=await r.json();return {at:j.access_token,rt:j.refresh_token,exp:Date.now()+(j.expires_in||3600)*1000,uid:j.user&&j.user.id};
+  }
+  async function session(){
+    let s=rd(SK);
+    if(s&&s.at&&s.uid&&s.exp>Date.now()+60e3)return s;
+    if(s&&s.rt){
+      try{const n=await auth('token?grant_type=refresh_token',{refresh_token:s.rt});s=Object.assign(s,n);wr(SK,s);return s}
+      catch(e){const x=rd(SK);if(x&&x.exp>Date.now()+60e3)return x;if(!/auth 4/.test(e.message))throw e}
+    }
+    s=await auth('signup',{data:{}});s.player=false;wr(SK,s);return s;
+  }
+  const post=(s,path,body,prefer)=>fetch(URL+'/rest/v1/'+path,{method:'POST',headers:Object.assign(hdr(s.at),{Prefer:prefer||'return=minimal'}),body:JSON.stringify(body),keepalive:true});
+  function later(ms){if(!tm)tm=setTimeout(()=>{tm=0;flush()},ms)}
+  async function flush(){
+    if(!on||busy||!q.length)return;
+    busy=true;let wait=0;
+    try{
+      const s=await session();
+      if(!s.player){const r=await post(s,'players?on_conflict=id',{id:s.uid},'resolution=ignore-duplicates,return=minimal');if(!r.ok)throw new Error('player '+r.status);s.player=true;wr(SK,s)}
+      const n=Math.min(q.length,100),r=await post(s,'events',q.slice(0,n).map(e=>Object.assign({player_id:s.uid},e)));
+      if(r.status===401){s.exp=0;wr(SK,s);wait=2e3}
+      else if(r.ok||(r.status>=400&&r.status<500)){q.splice(0,n);wr(QK,q);wait=q.length?1e3:0}
+      else wait=30e3;
+    }catch(e){wait=30e3}
+    busy=false;if(wait&&q.length)later(wait);
+  }
+  function log(kind,data){
+    if(!on)return;
+    try{q.push({app:APP,kind,at:new Date().toISOString(),data:JSON.parse(JSON.stringify(data||{}))});if(q.length>QMAX)q.splice(0,q.length-QMAX);wr(QK,q);later(2e3)}catch(e){}
+  }
+  if(on){
+    if(q.length)later(3e3);
+    addEventListener('online',()=>flush());
+    addEventListener('pagehide',()=>flush());
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
+  }
+  return {log,flush};
+})();
 {
 const $=s=>document.querySelector(s);
 const UP=['2','3','4','5','6','7','8','9','10','A'];
@@ -535,10 +632,11 @@ function setBtns(){
 }
 function fbIdle(){
   const w=S.mode!=='weak'?'':weakEmpty?'<p class="hint"><b>Zayıf el kalmadı.</b> Yanlış yaptığın her eli 3 kez üst üste doğru bildin; şimdilik karışık sorular geliyor.</p>':'<p class="hint"><b>Zayıf ellerin:</b> yanlış yaptığın bir el, 3 kez üst üste doğru bilene kadar burada sorulur.</p>';
-  $('#fb').innerHTML=w+'<p class="hint">Elin ve krupiyenin açık kartına bak, bir hamle seç.</p><p class="hint">Klavye: H, S, D, P, R. Cevaptan sonra Enter ile sonraki el.</p>';
+  $('#fb').innerHTML=w+'<p class="hint">Elin ve krupiyenin açık kartına bak, bir hamle seç.</p><p class="hint kb">Klavye: H, S, D, P, R. Cevaptan sonra Enter ile sonraki el.</p>';
 }
+let qT0=0;
 function next(){
-  clearTimeout(timer);answered=false;ended=false;
+  clearTimeout(timer);answered=false;ended=false;qT0=performance.now();
   const i=queue.findIndex(x=>x.due<=qn&&(['mix','phr','weak'].includes(S.mode)||x.q.cat===S.mode));
   q=i>-1?{...queue.splice(i,1)[0].q,review:true}:gen();
   last=keyOf(q);sol=solve(q);
@@ -565,12 +663,13 @@ function showPhrase(){
   $('#ask').textContent=`${info.title} için kural hangisi?`;
   $('#acts').hidden=true;$('#phr').hidden=false;
   $('#phr').innerHTML=opts.map((o,j)=>`<button class="po" data-i="${j}"><kbd>${j+1}</kbd><span>${cap(o)}.</span></button>`).join('');
-  $('#fb').innerHTML='<p class="hint">Krupiyenin kartına bakmadan, sadece eline göre kuralı hatırla. Doğru cümleyi seçince krupiyenin kartı açılır ve hamleni yaparsın.</p><p class="hint">Klavye: 1, 2, 3, 4.</p>';
+  $('#fb').innerHTML='<p class="hint">Krupiyenin kartına bakmadan, sadece eline göre kuralı hatırla. Doğru cümleyi seçince krupiyenin kartı açılır ve hamleni yaparsın.</p><p class="hint kb">Klavye: 1, 2, 3, 4.</p>';
 }
 function answerPhrase(j){
   if(stage!=='phrase'||!phq) return;
   stage='act';
   const ok=j===phq.ci, st=S.stats.phr;st[1]++;if(ok)st[0]++;
+  CLOUD.log('phrase',{key:phq.info.key,pick:j,right:phq.ci,ok});
   const pc=Array.isArray(S.pcells[phq.info.key])?S.pcells[phq.info.key]:(S.pcells[phq.info.key]=[0,0]);pc[1]++;if(ok)pc[0]++;
   save();renderStats();
   document.querySelectorAll('#phr .po').forEach((b,k)=>{b.disabled=true;if(k===phq.ci)b.classList.add('right');else if(k===j)b.classList.add('wrong')});
@@ -591,6 +690,7 @@ function newTest(){test={n:0,ok:0,miss:[]};next()}
 function showEnd(){
   ended=true;answered=false;setBtns();
   const pc=Math.round(test.ok/S.len*100);
+  CLOUD.log('test',{mode:S.mode,len:S.len,ok:test.ok,miss:test.miss});
   const say=pc>=95?'Tablo artık sende. Karışık modda hızlanmaya çalış.':pc>=80?'İyi gidiyor. Kaçırdığın ellere aşağıdan bak.':'Zorlandığın konuyu seçip ayrıca çalış, sonra testi tekrarla.';
   $('#fb').innerHTML=`<p class="verdict">Test bitti: ${test.ok}/${S.len} (%${pc})</p><p class="why">${say}</p>${test.miss.length?`<ul class="ml">${test.miss.map(missLi).join('')}</ul>`:'<p class="why">Hiç hata yok.</p>'}<button class="next" id="again">Yeni test</button>`;
   top();
@@ -600,6 +700,7 @@ function answer(act){
   const b=$('#b-'+act);if(b.disabled) return;
   answered=true;qn++;
   const ok=act===sol.act, st=S.stats[q.cat];
+  CLOUD.log('answer',{mode:S.mode,cat:q.cat,hand:handLabel(q),up:UP[q.ui],pick:act,right:sol.act,ok,test:S.len?[test.n+1,S.len]:null,ms:Math.round(performance.now()-qT0)});
   st[1]++;ses.n++;
   curKey=q.a===q.b?`pair|${q.a==='A'?'A':q.a===10?'T':q.a}|${q.ui}`:`${sol.tab}|${sol.row}|${q.ui}`;
   const cell=Array.isArray(S.cells[curKey])?S.cells[curKey]:(S.cells[curKey]=[0,0,0]);
@@ -617,7 +718,7 @@ function answer(act){
   $('#b-'+sol.act).classList.add('right');
   if(!ok) b.classList.add('wrong');
   const lastQ=S.len&&test.n>=S.len;
-  $('#fb').innerHTML=`<p class="verdict ${ok?'good':'bad'}">${ok?'Doğru':`Yanlış · doğrusu: ${ACT[sol.act][0]} (${ACT[sol.act][1]})`}</p><p class="why">${sol.why}</p>${miniRow(sol)}<p class="rule"><b>Kural</b> · ${(p=>`${p.title}: ${p.body}`)(phraseInfo(q.a,q.b))}.</p><button class="next" id="next">${lastQ?'Sonuçları gör':'Sonraki el (Enter)'}</button>`;
+  $('#fb').innerHTML=`<p class="verdict ${ok?'good':'bad'}">${ok?'Doğru':`Yanlış · doğrusu: ${ACT[sol.act][0]} (${ACT[sol.act][1]})`}</p><p class="why">${sol.why}</p>${miniRow(sol)}<p class="rule"><b>Kural</b> · ${(p=>`${p.title}: ${p.body}`)(phraseInfo(q.a,q.b))}.</p><button class="next" id="next">${lastQ?'Sonuçları gör':'Sonraki el<span class="kh"> (Enter)</span>'}</button>`;
   if(document.activeElement&&document.activeElement.classList.contains('act')) $('#next').focus({preventScroll:true});
   renderChart();renderStats();renderMiss();renderWeak();top();
   if(ok&&S.auto) timer=setTimeout(goNext,1400);

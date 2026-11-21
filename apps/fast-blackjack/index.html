@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a2c38">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fast BJ">
 <title>Fast Blackjack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -152,6 +157,43 @@ code{font:600 12px/1.4 ui-monospace,Menlo,monospace;color:var(--wh);overflow-wra
 @media(max-width:820px){.game{grid-template-columns:minmax(0,1fr)}.stage{order:-1;min-height:0;padding:22px 10px 18px;gap:6px}.zone{min-height:calc(var(--cw)*1.4 + 34px);gap:6px}.side>#pMan,.side>#pAuto{order:-2}.side>.hint{order:-1}.side>.tabs2{order:5}.rules{font-size:10px;line-height:1.8}:root{--cw:clamp(52px,15vw,74px)}.brand span{display:none}.deck{right:12px;top:12px}.wallet b{padding:0 10px}}
 @media(max-width:820px){.res{padding:10px 18px}.res b{font-size:26px}.res span{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.ci{transition:none}.res,.toast{animation:none}}
+/* touch screens and phones */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+body{-webkit-tap-highlight-color:transparent}
+.top{padding-top:env(safe-area-inset-top)}
+.topi{padding-left:max(2vw,12px,env(safe-area-inset-left));padding-right:max(2vw,12px,env(safe-area-inset-right))}
+.wrap{padding-left:max(2vw,12px,env(safe-area-inset-left));padding-right:max(2vw,12px,env(safe-area-inset-right));padding-bottom:max(40px,env(safe-area-inset-bottom))}
+@media(hover:none){.act:hover:not(:disabled){background:var(--line)}.tbtn:hover{background:var(--line)}.inp button:hover{background:transparent}}
+@media(pointer:coarse){.act kbd{display:none}}
+@media(max-width:600px){
+  :root{--cw:clamp(48px,13.5vw,62px)}
+  .topi{gap:8px;padding-top:8px;padding-bottom:8px}
+  .wrap{padding-top:10px}
+  .stage{padding:16px 10px 14px}
+  .zone{min-height:calc(var(--cw)*1.4 + 30px)}
+  .rules{line-height:1.6}
+  .side{gap:10px;padding:10px}
+  .act{height:50px}.betbtn{height:54px}
+  .hint{min-height:0}
+}
+/* phone, landscape: playfield left, controls right, both fit the screen */
+@media(orientation:landscape) and (max-height:520px){
+  :root{--cw:clamp(40px,calc((100svh - 150px)*.22),60px)}
+  .top{position:static}
+  .topi{max-width:none;padding-top:max(4px,env(safe-area-inset-top));padding-bottom:4px}
+  .tbtn,.wallet{height:36px}.ic{width:36px}
+  .wrap{max-width:none;padding-top:4px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+  .game{grid-template-columns:minmax(0,1fr) clamp(280px,34vw,340px);height:calc(100vh - 54px);height:calc(100svh - 54px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+  .stage{order:0;grid-column:1;grid-row:1;min-height:0;padding:12px 10px;gap:4px}
+  .zone{min-height:calc(var(--cw)*1.4 + 30px);gap:6px}
+  .rules{font-size:10px;line-height:1.6}
+  .deck{right:14px;top:12px}
+  .side>*{flex-shrink:0}
+  .side{grid-column:2;grid-row:1;overflow:auto;overscroll-behavior:contain;gap:10px;padding:10px}
+  .side>#pMan,.side>#pAuto{order:-2}.side>.hint{order:-1;min-height:0}.side>.tabs2{order:5}
+  .act{height:44px}.betbtn{height:50px}
+  .res{padding:8px 16px}.res b{font-size:24px}.res span{font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -200,6 +242,7 @@ code{font:600 12px/1.4 ui-monospace,Menlo,monospace;color:var(--wh);overflow-wra
         <button class="betbtn" id="autoBtn">Start Autobet</button>
       </div>
       <div class="hint" id="hint" aria-live="polite">Space to bet. Hints compare each play with basic strategy.</div>
+      <script>if(window.matchMedia&&matchMedia('(pointer:coarse)').matches)document.getElementById('hint').textContent='Tap Bet to deal. Hints compare each play with basic strategy.'</script>
     </aside>
     <div class="stage" id="stage">
       <div class="deck" id="deck" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -267,6 +310,57 @@ code{font:600 12px/1.4 ui-monospace,Menlo,monospace;color:var(--wh);overflow-wra
 </div></div>
 
 <script>
+/* ---------- game data log (Supabase) ----------
+   Each browser is an anonymous Supabase user; the four apps share it (same site, same localStorage).
+   Only game events are stored: no name, IP, location or device data. Events queue in localStorage
+   and go up in batches; any failure is silent and never touches the game. Off on file:// and localhost. */
+const CLOUD=(()=>{
+  const URL='https://irohhofzdjozpjyxzegv.supabase.co',KEY='sb_publishable_6Fpd6LSMXracrx2mBgTmJQ_Yxy8LsSA',APP='fast',SK='bj-cloud-v1',QK='bj-cloud-q-'+APP,QMAX=300;
+  const on=typeof fetch==='function'&&location.protocol==='https:'&&!/^(localhost|127\.|\[::1\])/.test(location.hostname);
+  const rd=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+  let q=on?(rd(QK)||[]):[],tm=0,busy=false;
+  const hdr=at=>Object.assign({'Content-Type':'application/json',apikey:KEY},at?{Authorization:'Bearer '+at}:{});
+  async function auth(path,body){
+    const r=await fetch(URL+'/auth/v1/'+path,{method:'POST',headers:hdr(),body:JSON.stringify(body)});
+    if(!r.ok)throw new Error('auth '+r.status);
+    const j=await r.json();return {at:j.access_token,rt:j.refresh_token,exp:Date.now()+(j.expires_in||3600)*1000,uid:j.user&&j.user.id};
+  }
+  async function session(){
+    let s=rd(SK);
+    if(s&&s.at&&s.uid&&s.exp>Date.now()+60e3)return s;
+    if(s&&s.rt){
+      try{const n=await auth('token?grant_type=refresh_token',{refresh_token:s.rt});s=Object.assign(s,n);wr(SK,s);return s}
+      catch(e){const x=rd(SK);if(x&&x.exp>Date.now()+60e3)return x;if(!/auth 4/.test(e.message))throw e}
+    }
+    s=await auth('signup',{data:{}});s.player=false;wr(SK,s);return s;
+  }
+  const post=(s,path,body,prefer)=>fetch(URL+'/rest/v1/'+path,{method:'POST',headers:Object.assign(hdr(s.at),{Prefer:prefer||'return=minimal'}),body:JSON.stringify(body),keepalive:true});
+  function later(ms){if(!tm)tm=setTimeout(()=>{tm=0;flush()},ms)}
+  async function flush(){
+    if(!on||busy||!q.length)return;
+    busy=true;let wait=0;
+    try{
+      const s=await session();
+      if(!s.player){const r=await post(s,'players?on_conflict=id',{id:s.uid},'resolution=ignore-duplicates,return=minimal');if(!r.ok)throw new Error('player '+r.status);s.player=true;wr(SK,s)}
+      const n=Math.min(q.length,100),r=await post(s,'events',q.slice(0,n).map(e=>Object.assign({player_id:s.uid},e)));
+      if(r.status===401){s.exp=0;wr(SK,s);wait=2e3}
+      else if(r.ok||(r.status>=400&&r.status<500)){q.splice(0,n);wr(QK,q);wait=q.length?1e3:0}
+      else wait=30e3;
+    }catch(e){wait=30e3}
+    busy=false;if(wait&&q.length)later(wait);
+  }
+  function log(kind,data){
+    if(!on)return;
+    try{q.push({app:APP,kind,at:new Date().toISOString(),data:JSON.parse(JSON.stringify(data||{}))});if(q.length>QMAX)q.splice(0,q.length-QMAX);wr(QK,q);later(2e3)}catch(e){}
+  }
+  if(on){
+    if(q.length)later(3e3);
+    addEventListener('online',()=>flush());
+    addEventListener('pagehide',()=>flush());
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
+  }
+  return {log,flush};
+})();
 {
 const $=s=>document.querySelector(s);
 const RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -424,6 +518,7 @@ function renderPanel(){
   $('#betEur').textContent=money(+$('#bet').value||0);
   $('#bal').textContent=fmt.format(S.bal);
 }
+const TOUCH=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
 function hint(html,ok){const h=$('#hint');h.innerHTML=html;h.className='hint'+(ok?' ok':'')}
 function toast(t){const o=$('#stage .toast');if(o)o.remove();const el=document.createElement('div');el.className='toast';el.textContent=t;$('#stage').appendChild(el);setTimeout(()=>el.remove(),1600)}
 function readAmt(sel){const v=parseFloat(String($(sel).value).replace(',','.'));return isFinite(v)&&v>0?r2(v):0}
@@ -444,7 +539,7 @@ async function placeBet(){
   await clearTable();
   S.bal=r2(S.bal-total);S.pending=total;G.base=b;G.pp=pp;G.t3=t3;G.ins=0;G.mist=[];
   G.server=S.server;G.client=S.client;G.nonce=S.nonce;S.nonce++;G.k=0;G.seq=cardsFor(G.server,G.client,G.nonce,24);
-  G.hands=[{cards:[],bet:b}];G.dealer=[];G.cur=0;save();SND.play('bet');render();hint('Your move: H hit, S stand, D double, P split.');
+  G.hands=[{cards:[],bet:b}];G.dealer=[];G.cur=0;save();SND.play('bet');render();hint(TOUCH?'Your move: hit, stand, double or split.':'Your move: H hit, S stand, D double, P split.');
   const h=G.hands[0];
   h.cards.push(next());render();await sleep(T(200));
   G.dealer.push(next());render();await sleep(T(200));
@@ -512,6 +607,7 @@ async function finish(){
   const fmtH=cs=>cs.map(c=>c.r+c.s).join(' ');
   S.hist.unshift({t:Date.now(),bet:totalWag,mult:+mult.toFixed(2),pay:totalRet,net,p:G.hands.map(h=>fmtH(h.cards)+(h.dbl?' (doubled)':'')),d:fmtH(d),nonce:G.nonce,client:G.client,hash:hex(SHA256(enc(G.server))),mist:G.mist});
   S.hist=S.hist.slice(0,50);
+  CLOUD.log('hand',Object.assign({bal:S.bal,auto:!!G.autoOn},S.hist[0]));
   save();renderHist();renderStats();renderPanel();
   return net;
 }

@@ -2,7 +2,12 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b5d36">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hi-Lo">
 <title>Hi-Lo Kart Sayma Testi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -178,6 +183,47 @@ legend{font-weight:600;margin-bottom:6px;padding:0}
 .note p:last-child{margin:0}
 @media(max-width:600px){.rail{min-height:320px;padding:16px 10px}.opt b{font-size:22px}.act b{font-size:19px}.stat b{font-size:26px}.sr{grid-template-columns:6.6em minmax(0,1fr) 2.8em 3.4em}.ls{padding:14px}.dt{font-size:13px}.dt th,.dt td{padding:5px 4px}.rd{grid-template-columns:40px minmax(0,1fr)}.rd>:last-child{grid-column:2}}
 @media(prefers-reduced-motion:reduce){.card.anim,.wrong{animation:none}.opt,.act{transition:none}}
+/* touch screens and phones */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+body{-webkit-tap-highlight-color:transparent}
+.felt{padding-top:max(clamp(20px,3vw,36px),env(safe-area-inset-top));padding-left:max(4vw,16px,env(safe-area-inset-left));padding-right:max(4vw,16px,env(safe-area-inset-right))}
+.lower{padding-left:max(4vw,16px,env(safe-area-inset-left));padding-right:max(4vw,16px,env(safe-area-inset-right));padding-bottom:max(clamp(28px,4vw,56px),env(safe-area-inset-bottom))}
+@media(hover:none){.act:hover:not(:disabled),.opt:hover:not(:disabled){transform:none}}
+@media(pointer:coarse){.act kbd,.opt kbd,.po kbd,.kh,.kb{display:none}}
+/* phone: the question, the cards, the answers and the next button fit on one screen */
+@media(max-width:600px){
+  .felt{padding-top:max(12px,env(safe-area-inset-top));padding-bottom:18px}
+  .top{gap:6px 16px;align-items:center}
+  h1{font-size:25px}.sub{display:none}
+  .stats{gap:4px 16px}.stat b{font-size:21px}.stat span{font-size:12px}
+  .play{margin-top:10px;gap:10px}
+  .rail{padding:12px 10px;border-radius:22px}
+  .print{margin:0}
+  .ask{font-size:21px;margin-bottom:8px}
+  .acts,.opts{gap:6px}
+  .act,.opt{min-height:52px;padding:6px 8px}
+  .fb{display:flex;flex-direction:column;align-items:flex-start;margin-top:10px;padding:12px;min-height:0}
+  .fb>*{align-self:stretch}
+  .fb .verdict{order:-2}.fb .next{order:-1;align-self:flex-start;margin:6px 0 4px}
+}
+/* phone, landscape: header in one line, table left, answers right */
+@media(orientation:landscape) and (max-height:520px){
+  .felt{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:14px}
+  .top{flex-wrap:nowrap;align-items:center;gap:8px 20px}
+  h1{font-size:24px}.sub{display:none}
+  .stats{flex-wrap:nowrap;gap:4px 16px}.stat b{font-size:20px}.stat span{font-size:12px}
+  .play{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;margin-top:8px;gap:14px}
+  .rail{padding:10px;border-radius:22px}
+  .print{margin:0}
+  .ask{font-size:21px;margin-bottom:8px}
+  .acts,.opts{gap:6px}
+  .act,.opt{min-height:46px;padding:6px 8px}
+  .fb{display:flex;flex-direction:column;align-items:flex-start;margin-top:8px;padding:10px 12px;min-height:0}
+  .fb>*{align-self:stretch}
+  .fb .verdict{order:-2}.fb .next{order:-1;align-self:flex-start;margin:6px 0 4px}
+}
+@media(max-width:600px){.tabs{flex-wrap:nowrap;overflow-x:auto;margin:10px -16px 0;padding:0 16px 4px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button{min-height:38px;padding:4px 14px;font-size:15px;flex:none}.rail{min-height:230px}.card{width:clamp(52px,15vw,70px)}}
+@media(orientation:landscape) and (max-height:520px){.tabs{flex-wrap:nowrap;overflow-x:auto;margin-top:8px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button{min-height:34px;padding:2px 14px;font-size:15px;flex:none}.rail{min-height:200px}.card{width:clamp(44px,calc((100svh - 150px)*.2),62px)}}
 </style>
 </head>
 <body>
@@ -301,6 +347,57 @@ legend{font-weight:600;margin-bottom:6px;padding:0}
 </section>
 
 <script>
+/* ---------- game data log (Supabase) ----------
+   Each browser is an anonymous Supabase user; the four apps share it (same site, same localStorage).
+   Only game events are stored: no name, IP, location or device data. Events queue in localStorage
+   and go up in batches; any failure is silent and never touches the game. Off on file:// and localhost. */
+const CLOUD=(()=>{
+  const URL='https://irohhofzdjozpjyxzegv.supabase.co',KEY='sb_publishable_6Fpd6LSMXracrx2mBgTmJQ_Yxy8LsSA',APP='hilo',SK='bj-cloud-v1',QK='bj-cloud-q-'+APP,QMAX=300;
+  const on=typeof fetch==='function'&&location.protocol==='https:'&&!/^(localhost|127\.|\[::1\])/.test(location.hostname);
+  const rd=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+  let q=on?(rd(QK)||[]):[],tm=0,busy=false;
+  const hdr=at=>Object.assign({'Content-Type':'application/json',apikey:KEY},at?{Authorization:'Bearer '+at}:{});
+  async function auth(path,body){
+    const r=await fetch(URL+'/auth/v1/'+path,{method:'POST',headers:hdr(),body:JSON.stringify(body)});
+    if(!r.ok)throw new Error('auth '+r.status);
+    const j=await r.json();return {at:j.access_token,rt:j.refresh_token,exp:Date.now()+(j.expires_in||3600)*1000,uid:j.user&&j.user.id};
+  }
+  async function session(){
+    let s=rd(SK);
+    if(s&&s.at&&s.uid&&s.exp>Date.now()+60e3)return s;
+    if(s&&s.rt){
+      try{const n=await auth('token?grant_type=refresh_token',{refresh_token:s.rt});s=Object.assign(s,n);wr(SK,s);return s}
+      catch(e){const x=rd(SK);if(x&&x.exp>Date.now()+60e3)return x;if(!/auth 4/.test(e.message))throw e}
+    }
+    s=await auth('signup',{data:{}});s.player=false;wr(SK,s);return s;
+  }
+  const post=(s,path,body,prefer)=>fetch(URL+'/rest/v1/'+path,{method:'POST',headers:Object.assign(hdr(s.at),{Prefer:prefer||'return=minimal'}),body:JSON.stringify(body),keepalive:true});
+  function later(ms){if(!tm)tm=setTimeout(()=>{tm=0;flush()},ms)}
+  async function flush(){
+    if(!on||busy||!q.length)return;
+    busy=true;let wait=0;
+    try{
+      const s=await session();
+      if(!s.player){const r=await post(s,'players?on_conflict=id',{id:s.uid},'resolution=ignore-duplicates,return=minimal');if(!r.ok)throw new Error('player '+r.status);s.player=true;wr(SK,s)}
+      const n=Math.min(q.length,100),r=await post(s,'events',q.slice(0,n).map(e=>Object.assign({player_id:s.uid},e)));
+      if(r.status===401){s.exp=0;wr(SK,s);wait=2e3}
+      else if(r.ok||(r.status>=400&&r.status<500)){q.splice(0,n);wr(QK,q);wait=q.length?1e3:0}
+      else wait=30e3;
+    }catch(e){wait=30e3}
+    busy=false;if(wait&&q.length)later(wait);
+  }
+  function log(kind,data){
+    if(!on)return;
+    try{q.push({app:APP,kind,at:new Date().toISOString(),data:JSON.parse(JSON.stringify(data||{}))});if(q.length>QMAX)q.splice(0,q.length-QMAX);wr(QK,q);later(2e3)}catch(e){}
+  }
+  if(on){
+    if(q.length)later(3e3);
+    addEventListener('online',()=>flush());
+    addEventListener('pagehide',()=>flush());
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
+  }
+  return {log,flush};
+})();
 {
 const $=s=>document.querySelector(s);
 const STRAT='../strategy-test/index.html';
@@ -377,7 +474,8 @@ const verdict=(ok,extra)=>`<p class="verdict ${ok?'good':'bad'}">${ok?'Doğru':'
 const nextBtn=l=>`<button class="next" id="next">${l}</button>`;
 const rail=h=>{$('#rail').innerHTML=h}, setQ=h=>{$('#q').innerHTML=h}, fb=h=>{$('#fb').innerHTML=h};
 function stop(){tok++;clearTimeout(timer);clearInterval(iv);$('#rail').classList.remove('tap')}
-function record(ok){
+function record(ok,d){
+  CLOUD.log('answer',Object.assign({mode:S.mode,ok},d));
   const st=S.stats[S.mode];st[1]++;ses.n++;
   if(ok){st[0]++;ses.ok++;ses.streak++;S.best=Math.max(S.best,ses.streak)}else ses.streak=0;
   save();top();renderStats();renderRoad();
@@ -413,14 +511,14 @@ const M={
       cur={c:rcard(),t0:performance.now()};phase='ask';
       rail(`<div class="hand">${cardHTML(cur.c,0,'big anim')}</div>`);
       setQ(`<p class="ask">Bu kartın Hi-Lo değeri?</p><div class="opts three">${optBtn(1,'+1','Düşük','1')}${optBtn(0,'0','Nötr','0')}${optBtn(-1,'−1','Yüksek','−')}</div>`);
-      fb('<p class="hint">Klavye: 1 ya da + → +1, 0 → 0, − → −1.</p><p class="hint">Hedef: düşünmeden, yarım saniyenin altında cevap vermek.</p>');
+      fb('<p class="hint kb">Klavye: 1 ya da + → +1, 0 → 0, − → −1.</p><p class="hint">Hedef: düşünmeden, yarım saniyenin altında cevap vermek.</p>');
     },
     answer(v){
       if(phase!=='ask') return;
       const ms=performance.now()-cur.t0, want=hv(cur.c.r), ok=v===want;
       times.push(ms);times=times.slice(-20);
-      record(ok);mark('v',v,want);
-      fb(verdict(ok,`doğrusu ${sg(want)}`)+`<p class="why">${cur.c.r}${cur.c.s} ${GRP[want]} kart: <b>${sg(want)}</b>. ${WHY[want]}</p><p class="hint">Süre: ${f1(ms/1000)} sn</p>`+nextBtn('Sonraki kart (Enter)'));
+      record(ok,{card:cur.c.r+cur.c.s,v,want,ms:Math.round(ms)});mark('v',v,want);
+      fb(verdict(ok,`doğrusu ${sg(want)}`)+`<p class="why">${cur.c.r}${cur.c.s} ${GRP[want]} kart: <b>${sg(want)}</b>. ${WHY[want]}</p><p class="hint">Süre: ${f1(ms/1000)} sn</p>`+nextBtn('Sonraki kart<span class="kh"> (Enter)</span>'));
       finish(ok,650);
     }
   },
@@ -428,7 +526,7 @@ const M={
     newQ(){
       cur={cards:Array.from({length:S.n},rcard)};phase='ready';
       rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap">${S.n} kart · kart başına ${dec(S.speed)} sn${S.two?' · ikişer':''}</p>`);
-      setQ(`<p class="ask">Kartları say, sonunda running count'u yaz.</p><button class="go" id="start">Başlat (Enter)</button>`);
+      setQ(`<p class="ask">Kartları say, sonunda running count'u yaz.</p><button class="go" id="start">Başlat<span class="kh"> (Enter)</span></button>`);
       fb('<p class="hint">Hız, kart sayısı ve ikişer gösterim aşağıdaki ayarlarda. Rahat başla, sonra hızlan.</p>');
     },
     start(){
@@ -437,15 +535,15 @@ const M={
         phase='ask';
         rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap">${cur.cards.length} kart bitti</p>`);
         setQ(stepper("Running count kaç?",0));
-        fb('<p class="hint">−/+ ile ayarla ya da yaz, Enter ile kontrol et.</p>');
+        fb('<p class="hint">−/+ ile ayarla ya da yaz<span class="kh">, Enter ile kontrol et</span>.</p>');
         if(fine()) $('#ans').focus({preventScroll:true});
       });
     },
     answer(v){
       if(phase!=='ask') return;
       const want=cur.cards.reduce((s,c)=>s+hv(c.r),0), ok=v===want;
-      record(ok);
-      fb(verdict(ok,`doğrusu ${sg(want)}`)+`<p class="why">Running count: <b>${sg(want)}</b>${ok?'':` (senin cevabın ${sg(v)})`}.</p><div class="scroll">${breakdown(cur.cards)}</div><p class="hint">Üstte kart, ortada değeri, altta o ana kadarki running count.</p>`+nextBtn('Yeni tur (Enter)'));
+      record(ok,{n:cur.cards.length,v,want});
+      fb(verdict(ok,`doğrusu ${sg(want)}`)+`<p class="why">Running count: <b>${sg(want)}</b>${ok?'':` (senin cevabın ${sg(v)})`}.</p><div class="scroll">${breakdown(cur.cards)}</div><p class="hint">Üstte kart, ortada değeri, altta o ana kadarki running count.</p>`+nextBtn('Yeni tur<span class="kh"> (Enter)</span>'));
       finish(ok,0);
     }
   },
@@ -454,7 +552,7 @@ const M={
       phase='ready';cur=null;
       const self=S.pace==='self';
       rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap">52 kartlık deste · 1 kart gizlenecek</p>`);
-      setQ(`<p class="ask">${self?'Desteyi kendi hızında çevir, gizlenen kartı bul.':'Kalan 51 kartı say, gizlenen kartın grubunu bul.'}</p><button class="go" id="start">Başlat (Enter)</button>`);
+      setQ(`<p class="ask">${self?'Desteyi kendi hızında çevir, gizlenen kartı bul.':'Kalan 51 kartı say, gizlenen kartın grubunu bul.'}</p><button class="go" id="start">Başlat<span class="kh"> (Enter)</span></button>`);
       fb(`<p class="hint">Tam deste 0'a döner. Sonda running count +1 ise eksik kart yüksek, −1 ise düşük, 0 ise nötrdür.</p><p class="hint">${self?'Hedef: 25 saniyenin altında, hatasız. Boşluk tuşu ya da karta dokunarak çevirirsin.':`Otomatik hız: kart başına ${dec(S.speed)} sn. Süre hedefi için "Kendi hızım" ayarını seç.`}</p>`);
     },
     start(){
@@ -487,17 +585,17 @@ const M={
       if(!cur.self) cur.t=performance.now()-cur.t0;
       rail(`<div class="hand">${cardHTML(null,0,'big')}</div><p class="cap">51 kart bitti · ${f1(cur.t/1000)} sn</p>`);
       setQ(`<p class="ask">Gizlenen kart hangi grupta?</p><div class="opts three">${optBtn(1,'Düşük','2–6','D')}${optBtn(0,'Nötr','7–9','N')}${optBtn(-1,'Yüksek','10–A','Y')}</div>`);
-      fb('<p class="hint">Klavye: D, N, Y.</p>');
+      fb('<p class="hint kb">Klavye: D, N, Y.</p>');
     },
     answer(v){
       if(phase!=='ask') return;
       const want=hv(cur.miss.r), ok=v===want, t=cur.t/1000;
       let rec='';
       if(cur.self&&ok&&(!S.bestDeck||t<S.bestDeck)){S.bestDeck=t;rec=' Yeni rekor!'}
-      record(ok);mark('v',v,want);
+      record(ok,{v,want,sec:t,self:!!cur.self});mark('v',v,want);
       rail(`<div class="hand">${cardHTML(cur.miss,0,'big anim')}</div><p class="cap">Gizlenen kart</p>`);
       const tl=cur.self?(t<25?' · 25 sn hedefinin altında.':' · Hedef: 25 sn altı.'):` (otomatik, ${dec(S.speed)} sn/kart)`;
-      fb(verdict(ok,`gizlenen kart ${GRP[want]}`)+`<p class="why">51 kartın running count'u ${sg(-want)}, yani eksik kart <b>${GRP[want]}</b>: ${cur.miss.r}${cur.miss.s}.</p><p class="hint">Süre: ${f1(t)} sn${tl}${rec}</p>`+nextBtn('Yeni deste (Enter)'));
+      fb(verdict(ok,`gizlenen kart ${GRP[want]}`)+`<p class="why">51 kartın running count'u ${sg(-want)}, yani eksik kart <b>${GRP[want]}</b>: ${cur.miss.r}${cur.miss.s}.</p><p class="hint">Süre: ${f1(t)} sn${tl}${rec}</p>`+nextBtn('Yeni deste<span class="kh"> (Enter)</span>'));
       finish(ok,0);
     }
   },
@@ -516,8 +614,8 @@ const M={
     answer(v){
       if(phase!=='ask') return;
       const {D,T,R}=cur, ok=v===T;
-      record(ok);
-      fb(verdict(ok,`doğrusu ${sg(T)}`)+`<p class="why">${sg(R)} ÷ ${dec(D)} = <b>${sg(T)}</b>.</p>`+nextBtn('Sonraki soru (Enter)'));
+      record(ok,{rc:R,decks:D,v,want:T});
+      fb(verdict(ok,`doğrusu ${sg(T)}`)+`<p class="why">${sg(R)} ÷ ${dec(D)} = <b>${sg(T)}</b>.</p>`+nextBtn('Sonraki soru<span class="kh"> (Enter)</span>'));
       finish(ok,1200);
     }
   },
@@ -531,22 +629,22 @@ const M={
       rail(`<div class="row2"><div><p class="cap">Krupiye</p><div class="hand">${cardHTML(vcard(upv),0,'anim')}${cardHTML(null,1)}</div></div><div class="plaque sm"><span>True count</span><b>${sg(T)}</b></div></div><div><div class="hand p">${pc.map((c,j)=>cardHTML(c,j+2,'anim')).join('')}</div><p class="hl">${label}</p></div><div class="badges"><span class="badge">${S.rule.toUpperCase()}</span><span class="badge">${it.sur?'Late surrender var':'Surrender yok'}</span></div>`);
       if(it.play==='I'){
         setQ(`<p class="ask">Krupiye As gösteriyor. Sigorta alır mısın?</p><div class="opts two"><button class="opt o2" data-a="I"><b>Sigorta al</b><kbd>E</kbd></button><button class="opt o0" data-a="N"><b>Alma</b><kbd>H</kbd></button></div>`);
-        fb('<p class="hint">Klavye: E evet, H hayır.</p>');
+        fb('<p class="hint kb">Klavye: E evet, H hayır.</p>');
       } else {
         setQ(`<p class="ask">Bu sayıda ne yaparsın?</p><div class="acts">${actBtn('H','H')}${actBtn('S','S')}${actBtn('D','D')}${actBtn('P','P',it.h!=='TT')}${actBtn('R','R',!it.sur)}</div>`);
-        fb('<p class="hint">Klavye: H, S, D, P, R. True count indekse eşit ya da üstündeyse sapma, altındaysa diğer oyun.</p>');
+        fb('<p class="hint"><span class="kb">Klavye: H, S, D, P, R. </span>True count indekse eşit ya da üstündeyse sapma, altındaysa diğer oyun.</p>');
       }
     },
     answer(a){
       if(phase!=='ask') return;
       const b=document.querySelector(`#q [data-a="${a}"]`);if(!b||b.disabled) return;
       const {it,ix,T,label,want}=cur, ok=a===want;
-      record(ok);mark('a',a,want);devHL=it.id;renderDev();
+      record(ok,{dev:it.id,hand:label,tc:T,pick:a,want});mark('a',a,want);devHL=it.id;renderDev();
       let why;
       if(it.play==='I') why=`Sigorta indeksi <b>${sg(ix)}</b>: true count ${sg(ix)} ve üstünde sigorta al, altında alma. Şu an ${sg(T)} → <b>${want==='I'?'al':'alma'}</b>.`;
       else why=`${label} – krupiye ${it.up}, ${S.rule.toUpperCase()}: indeks <b>${sg(ix)}</b>. True count ${sg(ix)} ve üstünde ${ACTN[it.play][1]}, altında ${ACTN[it.base][1]}. Şu an ${sg(T)} → <b>${ACTN[want][1]}</b>.`;
       if(!it.sur&&it.h===16) why+=' Late surrender olsaydı 16\'yı bu karta karşı her sayıda teslim ederdin.';
-      fb(verdict(ok,`doğrusu ${ACTN[want][0]}`)+`<p class="why">${why}</p>`+nextBtn('Sonraki el (Enter)'));
+      fb(verdict(ok,`doğrusu ${ACTN[want][0]}`)+`<p class="why">${why}</p>`+nextBtn('Sonraki el<span class="kh"> (Enter)</span>'));
       finish(ok,1600);
     }
   },
@@ -563,11 +661,11 @@ const M={
     answer(v){
       if(phase!=='ask') return;
       const {T,money,units}=cur, want=money?units*S.unit:units, ok=v===want;
-      record(ok);
+      record(ok,{tc:T,money:!!money,v,want});
       let w=T<=1?`True count ${sg(T)}: +1 ve altında masa minimumu, ${units} birim`:T-1>S.spread?`${sg(T)} − 1 = ${T-1}, ama spread 1–${S.spread} olduğu için ${S.spread} birimde kalırsın`:`${sg(T)} − 1 = ${units} birim`;
       w+=money?` × ${S.unit} € = <b>${want} €</b>.`:` → <b>${units} birim</b>.`;
       $('#chips').innerHTML=Array.from({length:units},()=>'<i class="chip"></i>').join('');
-      fb(verdict(ok,`doğrusu ${money?want+' €':want+' birim'}`)+`<p class="why">${w}${edgeTxt(T)}</p>`+nextBtn('Sonraki soru (Enter)'));
+      fb(verdict(ok,`doğrusu ${money?want+' €':want+' birim'}`)+`<p class="why">${w}${edgeTxt(T)}</p>`+nextBtn('Sonraki soru<span class="kh"> (Enter)</span>'));
       finish(ok,1300);
     }
   }

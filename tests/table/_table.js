@@ -3,8 +3,8 @@ const { load } = require('../_util');
 
 const KEY = 'bj-masa-v1';
 
-function table(settings = {}) {
-  const t = load('table', { [KEY]: Object.assign({ cc: 0, betCheck: false, bots: 2, show: true, mode: 'exam', offer: false, bank: 1e6 }, settings) });
+function table(settings = {}, before) {
+  const t = load('table', { [KEY]: Object.assign({ cc: 0, betCheck: false, bots: 2, show: true, mode: 'exam', offer: false, bank: 1e6 }, settings) }, before);
   const { q, all, sleep } = t;
   const ask = () => ((q('#act .ask') || q('#act .verdict') || {}).textContent) || '';
   t.ask = ask;

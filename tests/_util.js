@@ -15,8 +15,9 @@ const HANDS = Math.max(20, parseInt(process.env.HANDS, 10) || 300);
 
 const read = app => fs.readFileSync(APPS[app], 'utf8');
 
-/** Load an app in jsdom with timers shortened. `store` seeds localStorage (key -> object). */
-function load(app, store = {}) {
+/** Load an app in jsdom with timers shortened. `store` seeds localStorage (key -> object).
+ *  `before(window)` runs before the page's scripts (e.g. to install a fake fetch). */
+function load(app, store = {}, before) {
   const { JSDOM } = require('jsdom');
   const util = require('util');
   const dom = new JSDOM(read(app), {
@@ -27,6 +28,7 @@ function load(app, store = {}) {
       if (!w.TextEncoder) w.TextEncoder = util.TextEncoder;
       w.__cfdbg = [];
       for (const [k, v] of Object.entries(store)) w.localStorage.setItem(k, JSON.stringify(v));
+      if (before) before(w);
     },
   });
   const w = dom.window, d = w.document;

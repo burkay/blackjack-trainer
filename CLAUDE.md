@@ -7,6 +7,8 @@ Burkay is learning blackjack (basic strategy → Hi-Lo counting → table play).
 - `apps/<name>/index.html` — one self-contained file per app: markup, CSS and JS inline, no build, no dependencies except Google Fonts.
 - `tests/` — jsdom simulations (`npm test`), Chrome screenshots (`npm run screens`).
 
+- Every app ends its CSS with phone blocks: portrait `max-width:600px` and landscape `orientation:landscape and max-height:520px`, plus safe-area padding and home-screen meta tags. Keyboard-only text is marked `.kh` (inline) or `.kb` (hint line) and `kbd`; all hidden on `pointer:coarse`.
+
 Keep each app a single file. After changing an app, run `npm test` (or `npm run test:quick`) and look at screenshots for layout changes.
 
 ## Publishing as Claude artifacts
@@ -19,6 +21,14 @@ Keep each app a single file. After changing an app, run `npm test` (or `npm run 
 - Repo is public; Pages deploys `main` / root automatically on every push.
 - Apps: `https://burkay.github.io/blackjack-trainer/apps/<name>/`. No `window.claude` there, so progress stays in localStorage only (the code already guards for it).
 - Commits use the GitHub noreply email; GitHub blocks pushes that expose the real one.
+
+## Game data in Supabase
+
+- Each app has a `CLOUD` module at the top of its script: anonymous Supabase sign-in (shared by all four apps through localStorage `bj-cloud-v1`), events queued in `bj-cloud-q-<app>` and posted in batches to `events`. Failures are silent; logging is off on `file://`, localhost and wherever `fetch` is missing (so jsdom tests and screenshots never send anything).
+- Only game data: hands, exams, count checks, drill answers. Burkay chose explicitly: no visitor data (IP, location, device), no nickname, no cross-device sync.
+- Schema and Row Level Security: `supabase/schema.sql` (run by hand in the SQL Editor). Players can read/write only their own rows; the dashboard sees all.
+- The client key in the apps is the publishable key (public by design). Never put the secret/service_role key in the repo.
+- `tests/cloud.test.js` checks the flow against a fake server.
 
 ## Table Simulator internals worth knowing
 
