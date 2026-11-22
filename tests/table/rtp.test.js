@@ -15,7 +15,7 @@ const signed = n => (n ? (n > 0 ? '+' : '−') + eur(Math.abs(n)) : '€0');
   for (let r = 0; r < HANDS; r++) {
     if (!(await t.toBet())) break;
     t.bet(25);
-    for (const k of ['pp', 't3']) { q(`[data-bt=${k}]`).click(); q('#clr').click(); if (Math.random() < .5) q('[data-chip="5"]').click(); }
+    for (const k of ['pp', 't3']) if (Math.random() < .5) { q(`[data-bt=${k}]`).click(); q('[data-chip="5"]').click(); }
     const b0 = t.S().bank;
     q('#deal').click();
     if (!(await t.playOut(random))) break;

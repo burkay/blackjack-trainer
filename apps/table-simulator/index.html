@@ -44,13 +44,11 @@ a{color:inherit;text-underline-offset:3px}
 .betrow:has(.sbt){gap:10px 12px}.betrow:has(.sbt) .chips{gap:6px}
 .sbt{display:flex;gap:6px}
 .sbt button{display:grid;gap:1px;min-width:76px;min-height:50px;padding:5px 9px;border:1.5px solid var(--line);border-radius:14px;background:rgba(0,0,0,.3);text-align:left;cursor:pointer}
-.sbt button[aria-pressed=true]{border-color:var(--gold);background:rgba(243,197,82,.14)}
 .sbt span{font-size:12px;line-height:1.1;color:var(--mute)}
 .sbt b{font:800 24px/1 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums;color:var(--gold)}
 .sbs{position:absolute;top:20%;width:62%;aspect-ratio:1;border-radius:50%;border:1.5px dashed rgba(255,255,255,.5);display:grid;place-items:center}
 .sbs.pp{right:108%}.sbs.t3{left:108%}
 .sbs em{font:700 clamp(10px,calc(var(--cw)*.15),15px)/1 "Barlow Condensed",sans-serif;color:rgba(255,255,255,.75);font-style:normal}
-.sbs.sel{border:2px solid var(--gold);box-shadow:0 0 12px rgba(243,197,82,.45)}
 .sbs.won{border:2px solid #9ef0b9;box-shadow:0 0 14px rgba(47,180,102,.7)}
 .sbs span{position:absolute;top:calc(100% + 2px);left:50%;translate:-50% 0;font:800 clamp(12px,calc(var(--cw)*.16),17px)/1.25 "Barlow Condensed",sans-serif;color:#04210f;background:var(--kg);border-radius:999px;padding:0 7px;white-space:nowrap}
 .sbs span:empty{display:none}
@@ -199,6 +197,15 @@ a{color:inherit;text-underline-offset:3px}
 .betv span{font-size:14px;color:var(--mute)}
 .chips{display:flex;gap:10px;flex-wrap:wrap}
 .cbtn{position:relative;width:62px;height:62px;border:0;border-radius:50%;padding:0;background:none;cursor:pointer;--cw:62px;transition:transform .1s}
+.cbtn{cursor:grab}
+.cbtn,.seat.me .spot,.sbs{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.ask small{margin-left:10px;font:500 14px Barlow,sans-serif;color:var(--mute)}
+.dragc{position:fixed;width:50px;height:50px;margin:-25px 0 0 -25px;z-index:95;pointer-events:none;--cw:62px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.55))}
+.dragc .chip::after{font-size:15px}
+.lifted .stack{opacity:.25}
+.dragging{cursor:grabbing}.dragging .seat.me .spot,.dragging .sbs{border-color:var(--gold);border-style:dashed;box-shadow:0 0 14px rgba(243,197,82,.45)}
+.seat.me .spot.drop,.sbs.drop{border-style:solid!important;background:rgba(243,197,82,.28);box-shadow:0 0 22px rgba(243,197,82,.9)!important}
+.sbt button.drop{border-color:var(--gold);background:rgba(243,197,82,.22)}
 .cbtn .chip{transform:none}
 .cbtn .chip::after{font-size:16px}
 .cbtn:hover{transform:translateY(-3px)}
@@ -1051,7 +1058,7 @@ function renderTable(){
     el.querySelector('.sl').textContent=on?`${name}${amt?' · '+eur(amt):nextB?' · next '+eur(nextB):''}`:'Empty';
     if(me) SIDE.forEach(([k])=>{
       const se=sideEl(k),r=(G.sbR||[]).find(x=>x.k===k),bet=G.phase==='bet'?G.sb[k]:r?(r.pay?r.pay:0):G.phase==='deal'||G.phase==='play'?G.sb[k]:0;
-      se.hidden=!S.sbo&&!bet&&!r;se.classList.toggle('sel',G.phase==='bet'&&G.bt===k);se.classList.toggle('won',!!(r&&r.pay));
+      se.hidden=!S.sbo&&!bet&&!r;se.classList.toggle('won',!!(r&&r.pay));
       if(se._amt!==bet){se._amt=bet;se.querySelector('.stack').innerHTML=bet?chipsHTML(bet):''}
       const txt=r?(r.pay?'+'+eur(r.pay-r.bet):''):'';if(se._t!==txt){se._t=txt;se.querySelector('span').textContent=txt}
     });
@@ -1116,7 +1123,7 @@ function renderAct(){
   if(p==='bet'&&G.shuffling){
     el.innerHTML='<p class="ask">Shuffling a new shoe…</p><p class="mute">The dealer is shuffling all the cards. Place your bet in a moment.</p>';
   } else if(p==='bet'){
-    el.innerHTML=`<p class="ask">Place your bet</p><div class="betrow">${S.sbo?`<div class="sbt" role="group" aria-label="Chips go on">${[['m','Bet',G.bet]].concat(SIDE.map(x=>[x[0],x[2],G.sb[x[0]]])).map(([k,l,v])=>`<button data-bt="${k}" aria-pressed="${G.bt===k}"><span>${l}</span><b>${eur(v)}</b></button>`).join('')}</div>`:`<div class="betv"><b>${eur(G.bet)}</b><span>Bankroll ${eur(S.bank)} · table ${eur(MINB)}–${eur(MAXB)}</span></div>`}<div class="chips">${[5,10,25,100,500].map(v=>`<button class="cbtn" data-chip="${v}" aria-label="Add €${v}"><i class="chip c${v}" data-v="${v}"></i></button>`).join('')}</div></div><div class="row"><button class="ghost" id="clr">Clear</button><button class="ghost" id="minb">Min<span class="lg">imum</span></button>${G.pos>0?'<button class="ghost" id="newShoe">New shoe</button>':''}<button class="go" id="deal">DEAL<span class="kh"> (Enter)</span></button></div>`;
+    el.innerHTML=`<p class="ask">Place your bet<small>drag chips onto the table</small></p><div class="betrow">${S.sbo?`<div class="sbt" role="group" aria-label="Chips go on">${[['m','Bet',G.bet]].concat(SIDE.map(x=>[x[0],x[2],G.sb[x[0]]])).map(([k,l,v])=>`<button data-bt="${k}" aria-pressed="${G.bt===k}"><span>${l}</span><b>${eur(v)}</b></button>`).join('')}</div>`:`<div class="betv"><b>${eur(G.bet)}</b><span>Bankroll ${eur(S.bank)} · table ${eur(MINB)}–${eur(MAXB)}</span></div>`}<div class="chips">${[5,10,25,100,500].map(v=>`<button class="cbtn" data-chip="${v}" aria-label="Add €${v}"><i class="chip c${v}" data-v="${v}"></i></button>`).join('')}</div></div><div class="row"><button class="ghost" id="clr">Clear</button><button class="ghost" id="minb">Min<span class="lg">imum</span></button>${G.pos>0?'<button class="ghost" id="newShoe">New shoe</button>':''}<button class="go" id="deal">DEAL<span class="kh"> (Enter)</span></button></div>`;
   } else if(p==='check'){
     el.innerHTML=`<p class="ask">Count check</p><p class="mute">Call the count before you bet. About <b>${dec(decksLeft())}</b> decks remain; round the true count down.</p><div class="ccg"><label>Running count<span class="step"><button class="sb" data-t="cc-rc" data-d="-1" aria-label="Down">−</button><input id="cc-rc" type="number" value="0"><button class="sb" data-t="cc-rc" data-d="1" aria-label="Up">+</button></span></label><label>True count<span class="step"><button class="sb" data-t="cc-tc" data-d="-1" aria-label="Down">−</button><input id="cc-tc" type="number" value="0"><button class="sb" data-t="cc-tc" data-d="1" aria-label="Up">+</button></span></label><button class="go" id="ccgo">CHECK</button></div>`;
   } else if(p==='ins'){
@@ -1431,6 +1438,91 @@ function submitCheck(){
   else coach('<p class="head">Count recorded</p><p>The answer is in the report at the end of the exam.</p>','');
   G.phase='bet';render();
 }
+/* ---------- placing bets: drag a chip onto a spot (or its box), drag chips off a spot to take them back ---------- */
+const betEl=k=>k==='m'?spotEl(1):sideEl(k),betOn=k=>k==='m'?G.bet:G.sb[k];
+const betOpen=()=>G.phase==='bet'&&!busy&&!G.shuffling&&!G.collecting;
+const betRoom=k=>Math.max(0,k==='m'?Math.min(MAXB,S.bank-sideSum(G.sb))-G.bet:Math.min(SBMAX-G.sb[k],S.bank-G.bet-sideSum(G.sb)));
+function setBet(k,v){if(k==='m'){G.bet=v;G.betChecked=false}else G.sb[k]=v}
+function betRefused(k){
+  SND.play('error');
+  if(k==='m'?G.bet>=MAXB:G.sb[k]>=SBMAX) coach(`<p class="head">Limit: ${eur(k==='m'?MAXB:SBMAX)}</p><p>${k==='m'?'That is the most you can bet on a hand here.':'A side bet can be up to that much.'}</p>`,'bad');
+  else coach(`<p class="head">No money left for this bet</p><p>Your bankroll is ${eur(S.bank)} and your bets already use ${eur(G.bet+sideSum(G.sb))}. Drag some chips off the table first.</p>`,'bad');
+}
+function placeBet(k,v){
+  const add=Math.min(v,betRoom(k));
+  if(!betOpen()) return 0;
+  if(add<=0){betRefused(k);return 0}
+  setBet(k,betOn(k)+add);return add;
+}
+// chips from one spot to another; what does not fit stays where it was
+function moveBet(a,b){
+  const v=betOn(a);setBet(a,0);
+  const add=Math.min(v,betRoom(b));setBet(a,v-add);
+  if(add<=0){betRefused(b);return 0}
+  setBet(b,betOn(b)+add);return add;
+}
+const DRAG={on:null,ptr:false};
+// nearest spot (or its box in the bet panel) to a point, within reach of a fingertip
+function dropAt(x,y){
+  let best=null,bd=1e9;
+  const look=(el,k,reach)=>{
+    if(!el||el.hidden)return;const r=el.getBoundingClientRect();if(!r.width)return;
+    const dx=Math.max(r.left-x,0,x-r.right),dy=Math.max(r.top-y,0,y-r.bottom),d=Math.hypot(dx,dy),c=Math.hypot(x-(r.left+r.right)/2,y-(r.top+r.bottom)/2);
+    if(d<=reach&&c<bd){bd=c;best=k}
+  };
+  (S.sbo?['m','pp','t3']:['m']).forEach(k=>{look(betEl(k),k,38);look(document.querySelector(`[data-bt=${k}]`),k,4)});
+  if(!S.sbo)look(document.querySelector('.betv'),'m',4);
+  return best;
+}
+function dragMark(k){
+  document.querySelectorAll('.drop').forEach(e=>e.classList.remove('drop'));
+  if(k)[betEl(k),document.querySelector(`[data-bt=${k}]`)].forEach(e=>e&&e.classList.add('drop'));
+}
+function dragEnd(){
+  const g=DRAG.on;DRAG.on=null;dragMark(null);document.body.classList.remove('dragging');
+  if(g&&g.ghost)g.ghost.remove();if(g&&g.src)g.src.classList.remove('lifted');
+  return g;
+}
+function bindDrag(){
+  document.addEventListener('pointerdown',e=>{
+    if(DRAG.on||e.button>0||!e.target.closest) return;
+    const chip=e.target.closest('.cbtn');
+    if(chip){DRAG.ptr=true;clearTimeout(DRAG.tm)}
+    if(!betOpen()) return;
+    const side=e.target.closest('.sbs'),spot=e.target.closest('.seat.me .spot'),k=chip?null:side?side.dataset.sb:spot?'m':null;
+    if(!chip&&(!k||!betOn(k))) return;
+    DRAG.on={id:e.pointerId,k,v:chip?+chip.dataset.chip:betOn(k),x:e.clientX,y:e.clientY,up:e.pointerType==='touch'?24:0,src:chip||betEl(k),ghost:null};
+    if(e.pointerType==='mouse'&&e.cancelable) e.preventDefault(); // no text selection, no native drag
+  });
+  document.addEventListener('keydown',()=>{DRAG.ptr=false},true); // the next click comes from the keyboard
+  // a drag is never a scroll or a flick: otherwise the browser swallows the next tap (DEAL) as "stop scrolling"
+  document.addEventListener('touchstart',e=>{if(e.cancelable&&betOpen()&&e.target.closest&&e.target.closest('.cbtn,.seat.me .spot,.sbs'))e.preventDefault()},{passive:false});
+  window.addEventListener('pointermove',e=>{
+    const g=DRAG.on;if(!g||e.pointerId!==g.id) return;
+    if(!g.ghost){
+      if(Math.hypot(e.clientX-g.x,e.clientY-g.y)<7) return;
+      g.ghost=document.createElement('div');g.ghost.className='dragc';g.ghost.innerHTML=chipsHTML(g.v);document.body.appendChild(g.ghost);
+      document.body.classList.add('dragging');if(g.k)g.src.classList.add('lifted');SND.play('chip');
+    }
+    g.cx=e.clientX;g.cy=e.clientY-g.up;
+    g.ghost.style.left=g.cx+'px';g.ghost.style.top=g.cy+'px';
+    dragMark(dropAt(g.cx,g.cy));
+  });
+  const up=e=>{
+    const g0=DRAG.on;clearTimeout(DRAG.tm);DRAG.tm=setTimeout(()=>{DRAG.ptr=false},400);
+    if(!g0||e.pointerId!==g0.id) return;
+    const g=dragEnd();
+    if(e.type==='pointercancel') return;
+    if(!g.ghost){if(!g.k&&betOpen())coach(`<p class="head">Drag the chip onto a spot</p><p>Your spot${S.sbo?', PP (Perfect Pairs) or 21+3':''}. Drag chips off a spot to take them back.</p>`,'');return}
+    if(!betOpen()) return;
+    const k=dropAt(g.cx,g.cy);
+    if(!g.k){if(k&&placeBet(k,g.v))SND.play('chip')}
+    else if(!k){setBet(g.k,0);SND.play('chip')}
+    else if(k!==g.k&&moveBet(g.k,k))SND.play('chip');
+    render();
+  };
+  window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+}
 function tryDeal(force,quiet){
   if(G.phase!=='bet'||busy||G.shuffling) return;
   if(G.bet+sideSum(G.sb)>S.bank&&G.bet>=MINB&&G.bet<=S.bank){G.sb={pp:0,t3:0};coach('<p>Your bankroll does not cover the side bets, so they were taken off.</p>','bad');SND.play('error');render();return}
@@ -1702,21 +1794,14 @@ function openDrawer(open){
   if(open){SND.play('click');$('#btnClose').focus({preventScroll:true})}else $('#btnMenu').focus({preventScroll:true});
 }
 function bind(){
+  bindDrag();
   document.querySelector('.modes').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.mode)});
   $('#act').addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b||b.disabled) return;
     if(b.dataset.chip){
-      if(G.phase!=='bet') return;
-      if(G.bt!=='m'){
-        const k=G.bt,cur=G.sb[k],v=Math.max(cur,Math.min(cur+ +b.dataset.chip,SBMAX,S.bank-G.bet-sideSum(G.sb)+cur));
-        if(v===cur){SND.play('error');return}
-        G.sb[k]=v;renderAct();chipFly(b,sideEl(k),v-cur).then(()=>{if(G.phase==='bet')renderTable()});
-        return;
-      }
-      const nb=Math.max(G.bet,Math.min(G.bet+ +b.dataset.chip,MAXB,S.bank-sideSum(G.sb)));
-      if(nb===G.bet){SND.play('error');return}
-      const add=nb-G.bet;G.bet=nb;G.betChecked=false;renderAct();renderCount();
-      chipFly(b,spotEl(1),add).then(()=>{if(G.phase==='bet')renderTable()});
+      if(DRAG.ptr){DRAG.ptr=false;return} // a finger or the mouse drags; a click from the keyboard adds
+      const k=G.bt,add=placeBet(k,+b.dataset.chip);
+      if(add){renderAct();renderCount();chipFly(b,betEl(k),add).then(()=>{if(G.phase==='bet')renderTable()})}
       return;
     }
     if(b.dataset.bt){if(G.phase==='bet'){G.bt=b.dataset.bt;SND.play('click');render()}return}
@@ -1724,8 +1809,8 @@ function bind(){
     if(b.dataset.i){onIns(b.dataset.i);return}
     if(b.classList.contains('sb')){const el=$('#'+b.dataset.t);el.value=(parseInt(el.value,10)||0)+ +b.dataset.d;SND.play('click');return}
     switch(b.id){
-      case 'clr':if(G.bt!=='m'){if(G.sb[G.bt]){chipFly(sideEl(G.bt),bankEl(),G.sb[G.bt]);G.sb[G.bt]=0;render()}break}if(G.bet){chipFly(spotEl(1),bankEl(),G.bet);G.bet=0;G.betChecked=false;render()}break;
-      case 'minb':if(G.bt!=='m'){G.sb[G.bt]=Math.min(5,Math.max(0,S.bank-G.bet-sideSum(G.sb)+G.sb[G.bt]));SND.play('chip');render();break}G.bet=MINB;G.betChecked=false;SND.play('chip');render();break;
+      case 'clr':['m','pp','t3'].forEach(k=>{if(betOn(k)){chipFly(betEl(k),bankEl(),betOn(k));setBet(k,0)}});G.bt='m';render();break;
+      case 'minb':G.bet=Math.min(MINB,S.bank);if(G.bet+sideSum(G.sb)>S.bank)G.sb={pp:0,t3:0};G.betChecked=false;SND.play('chip');render();break;
       case 'deal':SND.play('click');tryDeal();break;
       case 'ccgo':submitCheck();break;
       case 'nextR':SND.play('click');startBetting();break;
@@ -1811,7 +1896,7 @@ function start(){
   $('#coachP').addEventListener('click',e=>{if(!e.target.closest('button,a,input'))e.currentTarget.classList.toggle('open')});
   const un=closePend();
   if(S.mode==='exam') startExam();
-  else coach('<p class="head">Welcome to the table</p><p>Tap chips to bet, then Deal. In training I stop you on a wrong play and show the right one; your bets and your count are checked too.</p>','');
+  else coach('<p class="head">Drag chips onto your spot</p><p>The big circle is your bet, PP and 21+3 are side bets. Drag chips off a spot to take them back, then Deal. In training I stop you on a wrong play and show the right one; your bets and your count are checked too.</p>','');
   if(un&&!un.done) coach(`<p class="head">Unfinished hand: −${eur(un.bet)}</p><p>The page closed in the middle of a hand. As at a real table, the ${eur(un.bet)} you had bet counts as lost${un.side?`; the side bets came to <b>${sgE(un.side)}</b>`:''}.</p>`,'bad');
   startBetting();renderRecord();connect();
 }

@@ -48,7 +48,7 @@ async function hand(t, want) { if (want) stack(t.w.__G, want); const b0 = t.S().
   s = t.S();
   check('lost side bets: +100 − 20, streak still grows', net === 80 && s.str === 2 && s.hlog[0].y === 100, [net, s.str]);
   t.q('#nextR').click(); await t.toBet();
-  t.q('[data-bt=pp]').click(); t.q('#clr').click(); t.q('[data-bt=t3]').click(); t.q('#clr').click();
+  t.q('#clr').click(); t.bet(100);
   net = await hand(t, ['10♠', '6♦', 'K♥', '10♣', 'J♥']);
   check('cleared side bets are off', net === 100 && !t.S().hlog[0].s, [net, t.S().hlog[0].s]);
   check('no script errors', t.errors.length === 0, t.errors);
@@ -70,7 +70,7 @@ async function hand(t, want) { if (want) stack(t.w.__G, want); const b0 = t.S().
   for (let r = 0; r < HANDS; r++) {
     if (!(await t.toBet())) break;
     t.bet(25);
-    for (const k of ['pp', 't3']) { t.q(`[data-bt=${k}]`).click(); t.q('#clr').click(); if (Math.random() < .7) t.q(`[data-chip="${random([5, 10, 25])}"]`).click(); }
+    for (const k of ['pp', 't3']) if (Math.random() < .7) { t.q(`[data-bt=${k}]`).click(); t.q(`[data-chip="${random([5, 10, 25])}"]`).click(); }
     const b0 = t.S().bank; t.q('#deal').click();
     if (!(await t.playOut(random))) break;
     const x = t.S(), hh = x.hlog[0], side = (hh.s || []).reduce((a, y) => a + y[2] - y[1], 0);
