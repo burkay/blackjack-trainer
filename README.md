@@ -18,11 +18,11 @@ Open any file straight in a browser to play, or play online on GitHub Pages:
 ## Table rules (Table Simulator)
 
 - 8 decks (6 optional), dealer stands on soft 17 (H17 optional), blackjack pays 3:2.
-- No hole card: the dealer draws a second card only after everyone has played, so a dealer blackjack takes doubled and split bets too. Insurance (ace up) pays 2:1 and is settled with that second card.
+- The dealer's second card is dealt face down. With an ace up the dealer offers insurance (2:1) and then checks for blackjack; with a ten up there is no check, and a dealer blackjack shows at the end and takes every bet, doubles and splits included.
 - Double on any two cards, also after a split. Split a pair once; split aces get one card each. Late surrender is optional (off by default).
-- By expected value that changes the chart in this game only: 11 is hit against a ten or an ace (doubled against a ten from true count +3), 8,8 is not split against a ten or an ace, A,A is not split against an ace. Fast Blackjack (the dealer checks for blackjack) and the two drills keep the standard chart.
+- By expected value that changes two plays in this game only: against a ten, 11 is hit (doubled only from true count +3) and 8,8 is not split. Fast Blackjack (the dealer checks for blackjack) and the two drills keep the standard chart.
 - Side bets (can be switched off): Perfect Pairs 25:1 perfect, 12:1 coloured, 6:1 mixed; 21+3 100:1 suited trips, 40:1 straight flush, 30:1 three of a kind, 10:1 straight, 5:1 flush. Settled right after the first three cards.
-- RTP: the stats show the game's long-run return (8 decks: 99.45% for the main game, 95.90% Perfect Pairs, 96.30% 21+3) next to what your own bets, the other players' bets and the house have made so far; small RTP figures also sit under the names, the house profit on the chip rack.
+- RTP: the stats show the game's long-run return (8 decks: 99.46% for the main game, 95.90% Perfect Pairs, 96.30% 21+3) next to what your own bets, the other players' bets and the house have made so far; small RTP figures also sit under the names, the house profit on the chip rack.
 - The shoe is shuffled once (crypto-random Fisher–Yates) and played to a cut card in the middle (45–55% left) or deep (20–25% left). Shoes alternate blue and red backs.
 - Player 1 bets reverse martingale (€10, double after a win, back to €10 after a loss); Player 2 bets flat €10. Both play basic strategy.
 

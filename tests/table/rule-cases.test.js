@@ -1,11 +1,10 @@
 // Hand-built cases for the rule replay (real card order), taken from real hands Burkay played.
-// The first cases were dealt with a hole card; the replay still accepts a dealer hand that already has two cards.
 const { read, check, done } = require('../_util');
 
 const src = read('table');
 const grab = (a, b) => src.slice(src.indexOf(a), src.indexOf(b));
 const code = "const UP=['2','3','4','5','6','7','8','9','10','A'];\n" + grab('/*LOGIC*/', '/*END*/') +
-  '\nconst cpHand=h=>Object.assign({},h,{cards:h.cards.slice()});\n' + grab('function dealerNeeds(', '/* Real card order') + grab('function cfRun(', 'function cfRecord(');
+  '\nconst cpHand=h=>Object.assign({},h,{cards:h.cards.slice()});\n' + grab('function seatNet(', '/* Real card order') + grab('function cfRun(', 'function cfRecord(');
 const S = { sur: true, s17: true, dev: false };
 const { cfRun } = new Function('S', code + ';return {cfRun};')(S);
 const C = x => ({ r: x.slice(0, -1), s: x.slice(-1) }), H = (...a) => a.map(C);
@@ -40,25 +39,20 @@ const snap = o => Object.assign({ hi: 0, pos: 0, rc: 0, bank: 1000, orig: 100, i
   check('soft 20 vs 4: your double wins €200 (bet €200, win €400)', mine.net === 200 && mine.me[0].bet === 200, mine.net);
   check('soft 20 vs 4: breaking the rule = €100 more profit', mine.net - rule.net === 100);
 }
-// No hole card: the dealer's second card is the next one in the shoe after everybody has played.
-// 2,9 vs K, then Q, 5 and A. Hit: you take the Q (21), the next player the 5 (17), the dealer the A: blackjack, €500 lost.
+// 2,9 vs K (hole A). Under a ten the dealer does not check and a blackjack takes every bet: hit loses €500, double €1,000.
 {
-  const c = snap({ shoe: H('Q♦', '5♦', 'A♠', '7♠'), me: [{ cards: H('2♠', '9♦'), bet: 500 }], up: C('K♦'), dealer: H('K♦'), after: [[{ cards: H('5♣', '7♠'), bet: 10 }]] });
-  const hit = cfRun(c, 'H'), dbl = cfRun(c, 'D');
-  check('no hole card: the dealer draws after the players', hit.d.map(k => k.r).join() === 'K,A', hit.d.map(k => k.r).join());
-  check('11 vs 10, dealer blackjack: hit loses €500', hit.net === -500, hit.net);
-  check('11 vs 10, dealer blackjack: double loses €1,000', dbl.net === -1000, dbl.net);
-  const s = snap({ shoe: H('3♦', '9♠', 'K♠', 'A♥', 'A♦'), me: [{ cards: H('8♠', '8♦'), bet: 100 }], up: C('K♦'), dealer: H('K♦') });
+  const c = snap({ shoe: H('Q♦', '5♦', '7♠'), me: [{ cards: H('2♠', '9♦'), bet: 500 }], up: C('K♦'), dealer: H('K♦', 'A♠'), after: [[{ cards: H('5♣', '7♠'), bet: 10 }]] });
+  check('11 vs 10, hidden blackjack: hit loses €500', cfRun(c, 'H').net === -500, cfRun(c, 'H').net);
+  check('11 vs 10, hidden blackjack: double loses €1,000', cfRun(c, 'D').net === -1000, cfRun(c, 'D').net);
+  const s = snap({ shoe: H('3♦', '9♠', 'K♠', 'K♥'), me: [{ cards: H('8♠', '8♦'), bet: 100 }], up: C('K♦'), dealer: H('K♦', 'A♠') });
   const split = cfRun(s, 'P');
-  check('8,8 split, dealer blackjack: every bet is lost', !split || split.d.length !== 2 || split.net === -split.me.reduce((a, h) => a + h.bet, 0), split && [split.net, split.d.map(k => k.r).join()]);
-  const a = snap({ shoe: H('K♠'), me: [{ cards: H('9♠', '8♦'), bet: 100 }], up: C('A♦'), dealer: H('A♦'), ins: 50 });
-  check('insurance pays 2:1 with the second card', cfRun(a, 'S').net === 0, cfRun(a, 'S').net);
-  const b = snap({ shoe: H('9♠'), me: [{ cards: H('A♠', 'K♦'), bet: 100, bj: true, done: true }], up: C('A♦'), dealer: H('A♦'), ins: 50 });
-  check('your blackjack against an ace: one dealer card, 3:2 minus the insurance', (x => x.net === 100 && x.d.length === 2)(cfRun(b, 'S')), cfRun(b, 'S').net);
-  const z = snap({ shoe: H('K♥', '9♥'), me: [{ cards: H('9♠', '7♦'), bet: 100 }], up: C('6♦'), dealer: H('6♦') });
-  check('everybody bust: the dealer draws nothing', cfRun(z, 'H').d.length === 1 && cfRun(z, 'H').net === -100, cfRun(z, 'H').d.length);
+  check('8,8 split, hidden blackjack: every bet is lost', split.net === -split.me.reduce((a, h) => a + h.bet, 0) && split.net <= -200, split.net);
+  const n = snap({ shoe: H('3♦'), me: [{ cards: H('A♣', 'Q♣'), bet: 100, bj: true, done: true }], up: C('K♦'), dealer: H('K♦', 'A♠') });
+  check('your own blackjack pushes', cfRun(n, 'S').net === 0, cfRun(n, 'S').net);
+  const z = snap({ shoe: H('K♥', '9♥'), me: [{ cards: H('9♠', '7♦'), bet: 100 }], up: C('6♦'), dealer: H('6♦', '5♠') });
+  check('everybody bust: the dealer takes no more cards', cfRun(z, 'H').d.length === 2 && cfRun(z, 'H').net === -100, cfRun(z, 'H').d.length);
 }
-// The chart without a hole card: these plays change and nothing else.
+// The chart under that rule: exactly two plays change, both against a ten.
 {
   const { decide } = new Function(code.slice(0, code.indexOf('\nconst cpHand')) + ';return {decide};')();
   const V = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'], UPS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A'], diff = new Set();
@@ -66,14 +60,12 @@ const snap = o => Object.assign({ hi: 0, pos: 0, rc: 0, bank: 1000, orig: 100, i
     const x = { canDouble: true, canSplit: a === b, canSur, das: true, s17, tc: 0, dev: false };
     const hand = [a, b].map(r => ({ r, s: '♠' })), up = { r: u, s: '♠' };
     const old = decide(hand, up, x).act, now = decide(hand, up, Object.assign({}, x, { enhc: true })).act;
-    if (old !== now) diff.add(`${a === b ? `${a},${b}` : 'hard ' + (+a + +b)} vs ${u}${canSur ? ' sur' : ''}${s17 ? '' : ' H17'}: ${old}→${now}`);
+    if (old !== now) diff.add(`${a === b ? `${a},${b}` : 'hard ' + (+a + +b)} vs ${u}${canSur ? ' sur' : ''}: ${old}→${now}`);
   }
-  const want = [];
-  for (const h of ['', ' H17']) {
-    for (const s of ['', ' sur']) { want.push(`hard 11 vs 10${s}${h}: D→H`, `A,A vs A${s}${h}: P→H`); if (h) want.push(`hard 11 vs A${s}${h}: D→H`); for (const u of ['10', 'A']) want.push(`8,8 vs ${u}${s}${h}: P→${s ? 'R' : 'H'}`); }
-  }
-  check('only 11, 8,8 and A,A change, against a ten or an ace', JSON.stringify([...diff].sort()) === JSON.stringify(want.sort()), [...diff].sort());
-  const at = (cards, u, tc) => decide(cards.map(r => ({ r, s: '♠' })), { r: u, s: '♠' }, { canDouble: true, canSplit: false, canSur: false, das: true, s17: true, tc, dev: true, enhc: true }).act;
-  check('with deviations: 11 vs 10 doubles from +3; 10 vs 10, 10 vs A and 11 vs A never', at(['5', '6'], '10', 2) === 'H' && at(['5', '6'], '10', 3) === 'D' && [4, 9].every(tc => at(['4', '6'], '10', tc) === 'H' && at(['4', '6'], 'A', tc) === 'H' && at(['5', '6'], 'A', tc) === 'H'));
+  const want = ['8,8 vs 10 sur: P→R', '8,8 vs 10: P→H', 'hard 11 vs 10 sur: D→H', 'hard 11 vs 10: D→H'].sort();
+  check('only 11 and 8,8 against a ten change', JSON.stringify([...diff].sort()) === JSON.stringify(want), [...diff].sort());
+  const at = (cards, u, tc, enhc = true) => decide(cards.map(r => ({ r, s: '♠' })), { r: u, s: '♠' }, { canDouble: true, canSplit: false, canSur: false, das: true, s17: true, tc, dev: true, enhc }).act;
+  check('with deviations: 11 vs 10 doubles from +3, 10 vs 10 never', at(['5', '6'], '10', 2) === 'H' && at(['5', '6'], '10', 3) === 'D' && [4, 9].every(tc => at(['4', '6'], '10', tc) === 'H'));
+  check('against an ace the deviations are the usual ones', [-3, 0, 1, 4, 6].every(tc => at(['5', '6'], 'A', tc) === at(['5', '6'], 'A', tc, false) && at(['4', '6'], 'A', tc) === at(['4', '6'], 'A', tc, false)) && at(['5', '6'], 'A', 1) === 'D');
 }
 done();

@@ -601,7 +601,7 @@ body{-webkit-tap-highlight-color:transparent}
       <label class="chk"><input type="checkbox" id="o-show">Show the count on screen</label>
       <label class="chk"><input type="checkbox" id="o-bet">Bet check (1 unit = €10, spread 1–8)</label>
       <label class="chk"><input type="checkbox" id="o-dev">Also check deviations (Illustrious 18 + Fab 4)</label>
-      <p class="mute">Other players use basic strategy. Player 1 bets reverse martingale: €10 to start, double after a win, back to €10 after a loss, same bet after a push; a double that would pass the €500 table limit goes back to €10. Their profit and loss shows under their names; reset it with the button above (a bankroll reset clears it too). Rules: blackjack pays 3:2. No hole card: the dealer takes a second card only after everyone has played, so a dealer blackjack (under a ten or an ace) takes doubled and split bets too. Insurance is offered on an ace and pays 2:1; it is settled when the second card comes. Double on any two cards, also after a split. Split a pair once; split aces get one card each. Perfect Pairs pays 25:1 perfect, 12:1 coloured, 6:1 mixed; 21+3 pays 100:1 suited trips, 40:1 straight flush, 30:1 three of a kind, 10:1 straight, 5:1 flush. Because of the missing hole card the chart here hits 11 against a ten or an ace, and does not split 8,8 against a ten or an ace or A,A against an ace.</p>
+      <p class="mute">Other players use basic strategy. Player 1 bets reverse martingale: €10 to start, double after a win, back to €10 after a loss, same bet after a push; a double that would pass the €500 table limit goes back to €10. Their profit and loss shows under their names; reset it with the button above (a bankroll reset clears it too). Rules: blackjack pays 3:2. The dealer's second card is dealt face down. With an ace up the dealer offers insurance (2:1) and then checks for blackjack. With a ten up there is no check: a dealer blackjack shows at the end and takes every bet, double and split money too. Double on any two cards, also after a split. Split a pair once; split aces get one card each. Perfect Pairs pays 25:1 perfect, 12:1 coloured, 6:1 mixed; 21+3 pays 100:1 suited trips, 40:1 straight flush, 30:1 three of a kind, 10:1 straight, 5:1 flush. Because of the unchecked ten the chart here hits 11 against a ten and does not split 8,8 against a ten.</p>
       <p class="mute">The shoe holds real decks (8 × 52 = 416 cards), shuffled with your browser's cryptographic random generator. The cut card goes in the middle (45–55% of the shoe left behind) or deep (20–25% left) as you choose, a little different every shoe; the shoe shows how far away it is. When it comes out the hand is finished, then the whole shoe is reshuffled. Between hands you can always ask for a new shoe.</p>
       <button class="ghost" id="resetBank">Reset bankroll to €1,000</button>
     </div>
@@ -704,17 +704,17 @@ const ACTN={H:['Hit','hit'],S:['Stand','stand'],D:['Double','double down'],P:['S
 const SUBT={H:'take a card',S:'stay',D:'double, one card',P:'make two hands',R:'give up half'};
 const HDEV=[[16,'10','S',0,0],[15,'10','S',4,4],[10,'10','D',4,4],[12,'3','S',2,2],[12,'2','S',3,3],[11,'A','D',-1,1],[9,'2','D',1,1],[10,'A','D',3,4],[9,'7','D',3,3],[16,'9','S',5,5],[13,'2','S',-1,-1],[12,'4','S',0,0],[12,'5','S',-2,-2],[12,'6','S',-3,-1],[13,'3','S',-2,-2]];
 function handName(cards){const {t,soft}=tot(cards),r=cards.map(c=>c.r).join(',');if(cards.length===2&&val(cards[0])===val(cards[1]))return `${r} (pair)`;return `${r} (${soft&&t<=21?'soft ':''}${t})`}
-/* x.enhc: no hole card. The dealer's second card comes after you have played, so a blackjack under a ten or an ace takes doubles
-   and splits too. By expected value that changes: 11 vs 10 hits (double only from true count +3), 11 and 10 vs A and 10 vs 10 never
-   double, 8,8 is not split against a ten or an ace, A,A is not split against an ace. Everything else stays on the chart. */
-const ENHC=' (no hole card: a dealer blackjack would take the extra bet too)';
+/* x.enhc: the dealer checks for blackjack under an ace but not under a ten, and a blackjack hidden under a ten takes doubles and
+   splits too. By expected value that changes two plays, both against a ten: 11 hits (double only from true count +3; 10 never
+   doubles) and 8,8 is not split. A,A is still split. Against an ace everything is on the chart. */
+const ENHC=' (the dealer does not check under a ten: a hidden blackjack would take the extra bet too)';
 function decide(cards,up,x){
-  const ui=upIdx(up),u=UP[ui],{t,soft}=tot(cards),tc=x.tc,name=handName(cards),nc=!!x.enhc&&(u==='10'||u==='A');
+  const ui=upIdx(up),u=UP[ui],{t,soft}=tot(cards),tc=x.tc,name=handName(cards),nc=!!x.enhc&&u==='10';
   const pv=cards.length===2&&val(cards[0])===val(cards[1])?val(cards[0]):0;
   if(pv&&x.canSplit){
     const k=pv===11?'A':pv===10?'T':String(pv);
     if(x.dev&&k==='T'&&(u==='5'||u==='6')){const i=u==='5'?5:4;if(tc>=i)return {act:'P',dev:true,why:`${name} vs ${u}: deviation, true count ${sg(tc)} ≥ ${sg(i)} → split.`}}
-    const c=nc&&(k==='8'||(k==='A'&&u==='A'))?'N':PAIR[k][ui];
+    const c=nc&&k==='8'?'N':PAIR[k][ui];
     if(c==='Y'||(c==='d'&&x.das)) return {act:'P',why:`${name} vs dealer ${u}: the chart says ${c==='Y'?'Y':'Y/N (double after split allowed)'} → split.`};
   }
   if(x.canSur&&!soft){
@@ -727,14 +727,14 @@ function decide(cards,up,x){
     if(r) return {act:'R',dev:dv,why:dv?`${name} vs ${u}: Fab 4, true count ${sg(tc)} ≥ ${sg(i)} → surrender.`:`${name} vs dealer ${u}: the chart says SUR${nc&&pv===8?ENHC:''} → surrender.`};
   }
   if(soft&&t===21) return {act:'S',why:`${name}: 21, stand.`};
-  if(soft&&t===12) return {act:'H',why:`${name}: soft 12, hit${nc&&pv===11&&u==='A'?ENHC:''}.`};
+  if(soft&&t===12) return {act:'H',why:`${name}: soft 12, hit.`};
   if(soft){
     const k=t-11;let c=SOFT[k][ui],n='';
     if(x.s17&&((k===8&&u==='6')||(k===7&&u==='2'))){c='S';n=' (S17 difference)'}
     const act=c==='H'?'H':c==='S'?'S':x.canDouble?'D':c==='D'?'H':'S';
     return {act,why:`${name} vs dealer ${u}: the chart says ${TXT[c]}${n}${(c==='D'||c==='X')&&!x.canDouble?', but you can\'t double here':''} → ${ACTN[act][1]}.`};
   }
-  if(x.dev){const d=nc&&t===11&&u==='10'?[11,'10','D',3,3]:nc&&(t===11||t===10)?null:HDEV.find(a=>a[0]===t&&a[1]===u);if(d){const i=d[x.s17?4:3];let act=tc>=i?d[2]:'H';if(act==='D'&&!x.canDouble)act='H';return {act,dev:true,why:`${name} vs ${u}: deviation index ${sg(i)}, true count ${sg(tc)} → ${ACTN[act][1]}.`}}}
+  if(x.dev){const d=nc&&t===11?[11,'10','D',3,3]:nc&&t===10?null:HDEV.find(a=>a[0]===t&&a[1]===u);if(d){const i=d[x.s17?4:3];let act=tc>=i?d[2]:'H';if(act==='D'&&!x.canDouble)act='H';return {act,dev:true,why:`${name} vs ${u}: deviation index ${sg(i)}, true count ${sg(tc)} → ${ACTN[act][1]}.`}}}
   if(t>=17) return {act:'S',why:`${name}: always stand on 17 or more.`};
   if(t<=8) return {act:'H',why:`${name}: always hit 8 or less.`};
   let c=HARD[t][ui],n='';
@@ -757,7 +757,7 @@ function poker3(cs){
 const SIDE=[['pp','Perfect Pairs','Pairs',h=>perfectPairs(h[0],h[1])],['t3','21+3','21+3',(h,up)=>poker3([h[0],h[1],up])]];
 /* Return to player, in percent of all money bet. Main game: 800 million hands per rule set with this chart (flat bet, no count, ±0.01).
    Side bets: exact odds from a full shoe. Keys: decks, then S17/H17 + s for surrender. */
-const RTP={8:{S17:99.45,S17s:99.52,H17:99.26,H17s:99.34,pp:95.90,t3:96.30},6:{S17:99.47,S17s:99.54,H17:99.27,H17s:99.35,pp:93.89,t3:95.38}};
+const RTP={8:{S17:99.46,S17s:99.53,H17:99.27,H17s:99.34,pp:95.90,t3:96.30},6:{S17:99.48,S17s:99.55,H17:99.29,H17s:99.36,pp:93.89,t3:95.38}};
 const rtpGame=k=>RTP[S.decks===6?6:8][k==='m'?(S.s17?'S17':'H17')+(S.sur?'s':''):k];
 /*ENDSIDE*/
 const UNIT=10,SPREAD=8,MINB=10,MAXB=500,BOTB=10,START=1000,SES_GAP=30*60e3,SBMAX=100;
@@ -907,6 +907,7 @@ function buildShoe(decks,cutPos){
 }
 /*ENDSHOE*/
 function newShoe(){G.deckCol=G.deckCol==='blue'?'red':'blue';document.documentElement.dataset.deck=G.deckCol;const b=buildShoe(S.decks,S.cutPos);G.shoe=b.cards;G.pos=0;G.cut=b.cut;G.rc=0;G.cutOut=false;G.lossStreak=0;G.dbjHist=[];G.offer=null}
+function reveal(c){if(c&&!c.up){c.up=true;G.rc+=hv(c)}}
 function draw(up=true){
   if(G.pos>=G.shoe.length)newShoe();
   const c=Object.assign({},G.shoe[G.pos++],{up,uid:'u'+(++UID)});if(up)G.rc+=hv(c);
@@ -1153,12 +1154,6 @@ function cfSnap(hi,rule,pick,h){
     me:seat.hands.map(cpHand),ins:seat.ins||0,up:upCard(),dealer:G.dealer.cards.slice(),
     before:ord.slice(0,me).map(i=>G.seats[i].hands.map(cpHand)),after:ord.slice(me+1).map(i=>G.seats[i].hands.map(cpHand))};
 }
-/* No hole card: 2 = the dealer plays the hand out, 1 = only the second card (insurance, or a blackjack or surrender that a dealer
-   blackjack could still beat), 0 = no card at all. */
-function dealerNeeds(hands,ins,up){
-  if(hands.some(h=>!h.bust&&!h.sur&&!h.bj))return 2;
-  return ins||(val(up)>=10&&hands.some(h=>!h.bust))?1:0;
-}
 function seatNet(hands,d,ins){
   const dt=tot(d).t,dbj=isBJ(d),dbust=dt>21;
   let net=ins?(dbj?ins*2:-ins):0;
@@ -1190,9 +1185,7 @@ function cfRun(c,first){
   rest(me,c.hi+1,false);
   const after=c.after.map(hs=>{const x=hs.map(cpHand);rest(x,0,true);return x});
   const d=c.dealer.slice();
-  const need=dealerNeeds([...c.before,me,...after].flat(),c.ins,up);
-  if(need===2){while(true){const {t,soft}=tot(d);if(!(t<17||(t===17&&soft&&!S.s17)))break;d.push(drw())}}
-  else if(need===1&&d.length<2)d.push(drw());
+  if([...c.before,me,...after].some(hs=>hs.some(h=>!h.bust&&!h.sur&&!h.bj))){while(true){const {t,soft}=tot(d);if(!(t<17||(t===17&&soft&&!S.s17)))break;d.push(drw())}}
   return ok?{net:seatNet(me,d,c.ins),me,d}:null;
 }
 function cfRecord(){
@@ -1221,7 +1214,7 @@ function profitRecord(main,side,bet,win){
 /* The open hand is saved from the deal on: money on the table (m), what came back so far (w: only once it is settled), side bets.
    If the page closes before the hand is over, closePend() books it on the next visit: what was not won is lost, as at a real table. */
 function openHand(o){
-  const me=G.seats[1],d=G.dealer.cards,r0=G.rec0||{};
+  const me=G.seats[1],d=G.dealer.cards.filter(c=>c.up),r0=G.rec0||{};
   S.pend=Object.assign({t:r0.t||Math.floor(Date.now()/1000),tc:r0.tc||0,x:r0.m||0,m:me.hands.reduce((a,h)=>a+h.bet,0)+(me.ins||0),w:0,h:me.hands.map(h=>cstr(h.cards)),d:cstr(d),dt:d.length?tot(d).t:0,
     s:G.sbR?G.sbR.map(x=>[x.k,x.bet,x.pay,x.name||'']):SIDE.filter(([k])=>G.sb[k]>0).map(([k])=>[k,G.sb[k],0,''])},o||{});
   save();
@@ -1507,7 +1500,7 @@ async function playRound(){
     await sleep(T(250));
     for(let k=0;k<2;k++){
       for(const i of ord){G.seats[i].hands[0].cards.push(draw(true));render();await sleep(D())}
-      if(k===0){G.dealer.cards.push(draw(true));render();await sleep(D())}
+      G.dealer.cards.push(draw(k===0));render();await sleep(D());
     }
     const up=upCard(),me=G.seats[1];
     openHand();
@@ -1518,6 +1511,11 @@ async function playRound(){
       const a=await wait('ins');
       if(a==='I'){me.ins=G.bet/2;S.bank-=me.ins;openHand();chipFly(bankEl(),spotEl(1),Math.max(5,me.ins))}
       G.phase='deal';render();
+    }
+    if(up.r==='A'){
+      await sleep(T(450));
+      if(isBJ(G.dealer.cards)){reveal(G.dealer.cards[1]);render();await sleep(D());await settle();return}
+      banner('c','NO BLACKJACK','push');await sleep(T(500));
     }
     for(const i of ord){
       const s=G.seats[i];
@@ -1532,9 +1530,9 @@ async function playRound(){
     }
     G.turn=null;G.phase='dealer';render();
     await sleep(T(250));
-    const need=dealerNeeds(ord.flatMap(i=>G.seats[i].hands),me.ins,up);
-    if(need){G.dealer.cards.push(draw(true));render();await sleep(D())}
-    if(need===2){while(dealerHits()){G.dealer.cards.push(draw(true));render();await sleep(D())}}
+    reveal(G.dealer.cards[1]);render();await sleep(D());
+    const live=ord.some(i=>G.seats[i].hands.some(h=>!h.bust&&!h.sur&&!h.bj));
+    if(live){while(dealerHits()){G.dealer.cards.push(draw(true));render();await sleep(D())}}
     if(tot(G.dealer.cards).t>21){banner('c','DEALER BUSTS','win')}
     await settle();
   }finally{busy=false}
@@ -1626,7 +1624,8 @@ async function settle(){
   if(dbj){
     const hs=G.seats[1].hands,more=hs.length>1||hs.some(h=>h.dbl);
     banner('c','DEALER BLACKJACK','lose');
-    coach(`<p class="head">Dealer blackjack</p><p>There is no hole card: the dealer's second card came after everyone had played. ${hs.every(h=>h.bj)?'Your blackjack pushes':`It takes every bet${more?', your double and split money too':''}`}${myIns?'; your insurance pays 2:1':''}.</p>`,'');
+    const what=hs.every(h=>h.bj)?'Your blackjack pushes':d[0].r==='A'?'The hand is over':`It takes every bet${more?', your double and split money too':''}`;
+    coach(`<p class="head">Dealer blackjack</p><p>${d[0].r==='A'?'The dealer checked under the ace: blackjack.':'With a ten up the dealer does not check, so the blackjack shows at the end.'} ${what}${myIns?'; your insurance pays 2:1':''}.</p>`,'');
   }
   if(anyBJ){banner(1,`BLACKJACK +${eur(net)}`,'bj');SND.play('bj')}
   else if(net>0){banner(1,`WIN +${eur(net)}`,'win');SND.play('win')}
