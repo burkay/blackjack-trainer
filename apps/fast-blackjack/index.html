@@ -312,7 +312,7 @@ body{-webkit-tap-highlight-color:transparent}
 <script>
 /* ---------- game data log (Supabase) ----------
    Each browser is an anonymous Supabase user; the four apps share it (same site, same localStorage).
-   Only game events are stored: no name, IP, location or device data. Events queue in localStorage
+   The app sends game events only: no name, location or device data (Supabase Auth itself logs sign-in IPs). Events queue in localStorage
    and go up in batches; any failure is silent and never touches the game. Off on file:// and localhost. */
 const CLOUD=(()=>{
   const URL='https://irohhofzdjozpjyxzegv.supabase.co',KEY='sb_publishable_6Fpd6LSMXracrx2mBgTmJQ_Yxy8LsSA',APP='fast',SK='bj-cloud-v1',QK='bj-cloud-q-'+APP,QMAX=300;

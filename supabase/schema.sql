@@ -7,7 +7,8 @@
 -- Row Level Security: a player can only read and write their own rows.
 -- The project owner sees everything in the Table Editor (it uses the service role).
 
--- Players: one row per browser (anonymous user). No name, email or device data is stored.
+-- Players: one row per browser (anonymous user). The apps send no name, email or device data
+-- (Supabase Auth itself keeps the IP and user agent of each sign-in in auth.sessions).
 create table if not exists public.players (
   id uuid primary key default auth.uid() references auth.users (id) on delete cascade,
   created_at timestamptz not null default now()

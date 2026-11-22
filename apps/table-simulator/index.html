@@ -38,6 +38,25 @@ a{color:inherit;text-underline-offset:3px}
 .modes button[aria-pressed=true]{background:linear-gradient(180deg,#ffd979,#e0a92f);color:#2a1a00}
 .kpi{display:grid;line-height:1.05}
 .kpi span{font-size:12px;color:var(--mute)}
+.kpi.rtp em{display:none}.kpi em{font-style:normal;font-size:12px;color:var(--mute)}
+@media(max-width:1180px){.topbar .kpi.rtp{display:none}}
+/* side bets */
+.betrow:has(.sbt){gap:10px 12px}.betrow:has(.sbt) .chips{gap:6px}
+.sbt{display:flex;gap:6px}
+.sbt button{display:grid;gap:1px;min-width:76px;min-height:50px;padding:5px 9px;border:1.5px solid var(--line);border-radius:14px;background:rgba(0,0,0,.3);text-align:left;cursor:pointer}
+.sbt button[aria-pressed=true]{border-color:var(--gold);background:rgba(243,197,82,.14)}
+.sbt span{font-size:12px;line-height:1.1;color:var(--mute)}
+.sbt b{font:800 24px/1 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums;color:var(--gold)}
+.sbs{position:absolute;top:20%;width:62%;aspect-ratio:1;border-radius:50%;border:1.5px dashed rgba(255,255,255,.5);display:grid;place-items:center}
+.sbs.pp{right:108%}.sbs.t3{left:108%}
+.sbs em{font:700 clamp(10px,calc(var(--cw)*.15),15px)/1 "Barlow Condensed",sans-serif;color:rgba(255,255,255,.75);font-style:normal}
+.sbs.sel{border:2px solid var(--gold);box-shadow:0 0 12px rgba(243,197,82,.45)}
+.sbs.won{border:2px solid #9ef0b9;box-shadow:0 0 14px rgba(47,180,102,.7)}
+.sbs span{position:absolute;top:calc(100% + 2px);left:50%;translate:-50% 0;font:800 clamp(12px,calc(var(--cw)*.16),17px)/1.25 "Barlow Condensed",sans-serif;color:#04210f;background:var(--kg);border-radius:999px;padding:0 7px;white-space:nowrap}
+.sbs span:empty{display:none}
+.kpi i{font-style:normal}.kpi span::first-letter{text-transform:uppercase}
+.kpi.ses b.gp,.kpi.totp b.gp{color:#9ef0b9}.kpi.ses b.gn,.kpi.totp b.gn{color:#ffb4a6}
+.cfs.pf2{grid-template-columns:1fr 1fr}
 .kpi b{font:700 26px/1 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
 .kpi.bank b{color:var(--gold);font-size:30px;transition:text-shadow .3s}
 .kpi.bank b.up{text-shadow:0 0 14px rgba(243,197,82,.8)}
@@ -98,13 +117,21 @@ a{color:inherit;text-underline-offset:3px}
 .c5{--c:#c8102e}.c10{--c:#1f4fd1}.c25{--c:#14874a}.c100{--c:#1b1b1b}.c500{--c:#6b2fb3}
 .chip.fly{position:fixed;inset:auto;z-index:60;pointer-events:none;transform:none}
 .chip.fly::after{font-size:13px}
-.insc{position:absolute;right:-34%;top:-18%;width:46%;aspect-ratio:1}
+.insc{position:absolute;right:-34%;top:-34%;width:46%;aspect-ratio:1}
 .insc .chip{transform:none}
 .sl{font:600 clamp(13px,calc(var(--cw)*.162),21px)/1.4 Barlow,sans-serif;color:#fff;background:rgba(0,0,0,.4);border-radius:999px;padding:1px 10px;white-space:nowrap}
 .seat.me .sl{background:linear-gradient(180deg,#ffd979,#e0a92f);color:#2a1a00}
 .spl{display:grid;justify-items:center;gap:1px;margin-top:-2px;font:600 clamp(12px,calc(var(--cw)*.15),19px)/1.3 Barlow,sans-serif;color:rgba(255,255,255,.88);background:rgba(0,0,0,.32);border-radius:8px;padding:2px 9px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .spl i{font-style:normal;font-size:.92em;color:#ffd979}.spl .gp{color:#9ef0b9}.spl .gn{color:#ffb4a6}.spl:empty{display:none}
 .seat.empty .spot{opacity:.35}
+/* wins in a row, under the name: the row keeps its height so nothing jumps when it appears */
+.stk{display:inline-flex;align-items:center;gap:3px;height:1.3em;margin:-2px 0;padding:0 9px;border-radius:999px;font:800 clamp(14px,calc(var(--cw)*.19),23px)/1 "Barlow Condensed",sans-serif;color:#fff;font-variant-numeric:tabular-nums}
+.stk:empty+.spl{translate:0 calc(-1*clamp(18px,var(--cw)*.247,30px))}
+.stk:not(:empty){background:rgba(0,0,0,.4)}
+.stk.hot{background:rgba(70,22,0,.78);color:#ffd27a;box-shadow:0 0 12px rgba(255,122,26,.55)}
+.stk svg{width:1.05em;height:1.05em}
+.stk>*{animation:stk .4s cubic-bezier(.2,.8,.2,1)}
+@keyframes stk{from{transform:scale(.3);opacity:0}60%{transform:scale(1.25)}}
 .tb{display:inline-block;font:700 clamp(14px,calc(var(--cw)*.175),22px)/1.35 Barlow,sans-serif;background:rgba(0,0,0,.6);color:#fff;border-radius:999px;padding:1px 10px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .tb.win{background:var(--kg);color:#04210f}
 .tb.lose{background:#6a1626}
@@ -272,10 +299,10 @@ legend{font-weight:600;margin-bottom:6px;padding:0}
 .sp-sub{margin:16px 0 0;color:var(--mute);font-size:14px}
 @media(max-width:720px){.topbar{gap:6px 10px}.brand span{display:none}.brand svg{width:32px;height:32px}.modes{order:5}.kpi.acc,#st-ex{order:6}.kpi.acc b,#st-ex b{font-size:20px}.icon{width:40px;height:40px}:root{--cw:clamp(36px,10vw,50px)}.rail{aspect-ratio:auto;min-height:560px;padding:10px;border-radius:26px 26px 46% 46%/26px 26px 18% 18%}.rail::before{border-radius:22px 22px 46% 46%/22px 22px 18% 18%}.felt{inset:10px;border-radius:18px 18px 46% 46%/18px 18px 17% 17%}.seat{width:33%}.seat.s0{left:0;bottom:17%}.seat.s1{left:33.5%;bottom:3%}.seat.s2{right:0;bottom:17%}.hands{gap:6px}.sl{font-size:12px;padding:1px 6px}.act b{font-size:20px}.act{min-height:56px}.kpi b{font-size:22px}.kpi.bank b{font-size:26px}.brand b{font-size:22px}.print{top:12%}}
 @media(max-width:480px){.act span,.act kbd{display:none}.act{grid-template-columns:minmax(0,1fr);text-align:center}.nxt{grid-template-columns:minmax(0,1fr)}.nxt .act{min-height:54px}}
-.kpi.rb{border:0;background:transparent;padding:0;text-align:left;color:inherit;cursor:pointer;font:inherit}
+.kpi.rb,.kpi.rtp{border:0;background:transparent;padding:0;text-align:left;color:inherit;cursor:pointer;font:inherit}
 .kpi.rb b.gp{color:#9ef0b9}.kpi.rb b.gn{color:#ffb4a6}
-.kpi.rb:hover span{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
-.kpi.rb:focus-visible,#btnHist:focus-visible,.hr:focus-visible,.hfil button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.kpi.rb:hover span,.kpi.rtp:hover span{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.kpi.rb:focus-visible,.kpi.rtp:focus-visible,.sbt button:focus-visible,#btnHist:focus-visible,.hr:focus-visible,.hfil button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .hist{position:fixed;inset:0;z-index:80;background:rgba(3,10,9,.97);overflow:auto;overscroll-behavior:contain;animation:pfade .18s ease-out}
 .hwrap{max-width:calc(var(--tmax) + 40px);margin:0 auto;padding:0 max(2.5vw,12px) 40px}
 .hh{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;padding:14px 0 10px;background:rgba(3,10,9,.97)}
@@ -322,8 +349,8 @@ legend{font-weight:600;margin-bottom:6px;padding:0}
 .hempty{padding:28px 16px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:14px}
 .hdl{display:none}
 @media(max-width:820px){.hhead{display:none}.hr{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"id net" "you you" "dlr dlr" "bw nt";gap:8px 10px}.hid{grid-area:id}.hyou{grid-area:you}.hdlr{grid-area:dlr}.hbw{grid-area:bw}.hnet{grid-area:net;text-align:right}.hnt{grid-area:nt;justify-content:flex-end}.hdl{display:inline;color:var(--mute);font-size:12px;margin-right:4px}.hh h2{font-size:28px}.hsumm{grid-template-columns:1fr 1fr}.hsumm b{font-size:28px}}
-@media(max-width:720px){.kpi.rb{order:6}.kpi.rb b{font-size:20px}}
-@media(prefers-reduced-motion:reduce){.hist,.pop,.popc,.pop.out,.pop.out .popc{animation:none}.ci{transition:none}.banner.show{animation:none;opacity:1}.act.hint{animation:none}.play{animation:none}.fan .card{animation:none;transform:translateX(-50%) rotate(var(--r))}.drawer{animation:none}}
+@media(max-width:720px){.kpi.rb,.kpi.totp{order:6}.kpi.rb b,.kpi.ses b,.kpi.totp b{font-size:20px}}
+@media(prefers-reduced-motion:reduce){.stk>*,.hist,.pop,.popc,.pop.out,.pop.out .popc{animation:none}.ci{transition:none}.banner.show{animation:none;opacity:1}.act.hint{animation:none}.play{animation:none}.fan .card{animation:none;transform:translateX(-50%) rotate(var(--r))}.drawer{animation:none}}
 /* touch screens and phones */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
 body{-webkit-tap-highlight-color:transparent}
@@ -334,37 +361,79 @@ body{-webkit-tap-highlight-color:transparent}
 .hh{padding-top:max(14px,env(safe-area-inset-top))}.hwrap{padding-bottom:max(40px,env(safe-area-inset-bottom))}
 @media(hover:none){.act:hover:not(:disabled){filter:none;transform:none}.cbtn:hover{transform:none}.icon:hover{background:rgba(0,0,0,.3)}.ghost:hover{background:rgba(255,255,255,.04)}}
 @media(pointer:coarse){.act kbd,.kh,.popk{display:none}}
-/* phone, portrait: table, one-line coach and the controls fit on one screen */
+/* phone, portrait: bankroll, table, one-line coach and the controls fill one screen; stats and mode sit below it (scroll) */
+.mstat{display:none}
 @media(max-width:600px){
-  .topbar{padding-top:max(6px,env(safe-area-inset-top));padding-bottom:2px;gap:4px 10px}
-  .kpi span{font-size:11px}
-  .rail{min-height:0;height:clamp(330px,calc(100vh - 330px),560px);height:clamp(330px,calc(100svh - 330px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),560px)}
-  .dock{margin-top:8px;gap:8px}
-  .dock>.panel{padding:10px 12px;border-radius:16px}
-  .dock>.coachp{order:-1;position:relative;padding:7px 34px 7px 12px;cursor:pointer}
-  .coachp::after{content:"";position:absolute;right:14px;top:16px;width:8px;height:8px;border:solid var(--mute);border-width:0 2px 2px 0;rotate:45deg;transition:rotate .2s}
-  .coachp.open::after{rotate:225deg;top:20px}
+  /* --R: table height left over after the bar, coach and controls; --cx: room for the count line when it is shown */
+  :root{--R:clamp(290px,calc(var(--vh,100svh) - 222px - var(--cx,0px) - env(safe-area-inset-top) - env(safe-area-inset-bottom)),720px);--cw:clamp(36px,min(14.2vw,calc((var(--R) - 180px)/4.2)),66px)}
+  :root:has(#cnt b){--cx:25px}
+  .topbar{flex-wrap:nowrap;gap:8px;padding-top:max(5px,env(safe-area-inset-top));padding-bottom:3px}
+  .topbar .kpi span{font-size:11px}.topbar .kpi i{display:none}.kpi.bank b{font-size:24px}.topbar #st-ex{order:0}.topbar #st-ex b{font-size:18px}
+  .topbar:has(#st-ex:not([hidden])) .brand div{display:none}
+  .rail{min-height:0;height:var(--R)}
+  .rack{--cw:40px}.shoe,.discard{--cw:42px}
+  .dealer{top:32px;gap:3px}
+  .print{top:calc(var(--R)*.5 - 34vw)}
+  .seat{gap:3px}.stk{height:15px;font-size:13px;margin:0}.stk:empty+.spl{translate:0 -18px}
+  .spot{width:var(--cw)}
+  .hand{padding:3px;gap:3px}
+  .hands.two{--cw:clamp(34px,11vw,48px)}.hands.many{--cw:clamp(28px,8.5vw,37px)}
+  /* long hands tuck closer together, so bigger cards still fit the seat */
+  .cards:has(.card:nth-child(4)) .card+.card{margin-left:calc(var(--cw)*-.7)}
+  .cards:has(.card:nth-child(5)) .card+.card{margin-left:calc(var(--cw)*-.76)}
+  .cards:has(.card:nth-child(6)) .card+.card{margin-left:calc(var(--cw)*-.81)}
+  .cards .card+.card.dbl{margin-left:calc(var(--cw)*-.55)}
+  .cards:has(.dbl){padding-right:calc(var(--cw)*.4)}.seat.s2 .cards:has(.dbl){translate:calc(var(--cw)*-.18)}
+  /* your hand and the dealer's get the biggest cards the table height allows */
+  .dealer,.seat.s1 .hands:not(.two):not(.many){--cw:max(clamp(36px,min(14.2vw,calc((var(--R) - 180px)/4.2)),66px),min(17.5vw,calc((var(--R) - 205px)/4.2)))}
+  .dock{margin-top:6px;gap:6px;padding-bottom:6px}
+  .dock>.panel{padding:8px 10px;border-radius:15px}
+  .dock>.coachp{order:-1;position:relative;padding:6px 34px 6px 12px;cursor:pointer}
+  .coachp::after{content:"";position:absolute;right:14px;top:14px;width:8px;height:8px;border:solid var(--mute);border-width:0 2px 2px 0;rotate:45deg;transition:rotate .2s}
+  .coachp.open::after{rotate:225deg;top:18px}
   .coachp .head{font-size:18px;margin:0}
   .coachp .msg p{font-size:15px}
   .coachp:not(.open):not(:has(.cbs)) .msg>:not(:first-child){display:none}
-  .coachp:not(.open):not(:has(.cbs)) .msg>p:first-child{margin:0;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .coachp:has(.cbs)::after{display:none}
+  .coachp:not(.open):not(:has(.cbs)) .msg>p:first-child{margin:0;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .coachp:has(.cbs){padding-right:12px}.coachp:has(.cbs)::after{display:none}
   .coachp:not(.open) .cnt:not(:has(b)){display:none}
-  .coachp .cbs{margin-top:6px}.coachp .cb{flex:1}
-  .coachp .cnt{margin-top:6px;padding-top:6px;gap:2px 10px}.coachp .cnt b{font-size:19px}.coachp .cnt span{font-size:12px}
-  .ask{font-size:20px;margin-bottom:8px}
-  .acts{gap:6px}.act{min-height:50px;border-radius:14px;padding:6px 8px}.act b{font-size:19px}
+  .coachp .cbs{margin-top:6px}.coachp .cb{flex:1;min-height:42px}
+  .coachp .cnt{margin-top:1px;padding-top:0;border:0;gap:0 8px;flex-wrap:nowrap;white-space:nowrap}.coachp .cnt b{font-size:18px;line-height:24px}.coachp .cnt span{font-size:12px}
+  .coachp.open .cnt{flex-wrap:wrap;white-space:normal}
+  .dock:has(.coachp .cbs) #act .ask{display:none}
+  .ask{font-size:17px;margin-bottom:6px}
+  #act>.mute{margin:2px 0 0;font-size:13px;line-height:1.3}
+  /* five actions in one slim row */
+  .acts{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.acts.two{grid-template-columns:1fr 1fr}
+  .acts .act,.acts .act:nth-child(n+4),.acts.two .act{grid-column:auto}
+  .act{min-height:44px;border-radius:12px;padding:4px 2px;grid-template-columns:minmax(0,1fr);text-align:center}.act span,.act kbd{display:none}
+  .act b{font-size:clamp(13px,3.6vw,16px);letter-spacing:0}
   #act .ask:has(+.betrow){display:none}
+  /* with side bets: what the chips go on + DEAL, then chips + Clear and Min */
+  #act:has(.sbt){display:flex;flex-wrap:wrap;gap:8px 5px}#act:has(.sbt) .betrow,#act:has(.sbt) .row{display:contents}
+  .sbt{order:1;flex:1 1 60%;gap:5px}.sbt button{flex:1;min-width:0;min-height:44px;padding:4px 8px;border-radius:12px}.sbt b{font-size:19px}.sbt span{font-size:11px}
+  #act:has(.sbt) #deal{order:2;flex:0 0 78px;padding:4px 6px}
+  #act:has(.sbt) .chips{order:3;flex:0 0 auto;gap:4px}#act:has(.sbt) .cbtn{width:42px;height:42px;--cw:42px}
+  #act:has(.sbt) #clr{order:4;flex:1}#act:has(.sbt) #minb{order:5;flex:1}#act:has(.sbt) #clr,#act:has(.sbt) #minb{padding:4px 6px}
+  #act:has(.sbt) #newShoe,#minb .lg{display:none}
   .betrow{flex-wrap:nowrap;gap:8px;justify-content:space-between}
-  .betv b{font-size:30px}.betv span{display:none}
-  .chips{gap:5px;flex-wrap:nowrap}
-  .cbtn{width:50px;height:50px;--cw:50px}.cbtn .chip::after{font-size:14px}
-  .row{margin-top:10px;gap:6px}.row .ghost{padding:6px 12px}.row .go{flex:1 1 110px;min-height:50px;padding:6px 14px}
-  .hres{gap:6px}.hres .ask{font-size:20px}
-  .hsum{flex:1 1 100%;flex-wrap:nowrap;gap:6px}.hsum div{flex:1;min-width:0;padding:4px 8px}.hsum b{font-size:20px}.hsum span,.hsum i{font-size:11px}
-  .nxt{grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:6px;margin-top:8px}.nxt .act{min-height:54px;padding:6px}.nxt .act b{font-size:17px;line-height:1.05}
+  .betv b{font-size:28px}.betv span{display:none}
+  .chips{gap:6px;flex-wrap:nowrap}
+  .cbtn{width:44px;height:44px;--cw:44px}.cbtn .chip::after{font-size:13px}
+  .row{margin-top:8px;gap:6px}.row .ghost{min-height:42px;padding:4px 12px}.row .go{flex:1 1 110px;min-height:42px;padding:4px 14px;font-size:19px}
+  .hres{gap:6px 10px;flex-wrap:nowrap}.hres .ask{font-size:19px}
+  .hsum{flex:1 1 auto;flex-wrap:nowrap;gap:6px}.hsum div{flex:1;min-width:0;padding:2px 8px}.hsum div:nth-child(3){display:none}.hsum b{font-size:19px}.hsum span,.hsum i{font-size:11px}.hsum i{display:inline;margin-left:5px}
+  .nxt{grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:6px;margin-top:6px}.nxt .act{min-height:46px;padding:4px}.nxt .act b{font-size:16px;line-height:1.05}
   .cfl{font-size:14px}
+  .mstat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px max(2.5vw,12px) max(18px,env(safe-area-inset-bottom));padding:12px;background:var(--glass);border:1px solid var(--line);border-radius:16px}
+  .mstat h2{grid-column:1/-1;margin:0;font:700 20px/1.1 "Barlow Condensed",sans-serif}
+  .mstat .kpi,.mstat .kpi.rb{order:0;align-content:center;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.3)}
+  .mstat .kpi span{font-size:13px}.mstat .kpi b,.mstat .kpi.acc b,.mstat .kpi.rb b,.mstat .kpi.ses b,.mstat .kpi.totp b{font-size:25px}
+  .mstat .kpi.rtp{grid-column:1/-1;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.3);grid-template-columns:auto 1fr;gap:0 10px;align-items:baseline}.mstat .kpi.rtp span{grid-column:1/-1}.mstat .kpi.rtp b{font-size:25px}.mstat .kpi.rtp em{display:block;font-size:14px}
+  .mstat .modes{grid-column:1/-1;order:9}.mstat .modes button{flex:1}
 }
+@media(max-width:410px){.brand div{display:none}}
+@media(max-width:359px){.acts{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px) and (max-height:700px){.shoe .tlab,.discard .tlab{display:none}}
 /* phone, landscape: table on the left, controls on the right */
 @media(orientation:landscape) and (max-height:520px){
@@ -373,7 +442,9 @@ body{-webkit-tap-highlight-color:transparent}
   .topbar{grid-column:1/-1;max-width:none;width:100%;flex-wrap:nowrap;gap:10px 14px;padding-top:max(4px,env(safe-area-inset-top));padding-bottom:2px}
   .brand div,.brand span{display:none}.brand svg{width:30px;height:30px}
   .modes{order:0}.modes button{min-height:32px;padding:2px 12px}
-  .kpi.acc,#st-ex,.kpi.rb{order:0}.kpi span{font-size:11px}.kpi b,.kpi.acc b,.kpi.rb b{font-size:19px}.kpi.bank b{font-size:22px}
+  .kpi.acc,#st-ex,.kpi.rb,.kpi.totp{order:0}.kpi span{font-size:11px}.kpi i{display:none}.kpi b,.kpi.acc b,.kpi.rb b,.kpi.ses b,.kpi.totp b{font-size:19px}
+  .seat{gap:2px}.stk{height:14px;font-size:13px;margin:0}.stk:empty+.spl{translate:0 -16px}.spl i{display:none}
+  .dealer{top:calc(var(--cw)*.4);gap:2px}.kpi.bank b{font-size:22px}
   .icon{width:36px;height:36px}
   .stage{grid-column:1;grid-row:2;padding-top:2px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
   .rail{height:100%;min-height:0;aspect-ratio:auto;max-width:none;padding:10px;border-radius:26px 26px 46% 46%/26px 26px 28% 28%}
@@ -389,16 +460,19 @@ body{-webkit-tap-highlight-color:transparent}
   .ask{font-size:20px;margin-bottom:8px}
   .acts{gap:6px}.act{min-height:46px;border-radius:14px;padding:6px 8px;grid-template-columns:minmax(0,1fr);text-align:center}.act b{font-size:19px}.act span{display:none}
   .betrow{gap:8px}.betv b{font-size:28px}.betv span{display:none}
+  .sbt{width:100%;gap:5px}.sbt button{flex:1;min-width:0;min-height:40px;padding:3px 8px;border-radius:12px}.sbt b{font-size:18px}.sbt span{font-size:11px}
   .chips{gap:5px;flex-wrap:nowrap}.cbtn{width:46px;height:46px;--cw:46px}.cbtn .chip::after{font-size:13px}
   .row{margin-top:8px;gap:6px}.row .go{flex:1 1 100px;min-height:46px;padding:6px 14px}
   .hsum{gap:6px}.hsum div{min-width:0;flex:1;padding:4px 8px}.hsum b{font-size:20px}
   .nxt{grid-template-columns:minmax(0,1fr);gap:6px}.nxt .act{min-height:44px}.nxt .act b{font-size:18px}
 }
+@media(orientation:landscape) and (max-height:520px) and (max-width:740px){.kpi.totp{display:none}}
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="s-h" viewBox="0 0 100 100"><path d="M50 92C22 70 2 52 2 30C2 14 14 3 29 3c9 0 17 5 21 13C54 8 62 3 71 3c15 0 27 11 27 27 0 22-20 40-48 62z"/></symbol>
+  <symbol id="s-fire" viewBox="0 0 24 24"><path fill="#ff7a1a" d="M13 1c.6 4-1 5.800-3 8C8.800 10.300 8.300 8.700 8.500 7 5.400 9.400 4 12.200 4 15a8 8 0 0 0 16 0c0-5-3-9.500-7-14z"/><path fill="#ffd24a" d="M12.500 11c.3 2.300-.8 3.300-2 4.600-.9 1-1.300 1.900-1.300 2.900a3.100 3.100 0 0 0 6.200 0c0-2.700-1.200-5.300-2.900-7.500z"/></symbol>
   <symbol id="s-d" viewBox="0 0 100 100"><path d="M50 2L88 50 50 98 12 50z"/></symbol>
   <symbol id="cbk" viewBox="0 0 250 350"><clipPath id="cbkc"><rect x="24" y="24" width="202" height="302" rx="5"/></clipPath><rect x="13" y="13" width="224" height="324" rx="11" fill="currentColor"/><path d="M-350 0l350 350M-339 0l350 350M-328 0l350 350M-317 0l350 350M-306 0l350 350M-295 0l350 350M-284 0l350 350M-273 0l350 350M-262 0l350 350M-251 0l350 350M-240 0l350 350M-229 0l350 350M-218 0l350 350M-207 0l350 350M-196 0l350 350M-185 0l350 350M-174 0l350 350M-163 0l350 350M-152 0l350 350M-141 0l350 350M-130 0l350 350M-119 0l350 350M-108 0l350 350M-97 0l350 350M-86 0l350 350M-75 0l350 350M-64 0l350 350M-53 0l350 350M-42 0l350 350M-31 0l350 350M-20 0l350 350M-9 0l350 350M2 0l350 350M13 0l350 350M24 0l350 350M35 0l350 350M46 0l350 350M57 0l350 350M68 0l350 350M79 0l350 350M90 0l350 350M101 0l350 350M112 0l350 350M123 0l350 350M134 0l350 350M145 0l350 350M156 0l350 350M167 0l350 350M178 0l350 350M189 0l350 350M200 0l350 350M211 0l350 350M222 0l350 350M233 0l350 350M244 0l350 350M255 0l350 350M0 0l-350 350M11 0l-350 350M22 0l-350 350M33 0l-350 350M44 0l-350 350M55 0l-350 350M66 0l-350 350M77 0l-350 350M88 0l-350 350M99 0l-350 350M110 0l-350 350M121 0l-350 350M132 0l-350 350M143 0l-350 350M154 0l-350 350M165 0l-350 350M176 0l-350 350M187 0l-350 350M198 0l-350 350M209 0l-350 350M220 0l-350 350M231 0l-350 350M242 0l-350 350M253 0l-350 350M264 0l-350 350M275 0l-350 350M286 0l-350 350M297 0l-350 350M308 0l-350 350M319 0l-350 350M330 0l-350 350M341 0l-350 350M352 0l-350 350M363 0l-350 350M374 0l-350 350M385 0l-350 350M396 0l-350 350M407 0l-350 350M418 0l-350 350M429 0l-350 350M440 0l-350 350M451 0l-350 350M462 0l-350 350M473 0l-350 350M484 0l-350 350M495 0l-350 350M506 0l-350 350M517 0l-350 350M528 0l-350 350M539 0l-350 350M550 0l-350 350M561 0l-350 350M572 0l-350 350M583 0l-350 350M594 0l-350 350M605 0l-350 350" stroke="#fff" stroke-opacity=".3" stroke-width="1.5" clip-path="url(#cbkc)"/><rect x="20" y="20" width="210" height="310" rx="7" fill="none" stroke="#fff" stroke-width="2.4"/><rect x="27" y="27" width="196" height="296" rx="4" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1"/><circle cx="125" cy="175" r="54" fill="currentColor" stroke="#fff" stroke-width="3"/><circle cx="125" cy="175" r="46" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1"/><g fill="#fff" fill-opacity=".9"><circle cx="161.0" cy="175.0" r="2.2"/><circle cx="158.3" cy="188.8" r="2.2"/><circle cx="150.5" cy="200.5" r="2.2"/><circle cx="138.8" cy="208.3" r="2.2"/><circle cx="125.0" cy="211.0" r="2.2"/><circle cx="111.2" cy="208.3" r="2.2"/><circle cx="99.5" cy="200.5" r="2.2"/><circle cx="91.7" cy="188.8" r="2.2"/><circle cx="89.0" cy="175.0" r="2.2"/><circle cx="91.7" cy="161.2" r="2.2"/><circle cx="99.5" cy="149.5" r="2.2"/><circle cx="111.2" cy="141.7" r="2.2"/><circle cx="125.0" cy="139.0" r="2.2"/><circle cx="138.8" cy="141.7" r="2.2"/><circle cx="150.5" cy="149.5" r="2.2"/><circle cx="158.3" cy="161.2" r="2.2"/></g><g fill="#fff"><ellipse cx="125" cy="148" rx="6.5" ry="17" transform="rotate(0 125 175)"/><ellipse cx="125" cy="148" rx="6.5" ry="17" transform="rotate(45 125 175)"/><ellipse cx="125" cy="148" rx="6.5" ry="17" transform="rotate(90 125 175)"/><ellipse cx="125" cy="148" rx="6.5" ry="17" transform="rotate(135 125 175)"/><ellipse cx="125" cy="148" rx="6.5" ry="17" transform="rotate(180 125 175)"/><ellipse cx="125" cy="148" rx="6.5" ry="17" transform="rotate(225 125 175)"/><ellipse cx="125" cy="148" rx="6.5" ry="17" transform="rotate(270 125 175)"/><ellipse cx="125" cy="148" rx="6.5" ry="17" transform="rotate(315 125 175)"/></g><circle cx="125" cy="175" r="10" fill="currentColor" stroke="#fff" stroke-width="2.5"/><circle cx="125" cy="175" r="3.5" fill="#fff"/><path d="M20 11l9 9-9 9-9-9z" fill="#fff"/><circle cx="20" cy="20" r="3" fill="currentColor"/><path d="M230 11l9 9-9 9-9-9z" fill="#fff"/><circle cx="230" cy="20" r="3" fill="currentColor"/><path d="M20 321l9 9-9 9-9-9z" fill="#fff"/><circle cx="20" cy="330" r="3" fill="currentColor"/><path d="M230 321l9 9-9 9-9-9z" fill="#fff"/><circle cx="230" cy="330" r="3" fill="currentColor"/><path d="M125 20v12M125 330v-12M20 175h12M230 175h-12" stroke="#fff" stroke-width="2.4"/></symbol>
   <symbol id="s-s" viewBox="0 0 100 100"><path d="M50 2C58 18 96 38 96 62c0 15-11 25-25 25-8 0-15-4-19-10 1 9 5 16 13 21H35c8-5 12-12 13-21-4 6-11 10-19 10C15 87 4 77 4 62 4 38 42 18 50 2z"/></symbol>
@@ -419,9 +493,12 @@ body{-webkit-tap-highlight-color:transparent}
   <div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#0e3b36" stroke="#f3c552" stroke-width="2"/><use href="#s-s" x="9" y="8" width="22" height="22" fill="#f3c552"/></svg><div><b>BLACKJACK</b><span>Training Table</span></div></div>
   <div class="modes" role="group" aria-label="Mode"><button data-mode="train" aria-pressed="true">Training</button><button data-mode="exam" aria-pressed="false">Exam</button></div>
   <div class="kpi bank"><span>Bankroll</span><b id="s-bank">€1,000</b></div>
-  <div class="kpi acc"><span>Decision accuracy</span><b id="s-dec">–</b></div>
+  <div class="kpi ses"><span>Session<i> profit</i></span><b id="s-ses">€0</b></div>
+  <div class="kpi totp"><span>Overall<i> profit</i></span><b id="s-tot">€0</b></div>
+  <button class="kpi rtp" id="k-rtp" aria-label="Return to player: open the stats"><span>Your RTP</span><b id="s-rtp">–</b><em id="s-rtpg"></em></button>
+  <div class="kpi acc"><span><i>Decision </i>accuracy</span><b id="s-dec">–</b></div>
   <div class="kpi" id="st-ex" hidden><span>Exam</span><b id="s-ex">1/20</b></div>
-  <button class="kpi rb" id="k-rb" aria-label="Rule breaking result: open the hand history"><span>Rule breaking</span><b id="s-rb">–</b></button>
+  <button class="kpi rb" id="k-rb" aria-label="Rule breaking result: open the hand history"><span>Rule<i> breaking</i></span><b id="s-rb">–</b></button>
   <button class="icon" id="btnHist" aria-label="Hand history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 7v5l3 2"/></svg></button>
   <button class="icon" id="btnSound" aria-label="Sound on" aria-pressed="true"></button>
   <button class="icon" id="btnMenu" aria-label="Settings and stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -454,6 +531,7 @@ body{-webkit-tap-highlight-color:transparent}
   <div class="panel" id="act" aria-live="polite"></div>
   <div class="panel coachp" id="coachP"><div id="coach" aria-live="polite"></div><div class="cnt" id="cnt"></div></div>
 </section>
+<section class="mstat" id="mstat" aria-labelledby="mstatT"><h2 id="mstatT">Your stats</h2></section>
 
 <div id="fx" aria-hidden="true"></div>
 <section class="hist" id="histPg" hidden role="dialog" aria-modal="true" aria-labelledby="histT">
@@ -497,6 +575,10 @@ body{-webkit-tap-highlight-color:transparent}
         <label><input type="radio" name="bots" id="b-2" value="2"><span>2</span></label>
       </fieldset>
       <p><button class="ghost" id="resetBots">Reset Player 1 and Player 2 stats</button></p>
+      <fieldset class="seg"><legend>Side bets (Perfect Pairs and 21+3, up to €100 each)</legend>
+        <label><input type="radio" name="sbo" id="sbo-1" value="1"><span>On</span></label>
+        <label><input type="radio" name="sbo" id="sbo-0" value="0"><span>Off</span></label>
+      </fieldset>
       <fieldset class="seg"><legend>Count check</legend>
         <label><input type="radio" name="cc" id="cc-0" value="0"><span>Off</span></label>
         <label><input type="radio" name="cc" id="cc-5" value="5"><span>Every 5 hands</span></label>
@@ -510,12 +592,17 @@ body{-webkit-tap-highlight-color:transparent}
       <label class="chk"><input type="checkbox" id="o-show">Show the count on screen</label>
       <label class="chk"><input type="checkbox" id="o-bet">Bet check (1 unit = €10, spread 1–8)</label>
       <label class="chk"><input type="checkbox" id="o-dev">Also check deviations (Illustrious 18 + Fab 4)</label>
-      <p class="mute">Other players use basic strategy. Player 1 bets reverse martingale: €10 to start, double after a win, back to €10 after a loss, same bet after a push; a double that would pass the €500 table limit goes back to €10. Their profit and loss shows under their names; reset it with the button above (a bankroll reset clears it too). Rules: blackjack pays 3:2. The dealer checks for blackjack only with an ace up, after offering insurance. With a ten up there is no check: a dealer blackjack shows at the end and takes only your original bet (double and split money is returned). Double after split, late surrender if allowed, split up to 4 hands, one card to split aces.</p>
+      <p class="mute">Other players use basic strategy. Player 1 bets reverse martingale: €10 to start, double after a win, back to €10 after a loss, same bet after a push; a double that would pass the €500 table limit goes back to €10. Their profit and loss shows under their names; reset it with the button above (a bankroll reset clears it too). Rules: blackjack pays 3:2. No hole card: the dealer takes a second card only after everyone has played, so a dealer blackjack (under a ten or an ace) takes doubled and split bets too. Insurance is offered on an ace and pays 2:1; it is settled when the second card comes. Double on any two cards, also after a split. Split a pair once; split aces get one card each. Perfect Pairs pays 25:1 perfect, 12:1 coloured, 6:1 mixed; 21+3 pays 100:1 suited trips, 40:1 straight flush, 30:1 three of a kind, 10:1 straight, 5:1 flush. Because of the missing hole card the chart here hits 11 against a ten or an ace, and does not split 8,8 against a ten or an ace or A,A against an ace.</p>
       <p class="mute">The shoe holds real decks (8 × 52 = 416 cards), shuffled with your browser's cryptographic random generator. The cut card goes in the middle (45–55% of the shoe left behind) or deep (20–25% left) as you choose, a little different every shoe; the shoe shows how far away it is. When it comes out the hand is finished, then the whole shoe is reshuffled. Between hands you can always ask for a new shoe.</p>
       <button class="ghost" id="resetBank">Reset bankroll to €1,000</button>
     </div>
     <div id="t-stat" hidden>
       <p class="sync" id="sync">Saved in this browser.</p>
+      <h3>Your profit</h3>
+      <div id="pfbox"></div>
+      <h3>RTP (return to player)</h3>
+      <div id="rtpbox"></div>
+      <h3>Accuracy</h3>
       <div id="rec"></div>
       <h3>Breaking the rules: you vs the chart</h3>
       <div id="cfbox"></div>
@@ -539,7 +626,7 @@ body{-webkit-tap-highlight-color:transparent}
 <script>
 /* ---------- game data log (Supabase) ----------
    Each browser is an anonymous Supabase user; the four apps share it (same site, same localStorage).
-   Only game events are stored: no name, IP, location or device data. Events queue in localStorage
+   The app sends game events only: no name, location or device data (Supabase Auth itself logs sign-in IPs). Events queue in localStorage
    and go up in batches; any failure is silent and never touches the game. Off on file:// and localhost. */
 const CLOUD=(()=>{
   const URL='https://irohhofzdjozpjyxzegv.supabase.co',KEY='sb_publishable_6Fpd6LSMXracrx2mBgTmJQ_Yxy8LsSA',APP='table',SK='bj-cloud-v1',QK='bj-cloud-q-'+APP,QMAX=300;
@@ -586,7 +673,7 @@ const CLOUD=(()=>{
     addEventListener('pagehide',()=>flush());
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
   }
-  return {log,flush};
+  return {log,flush,on};
 })();
 {
 const $=s=>document.querySelector(s);
@@ -608,13 +695,17 @@ const ACTN={H:['Hit','hit'],S:['Stand','stand'],D:['Double','double down'],P:['S
 const SUBT={H:'take a card',S:'stay',D:'double, one card',P:'make two hands',R:'give up half'};
 const HDEV=[[16,'10','S',0,0],[15,'10','S',4,4],[10,'10','D',4,4],[12,'3','S',2,2],[12,'2','S',3,3],[11,'A','D',-1,1],[9,'2','D',1,1],[10,'A','D',3,4],[9,'7','D',3,3],[16,'9','S',5,5],[13,'2','S',-1,-1],[12,'4','S',0,0],[12,'5','S',-2,-2],[12,'6','S',-3,-1],[13,'3','S',-2,-2]];
 function handName(cards){const {t,soft}=tot(cards),r=cards.map(c=>c.r).join(',');if(cards.length===2&&val(cards[0])===val(cards[1]))return `${r} (pair)`;return `${r} (${soft&&t<=21?'soft ':''}${t})`}
+/* x.enhc: no hole card. The dealer's second card comes after you have played, so a blackjack under a ten or an ace takes doubles
+   and splits too. By expected value that changes: 11 vs 10 hits (double only from true count +3), 11 and 10 vs A and 10 vs 10 never
+   double, 8,8 is not split against a ten or an ace, A,A is not split against an ace. Everything else stays on the chart. */
+const ENHC=' (no hole card: a dealer blackjack would take the extra bet too)';
 function decide(cards,up,x){
-  const ui=upIdx(up),u=UP[ui],{t,soft}=tot(cards),tc=x.tc,name=handName(cards);
+  const ui=upIdx(up),u=UP[ui],{t,soft}=tot(cards),tc=x.tc,name=handName(cards),nc=!!x.enhc&&(u==='10'||u==='A');
   const pv=cards.length===2&&val(cards[0])===val(cards[1])?val(cards[0]):0;
   if(pv&&x.canSplit){
     const k=pv===11?'A':pv===10?'T':String(pv);
     if(x.dev&&k==='T'&&(u==='5'||u==='6')){const i=u==='5'?5:4;if(tc>=i)return {act:'P',dev:true,why:`${name} vs ${u}: deviation, true count ${sg(tc)} ≥ ${sg(i)} → split.`}}
-    const c=PAIR[k][ui];
+    const c=nc&&(k==='8'||(k==='A'&&u==='A'))?'N':PAIR[k][ui];
     if(c==='Y'||(c==='d'&&x.das)) return {act:'P',why:`${name} vs dealer ${u}: the chart says ${c==='Y'?'Y':'Y/N (double after split allowed)'} → split.`};
   }
   if(x.canSur&&!soft){
@@ -624,35 +715,53 @@ function decide(cards,up,x){
     else if(x.dev&&t===14&&u==='10'){dv=true;i=3;r=tc>=3}
     else if(x.dev&&t===15&&u==='9'){dv=true;i=2;r=tc>=2}
     else if(x.dev&&t===15&&u==='A'){dv=true;i=x.s17?1:-1;r=tc>=i}
-    if(r) return {act:'R',dev:dv,why:dv?`${name} vs ${u}: Fab 4, true count ${sg(tc)} ≥ ${sg(i)} → surrender.`:`${name} vs dealer ${u}: the chart says SUR → surrender.`};
+    if(r) return {act:'R',dev:dv,why:dv?`${name} vs ${u}: Fab 4, true count ${sg(tc)} ≥ ${sg(i)} → surrender.`:`${name} vs dealer ${u}: the chart says SUR${nc&&pv===8?ENHC:''} → surrender.`};
   }
   if(soft&&t===21) return {act:'S',why:`${name}: 21, stand.`};
-  if(soft&&t===12) return {act:'H',why:`${name}: soft 12, hit.`};
+  if(soft&&t===12) return {act:'H',why:`${name}: soft 12, hit${nc&&pv===11&&u==='A'?ENHC:''}.`};
   if(soft){
     const k=t-11;let c=SOFT[k][ui],n='';
     if(x.s17&&((k===8&&u==='6')||(k===7&&u==='2'))){c='S';n=' (S17 difference)'}
     const act=c==='H'?'H':c==='S'?'S':x.canDouble?'D':c==='D'?'H':'S';
     return {act,why:`${name} vs dealer ${u}: the chart says ${TXT[c]}${n}${(c==='D'||c==='X')&&!x.canDouble?', but you can\'t double here':''} → ${ACTN[act][1]}.`};
   }
-  if(x.dev){const d=HDEV.find(a=>a[0]===t&&a[1]===u);if(d){const i=d[x.s17?4:3];let act=tc>=i?d[2]:'H';if(act==='D'&&!x.canDouble)act='H';return {act,dev:true,why:`${name} vs ${u}: deviation index ${sg(i)}, true count ${sg(tc)} → ${ACTN[act][1]}.`}}}
+  if(x.dev){const d=nc&&t===11&&u==='10'?[11,'10','D',3,3]:nc&&(t===11||t===10)?null:HDEV.find(a=>a[0]===t&&a[1]===u);if(d){const i=d[x.s17?4:3];let act=tc>=i?d[2]:'H';if(act==='D'&&!x.canDouble)act='H';return {act,dev:true,why:`${name} vs ${u}: deviation index ${sg(i)}, true count ${sg(tc)} → ${ACTN[act][1]}.`}}}
   if(t>=17) return {act:'S',why:`${name}: always stand on 17 or more.`};
   if(t<=8) return {act:'H',why:`${name}: always hit 8 or less.`};
   let c=HARD[t][ui],n='';
   if(x.s17&&t===11&&u==='A'){c='H';n=' (S17 difference)'}
+  if(nc&&t===11){c='H';n=ENHC}
+  if(nc&&pv===8)n=ENHC;
   const act=c==='D'?(x.canDouble?'D':'H'):c;
   return {act,why:`${name} vs dealer ${u}: the chart says ${TXT[c]}${n}${c==='D'&&!x.canDouble?', but you can\'t double here':''} → ${ACTN[act][1]}.`};
 }
 /*END*/
-const UNIT=10,SPREAD=8,MINB=10,MAXB=500,BOTB=10,START=1000;
+/*SIDE*/
+// Side bets. Perfect Pairs: your first two cards. 21+3: your first two cards and the dealer's card as a poker hand.
+const RNK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],isRed=c=>c.s==='♥'||c.s==='♦';
+function perfectPairs(a,b){return a.r!==b.r?null:a.s===b.s?['Perfect pair',25]:isRed(a)===isRed(b)?['Coloured pair',12]:['Mixed pair',6]}
+function poker3(cs){
+  const suited=cs.every(c=>c.s===cs[0].s),k=cs.map(c=>RNK.indexOf(c.r)).sort((a,b)=>a-b),trips=k[0]===k[2];
+  const straight=!trips&&((k[1]-k[0]===1&&k[2]-k[1]===1)||(k[0]===0&&k[1]===11&&k[2]===12));
+  return trips&&suited?['Suited trips',100]:straight&&suited?['Straight flush',40]:trips?['Three of a kind',30]:straight?['Straight',10]:suited?['Flush',5]:null;
+}
+const SIDE=[['pp','Perfect Pairs','Pairs',h=>perfectPairs(h[0],h[1])],['t3','21+3','21+3',(h,up)=>poker3([h[0],h[1],up])]];
+/* Return to player, in percent of all money bet. Main game: 800 million hands per rule set with this chart (flat bet, no count, ±0.01).
+   Side bets: exact odds from a full shoe. Keys: decks, then S17/H17 + s for surrender. */
+const RTP={8:{S17:99.45,S17s:99.52,H17:99.26,H17s:99.34,pp:95.90,t3:96.30},6:{S17:99.47,S17s:99.54,H17:99.27,H17s:99.35,pp:93.89,t3:95.38}};
+const rtpGame=k=>RTP[S.decks===6?6:8][k==='m'?(S.s17?'S17':'H17')+(S.sur?'s':''):k];
+/*ENDSIDE*/
+const UNIT=10,SPREAD=8,MINB=10,MAXB=500,BOTB=10,START=1000,SES_GAP=30*60e3,SBMAX=100;
 const fmtE=new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:2});
 const eur=n=>fmtE.format(Math.round(n*100)/100);
 const dec=x=>String(x);
 const KEY='bj-masa-v1';
-const DEF={mode:'train',s17:true,decks:8,sur:true,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
+const DEF={sbo:true,mode:'train',s17:true,decks:8,sur:false,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
 const STN={dec:'Decisions',cnt:'Count',bet:'Bets',ins:'Insurance'};
 const store={get(k){try{const x=localStorage.getItem(k);return x?JSON.parse(x):null}catch(e){return null}},set(k,x){try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}}};
 function normalize(src){
   const s=Object.assign(JSON.parse(JSON.stringify(DEF)),src&&typeof src==='object'?src:{});
+  if(s.hr!==1){s.sur=false;s.s17=true;s.hr=1} // house rules (2026-11): no surrender, dealer stands on all 17s; both can be changed in the menu
   if(!s.stats||typeof s.stats!=='object') s.stats={};
   for(const k in DEF.stats) if(!Array.isArray(s.stats[k])) s.stats[k]=[0,0];
   if(!Array.isArray(s.miss)) s.miss=[];
@@ -660,6 +769,13 @@ function normalize(src){
   if(!Array.isArray(s.hlog)) s.hlog=[];
   {const b=s.botst&&typeof s.botst==='object'?s.botst:{};s.botst={0:Object.assign({net:0,hands:0},b[0]||{}),2:Object.assign({net:0,hands:0,bet:10,run:0},b[2]||{})}}
   s.cf=Object.assign({n:0,you:0,rule:0,better:0,worse:0,same:0,log:[]},s.cf&&typeof s.cf==='object'?s.cf:{});if(!Array.isArray(s.cf.log))s.cf.log=[];
+  // profit: overall is seeded from the saved hand history; a session ends after SES_GAP without a hand
+  if(!s.tot||!isFinite(s.tot.net)||!isFinite(s.tot.hands)) s.tot={net:s.hlog.reduce((a,r)=>a+(+r.y||0),0),hands:s.hlog.length};
+  if(!s.ses||!isFinite(s.ses.net)||!(Date.now()-s.ses.t<=SES_GAP)) s.ses={net:0,hands:0,t:0};
+  s.str=Math.max(0,+s.str||0);
+  // money bet and paid back, per game, for "your RTP"; the main game starts from the saved hand history
+  if(!s.rt||typeof s.rt!=='object') s.rt={m:[s.hlog.reduce((a,r)=>a+(+r.b||0),0),s.hlog.reduce((a,r)=>a+(+r.w||0),0)]};
+  for(const k of ['m','pp','t3']) if(!Array.isArray(s.rt[k])||!s.rt[k].every(isFinite)) s.rt[k]=[0,0];
   if(typeof s.bank!=='number'||!isFinite(s.bank)) s.bank=START;
   if(typeof s.vol!=='number') s.vol=.7;
   delete s.updatedAt;
@@ -669,7 +785,7 @@ let S=normalize(null);
 let ref=null,writing=false,dirty=false,syncT=0;
 const save=()=>{S.ts=Date.now();store.set(KEY,S);if(ref){dirty=true;clearTimeout(syncT);syncT=setTimeout(flush,1500)}};
 const totalN=s=>Object.values(s.stats||{}).reduce((a,x)=>a+(Array.isArray(x)?+x[1]||0:0),0)+(+s.rounds||0);
-function setSync(st){$('#sync').innerHTML={wait:'Saved in this browser. Connecting to your account…',ok:'<b>Saved to your Claude account.</b> Same bankroll, settings and stats on every device; Claude can read and review them on request.',local:'Saved in this browser only.',err:'The last change could not be saved to your account; retrying shortly.'}[st]}
+function setSync(st){$('#sync').innerHTML={wait:'Saved in this browser. Connecting to your account…',ok:'<b>Saved to your Claude account.</b> Same bankroll, settings and stats on every device; Claude can read and review them on request.',local:'Your progress is saved in this browser.'+(CLOUD.on?' The hands you play are also recorded, without your name, in the site owner’s database.':''),err:'The last change could not be saved to your account; retrying shortly.'}[st]}
 async function flush(){
   if(!ref||writing||!dirty) return;
   writing=true;dirty=false;
@@ -753,7 +869,7 @@ const SND={
 };
 
 /* ---------- game state ---------- */
-const G={shoe:[],pos:0,cut:0,rc:0,seats:[0,1,2].map(()=>({hands:[],ins:0,spot:0})),dealer:{cards:[]},phase:'bet',turn:null,ord:null,reshuffle:false,bet:10,lastBet:10,since:0,tried:false,force:false,betChecked:false,lastNet:null,round:0};
+const G={shoe:[],pos:0,cut:0,rc:0,seats:[0,1,2].map(()=>({hands:[],ins:0,spot:0})),dealer:{cards:[]},phase:'bet',turn:null,ord:null,reshuffle:false,bet:10,lastBet:10,bt:'m',sb:{pp:0,t3:0},lastSb:{pp:0,t3:0},sbR:null,since:0,tried:false,force:false,betChecked:false,lastNet:null,round:0};
 let waiter=null,E=null,busy=false,coachFns={},UID=0,seatEls=[];
 const T=ms=>RM?0:Math.round(ms*(S.fast?.55:1));
 const D=()=>S.fast?280:560;
@@ -783,14 +899,13 @@ function draw(up=true){
   if(!G.cutOut&&G.pos>=G.cut){G.cutOut=true;setTimeout(()=>banner('c','CUT CARD','push'),T(500))}
   return c;
 }
-function reveal(c){if(c&&!c.up){c.up=true;G.rc+=hv(c)}}
 const decksLeft=()=>Math.max(.5,Math.round((G.shoe.length-G.pos)/52*2)/2);
 const tcNow=()=>Math.floor(G.rc/decksLeft());
 const order=()=>[2,1,0].filter(i=>i===1||(i===2&&S.bots>=1)||(i===0&&S.bots>=2));
 const upCard=()=>G.dealer.cards[0];
 function ctxFor(s,h,bot){
   const two=h.cards.length===2,afford=bot||S.bank>=h.bet;
-  return {canDouble:two&&!h.splitAces&&afford,canSplit:two&&val(h.cards[0])===val(h.cards[1])&&s.hands.length<4&&!h.splitAces&&afford,canSur:S.sur&&two&&s.hands.length===1&&!h.split,das:true,s17:S.s17,tc:tcNow(),dev:S.dev&&!bot};
+  return {canDouble:two&&!h.splitAces&&afford,canSplit:two&&val(h.cards[0])===val(h.cards[1])&&s.hands.length<2&&!h.splitAces&&afford,canSur:S.sur&&two&&s.hands.length===1&&!h.split,das:true,enhc:true,s17:S.s17,tc:tcNow(),dev:S.dev&&!bot};
 }
 
 /* ---------- card faces (drawn here, SVG) ---------- */
@@ -861,12 +976,13 @@ function chipFly(fromEl,toEl,amount,g){
     return anim(ch,[{transform:'translate(0,0) scale(.85)'},{transform:`translate(${dx*.5}px,${dy*.5-70}px) scale(1.08)`,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(1)`}],{duration:dur,delay:dl,easing:'cubic-bezier(.3,.6,.3,1)',fill:'forwards'}).then(()=>ch.remove());
   }));
 }
+const sideEl=k=>document.querySelector(`.sbs[data-sb=${k}]`);
 const spotEl=i=>seatEls[i]&&seatEls[i].querySelector('.spot');
 const bankEl=()=>$('#s-bank');
 
 /* ---------- table rendering (keyed, animated) ---------- */
 function buildSeats(){
-  $('#seats').innerHTML=[0,1,2].map(i=>`<div class="seat s${i}${i===1?' me':''}" data-i="${i}"><div class="hands"></div><div class="spot"><div class="stack"></div><div class="insc" hidden></div></div><span class="sl"></span><span class="spl"></span><div class="banner" aria-hidden="true"></div></div>`).join('');
+  $('#seats').innerHTML=[0,1,2].map(i=>`<div class="seat s${i}${i===1?' me':''}" data-i="${i}"><div class="hands"></div><div class="spot"><div class="stack"></div><div class="insc" hidden></div>${i===1?SIDE.map(x=>`<div class="sbs ${x[0]}" data-sb="${x[0]}" hidden><em>${x[0]==='pp'?'PP':'21+3'}</em><div class="stack"></div><span></span></div>`).join(''):''}</div><span class="sl"></span><span class="stk"></span><span class="spl"></span><div class="banner" aria-hidden="true"></div></div>`).join('');
   seatEls=[...document.querySelectorAll('#seats .seat')];
 }
 function syncCards(box,cards,hand,newEls){
@@ -918,6 +1034,14 @@ function renderTable(){
     const ic=el.querySelector('.insc');ic.hidden=!s.ins;if(s.ins&&!ic.innerHTML)ic.innerHTML=chipsHTML(Math.max(5,s.ins)).split('</i>')[0]+'</i>';if(!s.ins)ic.innerHTML='';
     const name=me?'You':i===2?'Player 1':'Player 2',nextB=i===2&&on&&!amt&&G.phase==='bet'?S.botst[2].bet:0;
     el.querySelector('.sl').textContent=on?`${name}${amt?' · '+eur(amt):nextB?' · next '+eur(nextB):''}`:'Empty';
+    if(me) SIDE.forEach(([k])=>{
+      const se=sideEl(k),r=(G.sbR||[]).find(x=>x.k===k),bet=G.phase==='bet'?G.sb[k]:r?(r.pay?r.pay:0):G.phase==='deal'||G.phase==='play'?G.sb[k]:0;
+      se.hidden=!S.sbo&&!bet&&!r;se.classList.toggle('sel',G.phase==='bet'&&G.bt===k);se.classList.toggle('won',!!(r&&r.pay));
+      if(se._amt!==bet){se._amt=bet;se.querySelector('.stack').innerHTML=bet?chipsHTML(bet):''}
+      const txt=r?(r.pay?'+'+eur(r.pay-r.bet):''):'';if(se._t!==txt){se._t=txt;se.querySelector('span').textContent=txt}
+    });
+    const wn=on?(me?S.str:S.botst[i]&&S.botst[i].str)||0:0,sk=el.querySelector('.stk');
+    if(sk._n!==wn){sk._n=wn;sk.classList.toggle('hot',wn>1);sk.title=wn?`${wn} win${wn>1?'s':''} in a row`:'';sk.innerHTML=wn?`${wn>1?'<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#s-fire"/></svg>':''}<b>${wn}</b>`:''}
     if(!me){const st=S.botst[i],pl=on&&st?`${i===2?'<i>Reverse martingale</i>':''}<span><b class="${st.net>0?'gp':st.net<0?'gn':''}">${sgE(st.net)}</b> · ${st.hands} hand${st.hands===1?'':'s'}</span>`:'';const sp=el.querySelector('.spl');if(sp._h!==pl){sp._h=pl;sp.innerHTML=pl}}
   });
   const total=G.shoe.length||1;
@@ -973,7 +1097,7 @@ function renderAct(){
   if(p==='bet'&&G.shuffling){
     el.innerHTML='<p class="ask">Shuffling a new shoe…</p><p class="mute">The dealer is shuffling all the cards. Place your bet in a moment.</p>';
   } else if(p==='bet'){
-    el.innerHTML=`<p class="ask">Place your bet</p><div class="betrow"><div class="betv"><b>${eur(G.bet)}</b><span>Bankroll ${eur(S.bank)} · table ${eur(MINB)}–${eur(MAXB)}</span></div><div class="chips">${[5,10,25,100,500].map(v=>`<button class="cbtn" data-chip="${v}" aria-label="Add €${v}"><i class="chip c${v}" data-v="${v}"></i></button>`).join('')}</div></div><div class="row"><button class="ghost" id="clr">Clear</button><button class="ghost" id="minb">Minimum</button>${G.pos>0?'<button class="ghost" id="newShoe">New shoe</button>':''}<button class="go" id="deal">DEAL<span class="kh"> (Enter)</span></button></div>`;
+    el.innerHTML=`<p class="ask">Place your bet</p><div class="betrow">${S.sbo?`<div class="sbt" role="group" aria-label="Chips go on">${[['m','Bet',G.bet]].concat(SIDE.map(x=>[x[0],x[2],G.sb[x[0]]])).map(([k,l,v])=>`<button data-bt="${k}" aria-pressed="${G.bt===k}"><span>${l}</span><b>${eur(v)}</b></button>`).join('')}</div>`:`<div class="betv"><b>${eur(G.bet)}</b><span>Bankroll ${eur(S.bank)} · table ${eur(MINB)}–${eur(MAXB)}</span></div>`}<div class="chips">${[5,10,25,100,500].map(v=>`<button class="cbtn" data-chip="${v}" aria-label="Add €${v}"><i class="chip c${v}" data-v="${v}"></i></button>`).join('')}</div></div><div class="row"><button class="ghost" id="clr">Clear</button><button class="ghost" id="minb">Min<span class="lg">imum</span></button>${G.pos>0?'<button class="ghost" id="newShoe">New shoe</button>':''}<button class="go" id="deal">DEAL<span class="kh"> (Enter)</span></button></div>`;
   } else if(p==='check'){
     el.innerHTML=`<p class="ask">Count check</p><p class="mute">Call the count before you bet. About <b>${dec(decksLeft())}</b> decks remain; round the true count down.</p><div class="ccg"><label>Running count<span class="step"><button class="sb" data-t="cc-rc" data-d="-1" aria-label="Down">−</button><input id="cc-rc" type="number" value="0"><button class="sb" data-t="cc-rc" data-d="1" aria-label="Up">+</button></span></label><label>True count<span class="step"><button class="sb" data-t="cc-tc" data-d="-1" aria-label="Down">−</button><input id="cc-tc" type="number" value="0"><button class="sb" data-t="cc-tc" data-d="1" aria-label="Up">+</button></span></label><button class="go" id="ccgo">CHECK</button></div>`;
   } else if(p==='ins'){
@@ -985,7 +1109,8 @@ function renderAct(){
   } else if(p==='over'){
     const n=G.lastNet;
     const bw=G.lastBW||{bet:0,win:0},det=[bw.n>1?`${bw.n} hands`:'',bw.dbl?(bw.dbl>1?`${bw.dbl} doubles`:'doubled'):'',bw.sur?'surrendered':'',bw.ins?`insurance ${eur(bw.ins)}`:''].filter(Boolean).join(' · ');
-    const note=[E?`Exam ${E.n}/${E.len}`:'',G.pos>=G.cut?'The cut card is out: the shoe is shuffled before the next hand.':''].filter(Boolean).join(' · ');
+    const sbTxt=(G.sbR||[]).map(x=>`${x.label}${x.pay?` <b class="gp">${x.name} ${x.odds}:1 +${eur(x.pay-x.bet)}</b>`:` <b class="gn">−${eur(x.bet)}</b>`}`).join(' · ');
+    const note=[sbTxt,E?`Exam ${E.n}/${E.len}`:'',G.pos>=G.cut?'The cut card is out: the shoe is shuffled before the next hand.':''].filter(Boolean).join(' · ');
     el.innerHTML=`<div class="hres"><p class="ask">${n>0?`This hand: +${eur(n)}`:n<0?`This hand: −${eur(-n)}`:'This hand: push'}</p><div class="hsum"><div><span>Bet</span><b>${eur(bw.bet)}</b>${det?`<i>${det}</i>`:''}</div><div class="w${bw.win?'':' zero'}"><span>Win</span><b>${eur(bw.win)}</b></div><div><span>Bankroll</span><b>${eur(S.bank)}</b></div></div></div>${note?`<p class="mute">${note}</p>`:''}${G.lastCF&&!E?cfLine(G.lastCF):''}${G.offer?`<div class="offer"><p class="head">New shoe?</p><p>${G.offer.why} You can ask the dealer for a freshly shuffled shoe.</p><div class="row"><button class="go" id="shoeYes">NEW SHOE</button><button class="ghost" id="shoeNo">Keep this shoe<span class="kh"> (Enter)</span></button></div></div>`:(E&&E.n>=E.len?'<div class="row"><button class="go" id="nextR">SEE EXAM RESULTS</button></div>':nextHTML())}`;
   } else if(p==='broke'){
     el.innerHTML=`<p class="ask">Out of chips</p><p class="mute">Play money left: ${eur(S.bank)}. Reset and keep going.</p><div class="row"><button class="go" id="refill">CONTINUE WITH €1,000</button></div>`;
@@ -1007,16 +1132,21 @@ const sgE=n=>(n>0?'+':n<0?'−':'')+eur(Math.abs(n));
 function cfSnap(hi,rule,pick,h){
   const ord=G.ord||order(),me=ord.indexOf(1),seat=G.seats[1];
   return {hi,rule,pick,desc:`${handName(h.cards)} vs ${UP[upIdx(upCard())]}`,shoe:G.shoe,pos:G.pos,rc:G.rc,bank:S.bank,
-    me:seat.hands.map(cpHand),orig:seat.orig||seat.hands[0].bet,ins:seat.ins||0,up:upCard(),dealer:G.dealer.cards.slice(),
+    me:seat.hands.map(cpHand),ins:seat.ins||0,up:upCard(),dealer:G.dealer.cards.slice(),
     before:ord.slice(0,me).map(i=>G.seats[i].hands.map(cpHand)),after:ord.slice(me+1).map(i=>G.seats[i].hands.map(cpHand))};
 }
-function seatNet(hands,d,orig,ins){
-  const dt=tot(d).t,dbj=isBJ(d),dbust=dt>21,total=hands.reduce((a,h)=>a+h.bet,0),insN=ins?(dbj?ins*2:-ins):0;
-  if(dbj&&d[0].r!=='A'){const nat=hands.length===1&&!hands[0].split&&isBJ(hands[0].cards);return (nat?total:total-orig)-total+insN}
-  let net=insN;
+/* No hole card: 2 = the dealer plays the hand out, 1 = only the second card (insurance, or a blackjack or surrender that a dealer
+   blackjack could still beat), 0 = no card at all. */
+function dealerNeeds(hands,ins,up){
+  if(hands.some(h=>!h.bust&&!h.sur&&!h.bj))return 2;
+  return ins||(val(up)>=10&&hands.some(h=>!h.bust))?1:0;
+}
+function seatNet(hands,d,ins){
+  const dt=tot(d).t,dbj=isBJ(d),dbust=dt>21;
+  let net=ins?(dbj?ins*2:-ins):0;
   for(const h of hands){
     const bj=!h.split&&hands.length===1&&isBJ(h.cards),t=tot(h.cards).t;let pay=0;
-    if(h.sur)pay=h.bet/2;else if(h.bust||t>21)pay=0;else if(dbj)pay=bj?h.bet:0;else if(bj)pay=h.bet*2.5;else if(dbust||t>dt)pay=h.bet*2;else if(t===dt)pay=h.bet;
+    if(h.bust||t>21)pay=0;else if(dbj)pay=bj?h.bet:0;else if(h.sur)pay=h.bet/2;else if(bj)pay=h.bet*2.5;else if(dbust||t>dt)pay=h.bet*2;else if(t===dt)pay=h.bet;
     net+=pay-h.bet;
   }
   return net;
@@ -1027,7 +1157,7 @@ function cfRun(c,first){
   let pos=c.pos,rc=c.rc,bank=c.bank,ok=true;
   const shoe=c.shoe,up=c.up;
   const drw=()=>{if(pos>=shoe.length){ok=false;return {r:'2',s:'♠'}}const k=shoe[pos++];rc+=hv(k);return k};
-  const ctx=(hands,h,bot)=>{const two=h.cards.length===2,af=bot||bank>=h.bet;return {canDouble:two&&!h.splitAces&&af,canSplit:two&&val(h.cards[0])===val(h.cards[1])&&hands.length<4&&!h.splitAces&&af,canSur:S.sur&&two&&hands.length===1&&!h.split,das:true,s17:S.s17,tc:Math.floor(rc/Math.max(.5,Math.round((shoe.length-pos)/52*2)/2)),dev:S.dev&&!bot}};
+  const ctx=(hands,h,bot)=>{const two=h.cards.length===2,af=bot||bank>=h.bet;return {canDouble:two&&!h.splitAces&&af,canSplit:two&&val(h.cards[0])===val(h.cards[1])&&hands.length<2&&!h.splitAces&&af,canSur:S.sur&&two&&hands.length===1&&!h.split,das:true,enhc:true,s17:S.s17,tc:Math.floor(rc/Math.max(.5,Math.round((shoe.length-pos)/52*2)/2)),dev:S.dev&&!bot}};
   const act=(hands,hi,a,bot)=>{const h=hands[hi];
     if(a==='S'){h.done=true;return false}
     if(a==='R'){h.sur=true;h.done=true;return false}
@@ -1042,8 +1172,10 @@ function cfRun(c,first){
   rest(me,c.hi+1,false);
   const after=c.after.map(hs=>{const x=hs.map(cpHand);rest(x,0,true);return x});
   const d=c.dealer.slice();
-  if([...c.before,me,...after].some(hs=>hs.some(h=>!h.bust&&!h.sur&&!h.bj))){while(true){const {t,soft}=tot(d);if(!(t<17||(t===17&&soft&&!S.s17)))break;d.push(drw())}}
-  return ok?{net:seatNet(me,d,c.orig,c.ins),me,d}:null;
+  const need=dealerNeeds([...c.before,me,...after].flat(),c.ins,up);
+  if(need===2){while(true){const {t,soft}=tot(d);if(!(t<17||(t===17&&soft&&!S.s17)))break;d.push(drw())}}
+  else if(need===1&&d.length<2)d.push(drw());
+  return ok?{net:seatNet(me,d,c.ins),me,d}:null;
 }
 function cfRecord(){
   const c=G.cf;G.cf=null;if(!c)return;
@@ -1058,10 +1190,20 @@ function cfRecord(){
   f.log=f.log.slice(0,30);
   G.lastCF=f.log[0];save();
 }
+// wins in a row: a win adds one, a loss clears it, a push leaves it
+const winStreak=(n,net)=>net>0?(n||0)+1:net<0?0:n||0;
+const sideSum=b=>(b.pp||0)+(b.t3||0);
+function profitRecord(main,side,bet,win){
+  const net=main+side;
+  const now=Date.now();
+  if(now-S.ses.t>SES_GAP)S.ses={net:0,hands:0,t:now};
+  S.ses.net+=net;S.ses.hands++;S.ses.t=now;S.tot.net+=net;S.tot.hands++;S.str=winStreak(S.str,main);
+  S.rt.m[0]+=bet;S.rt.m[1]+=win;(G.sbR||[]).forEach(x=>{S.rt[x.k][0]+=x.bet;S.rt[x.k][1]+=x.pay});
+}
 function botRecord(bn){
   for(const k of Object.keys(bn)){
     const i=+k,st=S.botst[i];if(!st)continue;const n=bn[k];
-    st.net+=n;st.hands++;st.last=n;
+    st.net+=n;st.hands++;st.last=n;st.str=winStreak(st.str,n);
     if(i===2){if(n>0){const nb=st.bet*2;if(nb>MAXB){st.bet=BOTB;st.run=0}else{st.bet=nb;st.run++}}else if(n<0){st.bet=BOTB;st.run=0}}
   }
 }
@@ -1092,6 +1234,7 @@ function histRecord(bet,win,net,ins){
   const me=G.seats[1],r0=G.rec0||{},d=G.dealer.cards;
   const rec={n:S.rounds,t:r0.t||Math.floor(Date.now()/1000),m:r0.m||0,tc:r0.tc||0,b:bet,w:win,y:net,
     h:me.hands.map(h=>[cstr(h.cards),h.res||'',h.cls||'']),d:[cstr(d),tot(d).t,isBJ(d)?1:0],x:G.decs||[]};
+  if(G.sbR&&G.sbR.length)rec.s=G.sbR.map(x=>[x.k,x.bet,x.pay,x.name||'']);
   if(ins)rec.i=ins;if(G.insD)rec.id=G.insD;if(G.bcD)rec.k=G.bcD;
   if(G.lastCF){const c=G.lastCF;rec.c=[c.pick,c.rule,c.you,c.ruleNet,c.rh,c.rd,c.yb||0,c.rb||0]}
   S.hlog.unshift(rec);if(S.hlog.length>1000)S.hlog.length=1000;
@@ -1112,6 +1255,7 @@ function hDetail(r){
   if(r.id)L.push(`<li>Insurance: you ${r.id[0]==='I'?'took it':'declined it'} ${r.id[1]?'<span class="ok">✓</span>':'<span class="no">✗</span>'}${r.i?` (${eur(r.i)})`:''}</li>`);
   r.x.forEach(([dd,a,c,f])=>L.push(`<li>${dd}: <b>${ACTN[a][0]}</b> ${a===c?'<span class="ok">✓ chart</span>':`<span class="no">✗ chart says ${ACTN[c][0]}</span>`}${f?` <span class="mute">(first tried ${ACTN[f][0]}, then corrected)</span>`:''}</li>`));
   if(!r.x.length)L.push(`<li class="mute">No decisions to make in this hand${r.d[2]?' (dealer blackjack)':r.h.some(h=>/^BJ/.test(h[1]))?' (blackjack)':''}.</li>`);
+  (r.s||[]).forEach(([k,b,p,n])=>L.push(`<li>${(SIDE.find(x=>x[0]===k)||['',k])[1]}: bet ${eur(b)}, ${p?`${n}, <b class="gp">+${eur(p-b)}</b>`:`<b class="gn">−${eur(b)}</b>`}</li>`));
   if(r.c)L.push(`<li>Rule broken: <b>${ACTN[r.c[0]][0]}</b> instead of <b>${ACTN[r.c[1]][0]}</b>. By the rule your hand would be ${r.c[4]} against the dealer's ${r.c[5]}${/\*/.test(r.c[4]+r.c[5])?' (* = still in the shoe, never dealt on the table)':''}.<br>${cfText(r.c[0],r.c[1],r.c[2],r.c[3],r.c[6],r.c[7])}</li>`);
   return `<ul>${L.join('')}</ul>`;
 }
@@ -1123,6 +1267,7 @@ function hRow(r){
   else if(r.x.length)nb.push('<span class="hb ok">By the chart</span>');
   if(r.id&&!r.id[1])nb.push('<span class="hb cor">Insurance ✗</span>');
   if(r.k&&!r.k[1])nb.push('<span class="hb cor">Bet ✗</span>');
+  if(r.s){const v=r.s.reduce((a,x)=>a+x[2]-x[1],0);nb.push(`<span class="hb rb">Side bets <b class="${v>0?'gp':v<0?'gn':''}">${v?sgE(v):'€0'}</b></span>`)}
   if(r.m)nb.push('<span class="hb ex">Exam</span>');
   const you=r.h.map(h=>`<div class="hh1">${mcs(h[0])} <span class="hp ${h[2]}">${h[1]}</span></div>`).join('');
   return `<article class="he${r.c?' rbk':''}"><button class="hr" aria-expanded="false"><div class="hid"><b>#${r.n}</b><span>${dy} ${tm} · TC ${sg(r.tc)}</span></div><div class="hyou">${you}</div><div class="hdlr hdl2"><span class="hdl">Dealer</span>${mcs(r.d[0])} <span class="hp">${r.d[2]?'BJ':r.d[1]>21?'Bust':r.d[1]}</span></div><div class="hbw"><span>Bet</span> ${eur(r.b)}<br><span>Win</span> ${eur(r.w)}</div><div class="hnet ${r.y>0?'gp':r.y<0?'gn':''}">${r.y?sgE(r.y):'Push'}</div><div class="hnt">${nb.join('')}</div></button><div class="hd" hidden>${hDetail(r)}</div></article>`;
@@ -1138,16 +1283,39 @@ function renderHist(){
 }
 function renderRecord(){
   $('#rec').innerHTML=Object.keys(STN).map(k=>{const [o,n]=S.stats[k],p=n?Math.round(o/n*100):0;return `<div class="sr"><span>${STN[k]}</span><div class="barx"><i style="width:${p}%"></i></div><span class="num">${n?p+'%':'–'}</span><span class="num mute">${o}/${n}</span></div>`}).join('')+`<p class="mute">${S.rounds} hands played in total.</p>`;
+  {const box=(l,o)=>`<div><span>${l}</span><b class="${pfC(o.net)}">${pfT(o.net)}</b><span>${o.hands} hand${o.hands===1?'':'s'}</span></div>`;
+  $('#pfbox').innerHTML=`<div class="cfs pf2">${box('Session',S.ses)}${box('Overall',S.tot)}</div><p class="mute">A new session starts after 30 minutes without a hand. Resetting the bankroll does not change these.</p>`}
+  $('#rtpbox').innerHTML=`<table class="cft"><thead><tr><th></th><th>Game</th><th>You</th><th>You bet</th></tr></thead><tbody>${[['m','Blackjack']].concat(SIDE).map(([k,l])=>`<tr><th>${l}</th><td>${rtpGame(k).toFixed(2)}%</td><td><b>${rtpTxt(S.rt[k])}</b></td><td>${eur(S.rt[k][0])}</td></tr>`).join('')}</tbody></table><p class="mute">RTP is the share of your bets a game pays back on average. "Game" is the long-run figure for this table (${S.decks} decks, dealer ${S.s17?'stands on':'hits'} soft 17, ${S.sur?'with':'no'} surrender), playing every hand by the chart with flat bets. "You" is what your bets have paid back so far, doubles, splits and insurance included; over a few hundred hands it is mostly luck.</p>`;
   renderCF();
   $('#miss').innerHTML=S.miss.length?S.miss.slice(0,10).map(missLi).join(''):'<li class="mute">No mistakes yet.</li>';
   $('#exams').innerHTML=S.exams.length?S.exams.slice(0,6).map(r=>`<li><b>${new Date(r.t).toLocaleDateString('en-GB')}</b> · decisions ${r.dec[0]}/${r.dec[1]}, count ${r.cnt[0]}/${r.cnt[1]}, bets ${r.bet[0]}/${r.bet[1]}<br><span>Bankroll ${r.net>=0?'+':'−'}${eur(Math.abs(r.net))}</span></li>`).join(''):'<li class="mute">No exams yet. Pick "Exam" at the top: 20 hands, report at the end.</li>';
 }
 const ICON_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke="none"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>';
 const ICON_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke="none"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+/* phones: stats and mode live under the controls; wider screens: back in the top bar, in the same order */
+function placeStats(narrow){
+  const bar=$('.topbar'),box=$('#mstat'),st=[$('.kpi.ses'),$('.kpi.totp'),$('.kpi.acc'),$('#k-rb'),$('#k-rtp')];
+  if(narrow){st.forEach(e=>box.appendChild(e));box.appendChild($('.modes'))}
+  else{bar.insertBefore($('.modes'),$('.kpi.bank'));[st[0],st[1],st[4],st[2],$('#st-ex'),st[3]].forEach(e=>bar.insertBefore(e,$('#btnHist')))}
+}
+// measured only at the top of the page, so the table never resizes while you scroll to the stats
+let vhW=0;
+function setVh(){if(vhW===innerWidth&&scrollY>4)return;vhW=innerWidth;document.documentElement.style.setProperty('--vh',innerHeight+'px')}
+function initLayout(){
+  setVh();addEventListener('resize',setVh);
+  if(!window.matchMedia)return;
+  const m=matchMedia('(max-width:600px)');placeStats(m.matches);
+  if(m.addEventListener)m.addEventListener('change',e=>placeStats(e.matches));
+}
+const pfT=v=>v?sgE(v):'€0',pfC=v=>v>0?'gp':v<0?'gn':'';
+function pft(id,v){const el=$(id);el.textContent=pfT(v);el.className=pfC(v)}
+const rtpTxt=([b,w])=>b?`${(w/b*100).toFixed(1)}%`:'–';
 function renderTop(){
   renderBank();
   const [o,n]=S.stats.dec;$('#s-dec').textContent=n?`${Math.round(o/n*100)}%`:'–';
   {const f=S.cf,d=f.you-f.rule,el=$('#s-rb');el.textContent=f.n?sgE(d):'–';el.className=f.n&&d?(d>0?'gp':'gn'):''}
+  $('#s-rtp').textContent=rtpTxt(S.rt.m);$('#s-rtpg').textContent=`game ${rtpGame('m').toFixed(2)}%`;
+  pft('#s-ses',S.ses.net);pft('#s-tot',S.tot.net);
   $('#st-ex').hidden=!E;if(E)$('#s-ex').textContent=`${Math.min(E.n+(['over','report'].includes(G.phase)?0:1),E.len)}/${E.len}`;
   document.querySelectorAll('.modes button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===S.mode)));
   const sb=$('#btnSound');sb.innerHTML=S.sound?ICON_ON:ICON_OFF;sb.setAttribute('aria-pressed',String(S.sound));sb.setAttribute('aria-label',S.sound?'Sound on':'Sound off');
@@ -1166,10 +1334,12 @@ function record(kind,ok,miss){
 }
 
 /* ---------- round flow ---------- */
+// the same side bets again, if the option is on and the bankroll still covers them
+const nextSb=bet=>S.sbo&&bet+sideSum(G.lastSb)<=S.bank?Object.assign({},G.lastSb):{pp:0,t3:0};
 function nextHTML(){
   const same=Math.max(MINB,Math.min(G.lastBet,S.bank,MAXB)),canSame=S.bank>=MINB,canShoe=G.pos<G.cut;
   const btn=(cls,id,t,sub,k)=>`<button class="act ${cls}" id="${id}"><b>${t}</b><span>${sub}</span><kbd>${k}</kbd></button>`;
-  const list=[canSame?btn('n-same','nxSame',`Next Hand with ${eur(same)}`,'same bet, deal now','Enter'):'',btn('n-bet','nextR','Next Hand with Change Bet','set a new bet first',canSame?'B':'Enter'),canShoe?btn('n-shoe','newShoe','Change Shoe',`fresh ${S.decks}-deck shoe`,'N'):''].filter(Boolean);
+  const list=[canSame?btn('n-same','nxSame',`Next Hand with ${eur(same)}${sideSum(nextSb(same))?` + ${eur(sideSum(nextSb(same)))}`:''}`,'same bet, deal now','Enter'):'',btn('n-bet','nextR','Next Hand with Change Bet','set a new bet first',canSame?'B':'Enter'),canShoe?btn('n-shoe','newShoe','Change Shoe',`fresh ${S.decks}-deck shoe`,'N'):''].filter(Boolean);
   return `<div class="nxt" style="--c:${list.length}">${list.join('')}</div>`;
 }
 async function nextSame(){
@@ -1189,12 +1359,14 @@ async function startBetting(){
       const me=G.seats[1],back=me.spot;
       const p=[collectCards()];
       if(back>0) p.push(chipFly(spotEl(1),bankEl(),back));
+      (G.sbR||[]).forEach(x=>{if(x.pay)p.push(chipFly(sideEl(x.k),bankEl(),x.pay))});G.sbR=null;
       G.seats.forEach(s=>{s.spot=0;s.ins=0});
       seatEls.forEach(e=>{e._amt=-1});renderTable();
       await Promise.all(p);
     }
     G.seats.forEach(s=>{s.hands=[];s.ins=0;s.spot=0});G.dealer.cards=[];G.turn=null;G.ord=null;G.betChecked=false;
     G.bet=Math.max(MINB,Math.min(G.lastBet,S.bank,MAXB));
+    G.bt='m';G.sbR=null;G.sb=nextSb(G.bet);
     if(S.bank<MINB) G.phase='broke';
     else if(S.cc&&G.since>=S.cc){G.phase='check';G.since=0}
     else G.phase='bet';
@@ -1215,6 +1387,7 @@ function submitCheck(){
 }
 function tryDeal(force,quiet){
   if(G.phase!=='bet'||busy||G.shuffling) return;
+  if(G.bet+sideSum(G.sb)>S.bank&&G.bet>=MINB&&G.bet<=S.bank){G.sb={pp:0,t3:0};coach('<p>Your bankroll does not cover the side bets, so they were taken off.</p>','bad');SND.play('error');render();return}
   if(G.bet<MINB||G.bet>Math.min(MAXB,S.bank)){coach(`<p>Your bet must be between ${eur(MINB)} and ${eur(Math.min(MAXB,S.bank))}.</p>`,'bad');SND.play('error');return}
   if(S.betCheck&&!force&&!G.betChecked){
     const tc=tcNow(),u=Math.min(SPREAD,Math.max(1,tc-1)),rec=u*UNIT,ok=G.bet===rec;G.bcD=[rec,ok?1:0,G.bet];
@@ -1222,7 +1395,7 @@ function tryDeal(force,quiet){
     record('bet',ok,ok?null:{type:'Bet',desc:`true count ${sg(tc)}`,pick:eur(G.bet),act:eur(rec)});
     if(!ok&&S.mode==='train'){
       if(quiet) coach(`<p class="head">Bet check</p><p>True count ${sg(tc)} called for <b>${eur(rec)}</b>; you dealt ${eur(G.bet)}.</p>`,'bad');
-      else{SND.play('error');betPopup(tc,u,Math.min(rec,S.bank));return}
+      else{SND.play('error');betPopup(tc,u,Math.min(rec,S.bank-sideSum(G.sb)));return}
     }
     if(ok&&S.mode==='train') coach(`<p class="head">Bet correct</p><p>True count ${sg(tc)} → ${eur(rec)}.</p>`,'good');
   }
@@ -1273,33 +1446,24 @@ async function playRound(){
     G.phase='deal';renderAct();
     if(G.pos>=G.cut||G.reshuffle){const why=G.reshuffle?'New deck count: fresh shoe.':`The cut card came out after ${dec(Math.round(G.pos/52*10)/10)} of ${S.decks} decks.`;newShoe();G.reshuffle=false;render();await shuffleFx(why)}
     G.rec0={t:Math.floor(Date.now()/1000),tc:tcNow(),m:S.mode==='exam'?1:0};G.decs=[];G.insD=null;
-    G.lastBet=G.bet;S.bank-=G.bet;G.cf=null;G.lastCF=null;
+    G.lastBet=G.bet;G.lastSb=Object.assign({},G.sb);G.bt='m';S.bank-=G.bet+sideSum(G.sb);G.sbR=null;G.cf=null;G.lastCF=null;
     const ord=order();G.ord=ord;
     G.seats.forEach(s=>{s.hands=[];s.ins=0;s.spot=0});
-    ord.forEach(i=>{const b=i===1?G.bet:i===2?Math.min(MAXB,Math.max(BOTB,S.botst[2].bet)):BOTB;G.seats[i].hands=[{cards:[],bet:b}];G.seats[i].spot=b;G.seats[i].orig=b});
+    ord.forEach(i=>{const b=i===1?G.bet:i===2?Math.min(MAXB,Math.max(BOTB,S.botst[2].bet)):BOTB;G.seats[i].hands=[{cards:[],bet:b}];G.seats[i].spot=b});
     G.dealer.cards=[];render();
     await sleep(T(250));
     for(let k=0;k<2;k++){
       for(const i of ord){G.seats[i].hands[0].cards.push(draw(true));render();await sleep(D())}
-      G.dealer.cards.push(draw(k===0));render();await sleep(D());
+      if(k===0){G.dealer.cards.push(draw(true));render();await sleep(D())}
     }
     const up=upCard(),me=G.seats[1];
+    await sideBets(me.hands[0].cards,up);
     if(isBJ(me.hands[0].cards)){banner(1,'BLACKJACK!','bj');SND.play('bj')}
     if(up.r==='A'&&S.bank>=G.bet/2){
       G.phase='ins';render();
       const a=await wait('ins');
       if(a==='I'){me.ins=G.bet/2;S.bank-=me.ins;chipFly(bankEl(),spotEl(1),Math.max(5,me.ins))}
       G.phase='deal';render();
-    }
-    if(up.r==='A'){
-      await sleep(T(450));
-      if(isBJ(G.dealer.cards)){
-        reveal(G.dealer.cards[1]);render();await sleep(D());
-        banner('c','DEALER BLACKJACK','lose');
-        coach('<p class="head">Dealer blackjack</p><p>The dealer checked under the ace: blackjack. The hand is over.</p>','');
-        await settle();return;
-      }
-      banner('c','NO BLACKJACK','push');await sleep(T(500));
     }
     for(const i of ord){
       const s=G.seats[i];
@@ -1314,9 +1478,9 @@ async function playRound(){
     }
     G.turn=null;G.phase='dealer';render();
     await sleep(T(250));
-    reveal(G.dealer.cards[1]);render();await sleep(D());
-    const live=ord.some(i=>G.seats[i].hands.some(h=>!h.bust&&!h.sur&&!h.bj));
-    if(live){while(dealerHits()){G.dealer.cards.push(draw(true));render();await sleep(D())}}
+    const need=dealerNeeds(ord.flatMap(i=>G.seats[i].hands),me.ins,up);
+    if(need){G.dealer.cards.push(draw(true));render();await sleep(D())}
+    if(need===2){while(dealerHits()){G.dealer.cards.push(draw(true));render();await sleep(D())}}
     if(tot(G.dealer.cards).t>21){banner('c','DEALER BUSTS','win')}
     await settle();
   }finally{busy=false}
@@ -1347,6 +1511,18 @@ async function exec(s,hi,a,bot){
   }
   return false;
 }
+async function sideBets(h,up){
+  const R=SIDE.filter(([k])=>G.sb[k]>0).map(([k,name,,fn])=>{const r=fn(h,up),bet=G.sb[k];return {k,bet,pay:r?bet*(r[1]+1):0,name:r?r[0]:'',odds:r?r[1]:0,label:name}});
+  if(!R.length) return;
+  G.sbR=R;const won=R.filter(x=>x.pay);
+  R.forEach(x=>{S.bank+=x.pay;if(!x.pay)chipFly(sideEl(x.k),$('#rack'),x.bet)});
+  render();
+  if(won.length){
+    banner(1,won.map(x=>`${x.name.toUpperCase()} ${x.odds}:1 +${eur(x.pay-x.bet)}`).join(' · '),'bj');SND.play('bj');
+    won.forEach(x=>chipFly($('#rack'),sideEl(x.k),x.pay-x.bet));
+  }
+  await sleep(T(won.length?1300:350));
+}
 async function playerHand(s,hi){
   while(true){
     const h=s.hands[hi],t=tot(h.cards).t;
@@ -1368,25 +1544,16 @@ async function botHand(s,hi){
 }
 async function settle(){
   const d=G.dealer.cards,dt=tot(d).t,dbj=isBJ(d),dbust=dt>21;
-  let net=0,anyBJ=false,myBet=0,myWin=0,myIns=0;const bn={};const fly=[],ord=G.ord||order(),lateBJ=dbj&&d[0].r!=='A';
+  let net=0,anyBJ=false,myBet=0,myWin=0,myIns=0;const bn={};const fly=[],ord=G.ord||order();
   {const me=G.seats[1];G.lastBW={n:me.hands.length,dbl:me.hands.filter(h=>h.dbl).length,sur:me.hands.some(h=>h.sur)}}
   for(const i of ord){
     const s=G.seats[i];let spot=0;
-    if(lateBJ){
-      const total=s.hands.reduce((a,h)=>a+h.bet,0),orig=s.orig||s.hands[0].bet;
-      const nat=s.hands.length===1&&!s.hands[0].split&&isBJ(s.hands[0].cards);
-      const pay=nat?total:total-orig;
-      s.hands.forEach((h,k)=>{if(nat){h.bj=true;h.res='Push';h.cls='push'}else if(k===0){h.res=`Lose ${eur(orig)}`;h.cls='lose'}else{h.res='Returned';h.cls='push'}});
-      if(i===1){S.bank+=pay;net+=pay-total;myBet+=total;myWin+=pay}else bn[i]=pay-total;
-      if(!nat) fly.push(chipFly(spotEl(i),$('#rack'),orig,i===1?1:.5));
-      s.spot=pay;continue;
-    }
     for(const h of s.hands){
       if(!h.split&&s.hands.length===1&&isBJ(h.cards))h.bj=true;
       const t=tot(h.cards).t;let pay=0,res,cls;
-      if(h.sur){pay=h.bet/2;res='Surrendered';cls='push'}
-      else if(h.bust){res='Bust';cls='lose'}
-      else if(dbj){if(h.bj){pay=h.bet;res='Push';cls='push'}else{res='Lose';cls='lose'}}
+      if(h.bust){res='Bust';cls='lose'}
+      else if(dbj){if(h.bj){pay=h.bet;res='Push';cls='push'}else{res=`Lose ${eur(h.bet)}`;cls='lose'}}
+      else if(h.sur){pay=h.bet/2;res='Surrendered';cls='push'}
       else if(h.bj){pay=h.bet*2.5;res=`BJ +${eur(h.bet*1.5)}`;cls='bj';if(i===1)anyBJ=true}
       else if(dbust||t>dt){pay=h.bet*2;res=`Win +${eur(h.bet)}`;cls='win'}
       else if(t===dt){pay=h.bet;res='Push';cls='push'}
@@ -1400,7 +1567,11 @@ async function settle(){
     s.spot=spot;
   }
   G.turn=null;renderTable();
-  if(lateBJ){banner('c','DEALER BLACKJACK','lose');coach(`<p class="head">Dealer blackjack</p><p>With a ten up the dealer does not check, so the blackjack shows at the end. Only your original bet${G.seats[1].hands.length>1||G.seats[1].hands.some(h=>h.dbl)?' is lost; your double and split money is returned':' is lost'}.</p>`,'')}
+  if(dbj){
+    const hs=G.seats[1].hands,more=hs.length>1||hs.some(h=>h.dbl);
+    banner('c','DEALER BLACKJACK','lose');
+    coach(`<p class="head">Dealer blackjack</p><p>There is no hole card: the dealer's second card came after everyone had played. ${hs.every(h=>h.bj)?'Your blackjack pushes':`It takes every bet${more?', your double and split money too':''}`}${myIns?'; your insurance pays 2:1':''}.</p>`,'');
+  }
   if(anyBJ){banner(1,`BLACKJACK +${eur(net)}`,'bj');SND.play('bj')}
   else if(net>0){banner(1,`WIN +${eur(net)}`,'win');SND.play('win')}
   else if(net<0){if(!G.seats[1].hands.every(h=>h.bust))banner(1,`LOSE −${eur(-net)}`,'lose');SND.play('lose')}
@@ -1415,8 +1586,8 @@ async function settle(){
     if(G.lossStreak>=5) G.offer={why:`You lost ${G.lossStreak} hands in a row.`};
     else if(nbj>=2) G.offer={why:`The dealer had ${nbj} blackjacks in the last ${G.dbjHist.length} hands.`};
   }
-  G.lastNet=net;Object.assign(G.lastBW,{bet:myBet,win:myWin,ins:myIns});cfRecord();botRecord(bn);G.phase='over';G.since++;S.rounds++;G.round++;histRecord(myBet,myWin,net,myIns);
-  if(E){E.n++;E.net+=net}
+  G.lastNet=net;Object.assign(G.lastBW,{bet:myBet,win:myWin,ins:myIns});cfRecord();botRecord(bn);const sideNet=(G.sbR||[]).reduce((a,x)=>a+x.pay-x.bet,0);profitRecord(net,sideNet,myBet,myWin);G.phase='over';G.since++;S.rounds++;G.round++;histRecord(myBet,myWin,net,myIns);
+  if(E){E.n++;E.net+=net+sideNet}
   save();render();renderRecord();
 }
 function onAction(a){
@@ -1467,7 +1638,7 @@ function setMode(m){
 }
 function syncControls(){
   const chk=sel=>{const e=document.querySelector(sel);if(e)e.checked=true};
-  chk(S.s17?'#r-s17':'#r-h17');chk(S.sur?'#su-1':'#su-0');chk('#cp-'+S.cutPos);chk('#d-'+S.decks);chk('#b-'+S.bots);chk('#cc-'+S.cc);chk(S.fast?'#f-1':'#f-0');
+  chk(S.s17?'#r-s17':'#r-h17');chk(S.sur?'#su-1':'#su-0');chk(S.sbo?'#sbo-1':'#sbo-0');chk('#cp-'+S.cutPos);chk('#d-'+S.decks);chk('#b-'+S.bots);chk('#cc-'+S.cc);chk(S.fast?'#f-1':'#f-0');
   $('#o-show').checked=S.show;$('#o-offer').checked=S.offer;$('#o-bet').checked=S.betCheck;$('#o-dev').checked=S.dev;
   $('#o-sound').checked=S.sound;$('#vol').value=Math.round(S.vol*100);$('#o-amb').checked=S.amb;
 }
@@ -1481,18 +1652,25 @@ function bind(){
     const b=e.target.closest('button');if(!b||b.disabled) return;
     if(b.dataset.chip){
       if(G.phase!=='bet') return;
-      const nb=Math.min(G.bet+ +b.dataset.chip,MAXB,S.bank);
+      if(G.bt!=='m'){
+        const k=G.bt,cur=G.sb[k],v=Math.max(cur,Math.min(cur+ +b.dataset.chip,SBMAX,S.bank-G.bet-sideSum(G.sb)+cur));
+        if(v===cur){SND.play('error');return}
+        G.sb[k]=v;renderAct();chipFly(b,sideEl(k),v-cur).then(()=>{if(G.phase==='bet')renderTable()});
+        return;
+      }
+      const nb=Math.max(G.bet,Math.min(G.bet+ +b.dataset.chip,MAXB,S.bank-sideSum(G.sb)));
       if(nb===G.bet){SND.play('error');return}
       const add=nb-G.bet;G.bet=nb;G.betChecked=false;renderAct();renderCount();
       chipFly(b,spotEl(1),add).then(()=>{if(G.phase==='bet')renderTable()});
       return;
     }
+    if(b.dataset.bt){if(G.phase==='bet'){G.bt=b.dataset.bt;SND.play('click');render()}return}
     if(b.dataset.a){onAction(b.dataset.a);return}
     if(b.dataset.i){onIns(b.dataset.i);return}
     if(b.classList.contains('sb')){const el=$('#'+b.dataset.t);el.value=(parseInt(el.value,10)||0)+ +b.dataset.d;SND.play('click');return}
     switch(b.id){
-      case 'clr':if(G.bet){chipFly(spotEl(1),bankEl(),G.bet);G.bet=0;G.betChecked=false;render()}break;
-      case 'minb':G.bet=MINB;G.betChecked=false;SND.play('chip');render();break;
+      case 'clr':if(G.bt!=='m'){if(G.sb[G.bt]){chipFly(sideEl(G.bt),bankEl(),G.sb[G.bt]);G.sb[G.bt]=0;render()}break}if(G.bet){chipFly(spotEl(1),bankEl(),G.bet);G.bet=0;G.betChecked=false;render()}break;
+      case 'minb':if(G.bt!=='m'){G.sb[G.bt]=Math.min(5,Math.max(0,S.bank-G.bet-sideSum(G.sb)+G.sb[G.bt]));SND.play('chip');render();break}G.bet=MINB;G.betChecked=false;SND.play('chip');render();break;
       case 'deal':SND.play('click');tryDeal();break;
       case 'ccgo':submitCheck();break;
       case 'nextR':SND.play('click');startBetting();break;
@@ -1508,9 +1686,10 @@ function bind(){
   $('#coach').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;const fn=coachFns[b.dataset.c];coachFns={};const row=b.closest('.cbs');if(row)row.remove();if(fn)fn()});
   $('#pop').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(b)closePop(b.dataset.p)});
   const radio=(name,fn)=>document.querySelectorAll(`input[name=${name}]`).forEach(el=>el.addEventListener('change',()=>{fn(el.value);save();render();SND.play('click')}));
-  radio('s17',v=>S.s17=v==='1');radio('sur',v=>S.sur=v==='1');radio('cutPos',v=>{S.cutPos=v;coach(`<p class="head">Cut card</p><p>${v==='mid'?'From the next shoe the cut card goes in the middle: about half of the shoe is played.':'From the next shoe the cut card goes deep: play continues until 1.6–2 decks are left.'} The shoe in play is not reshuffled.</p>`,'')});
-  radio('decks',v=>{S.decks=+v;if(!busy&&['bet','check','over','broke'].includes(G.phase)&&!cardEls.size){newShoe();G.reshuffle=false;coach(`<p class="head">Fresh shoe</p><p>${S.decks} decks, running count back to 0.</p>`,'')}else{G.reshuffle=true;coach(`<p class="head">${S.decks} decks</p><p>A fresh shoe starts with the next hand.</p>`,'')}});
+  radio('s17',v=>{S.s17=v==='1';renderRecord()});radio('sur',v=>{S.sur=v==='1';renderRecord()});radio('cutPos',v=>{S.cutPos=v;coach(`<p class="head">Cut card</p><p>${v==='mid'?'From the next shoe the cut card goes in the middle: about half of the shoe is played.':'From the next shoe the cut card goes deep: play continues until 1.6–2 decks are left.'} The shoe in play is not reshuffled.</p>`,'')});
+  radio('decks',v=>{S.decks=+v;renderRecord();if(!busy&&['bet','check','over','broke'].includes(G.phase)&&!cardEls.size){newShoe();G.reshuffle=false;coach(`<p class="head">Fresh shoe</p><p>${S.decks} decks, running count back to 0.</p>`,'')}else{G.reshuffle=true;coach(`<p class="head">${S.decks} decks</p><p>A fresh shoe starts with the next hand.</p>`,'')}});
   radio('bots',v=>{S.bots=+v;coach(`<p class="head">Players</p><p>${busy?'From the next hand':'Now'} ${S.bots?`${S.bots} other player${S.bots>1?'s':''} at the table`:'you play alone'}. The shoe continues; no reshuffle.</p>`,'')});
+  radio('sbo',v=>{S.sbo=v==='1';G.bt='m';if(!S.sbo&&G.phase==='bet')G.sb={pp:0,t3:0}});
   radio('cc',v=>S.cc=+v);radio('fast',v=>S.fast=v==='1');
   $('#o-show').addEventListener('change',e=>{S.show=e.target.checked;save();renderCount()});
   $('#o-bet').addEventListener('change',e=>{S.betCheck=e.target.checked;save()});
@@ -1523,6 +1702,7 @@ function bind(){
   $('#btnSound').addEventListener('click',()=>{S.sound=!S.sound;save();SND.init();SND.vol();SND.ambient();$('#o-sound').checked=S.sound;renderTop();SND.play('click')});
   $('#btnMenu').addEventListener('click',()=>openDrawer(true));
   $('#btnHist').addEventListener('click',()=>openHist(true,'all'));
+  $('#k-rtp').addEventListener('click',()=>{openDrawer(true);document.querySelector('[data-tab=t-stat]').click()});
   $('#k-rb').addEventListener('click',()=>openHist(true,'rb'));
   $('#histClose').addEventListener('click',()=>openHist(false));
   $('#hFil').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;HF=b.dataset.f;HN=50;SND.play('click');renderHist()});
@@ -1570,7 +1750,7 @@ function play(){
 }
 function start(){
   S=normalize(store.get(KEY));
-  buildSeats();buildFan();syncControls();bind();newShoe();
+  initLayout();buildSeats();buildFan();syncControls();bind();newShoe();
   $('#spSub').textContent=`Bankroll ${eur(S.bank)} · ${S.rounds?`${S.rounds} hands played`:'first visit'}${window.matchMedia&&matchMedia('(pointer:coarse)').matches?'':' · press Enter'}`;
   $('#play').addEventListener('click',play);
   $('#coachP').addEventListener('click',e=>{if(!e.target.closest('button,a,input'))e.currentTarget.classList.toggle('open')});

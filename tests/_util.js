@@ -16,11 +16,11 @@ const HANDS = Math.max(20, parseInt(process.env.HANDS, 10) || 300);
 const read = app => fs.readFileSync(APPS[app], 'utf8');
 
 /** Load an app in jsdom with timers shortened. `store` seeds localStorage (key -> object).
- *  `before(window)` runs before the page's scripts (e.g. to install a fake fetch). */
-function load(app, store = {}, before) {
+ *  `before(window)` runs before the page's scripts (e.g. to install a fake fetch); `patch(html)` may edit the source. */
+function load(app, store = {}, before, patch = x => x) {
   const { JSDOM } = require('jsdom');
   const util = require('util');
-  const dom = new JSDOM(read(app), {
+  const dom = new JSDOM(patch(read(app)), {
     runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://bj.test/',
     beforeParse(w) {
       const st = w.setTimeout.bind(w);
