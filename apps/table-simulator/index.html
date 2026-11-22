@@ -789,6 +789,7 @@ function normalize(src){
   if(!s.hs||typeof s.hs!=='object'){s.hs=JSON.parse(JSON.stringify(s.rt));s.hs0=-(s.botst[0].net+s.botst[2].net)} // hs0: what the other players had already lost, bets unknown
   if(!isFinite(s.hs0)) s.hs0=0;
   for(const k of ['m','pp','t3']) if(!Array.isArray(s.hs[k])||!s.hs[k].every(isFinite)) s.hs[k]=[0,0];
+  if(!s.pend||!(s.pend.m>0)) s.pend=null;
   if(typeof s.bank!=='number'||!isFinite(s.bank)) s.bank=START;
   if(typeof s.vol!=='number') s.vol=.7;
   delete s.updatedAt;
@@ -819,7 +820,7 @@ async function connect(){
     done=true;clearTimeout(to);ref=r;
     const rem=snap.exists?normalize(snap.data()):null;
     const rt=rem?(+rem.ts||0):-1,lt=+S.ts||0;
-    if(rem&&(rt>lt||(rt===lt&&totalN(rem)>totalN(S)))){S=rem;store.set(KEY,S);syncControls();if(G.phase==='bet')G.bet=Math.min(G.bet,S.bank);render();renderRecord();SND.vol()}
+    if(rem&&(rt>lt||(rt===lt&&totalN(rem)>totalN(S)))){S=rem;if(!busy)closePend();store.set(KEY,S);syncControls();if(G.phase==='bet')G.bet=Math.min(G.bet,S.bank);render();renderRecord();SND.vol()}
     else if(!rem||lt>rt||totalN(S)>totalN(rem)){dirty=true;flush()}
     setSync('ok');
   }catch(e){done=true;clearTimeout(to);ref=null;setSync('local')}
@@ -1217,6 +1218,29 @@ function profitRecord(main,side,bet,win){
   S.ses.net+=net;S.ses.hands++;S.ses.t=now;S.tot.net+=net;S.tot.hands++;S.str=winStreak(S.str,main);
   for(const c of [S.rt,S.hs]){c.m[0]+=bet;c.m[1]+=win;(G.sbR||[]).forEach(x=>{c[x.k][0]+=x.bet;c[x.k][1]+=x.pay})}
 }
+/* The open hand is saved from the deal on: money on the table (m), what came back so far (w: only once it is settled), side bets.
+   If the page closes before the hand is over, closePend() books it on the next visit: what was not won is lost, as at a real table. */
+function openHand(o){
+  const me=G.seats[1],d=G.dealer.cards,r0=G.rec0||{};
+  S.pend=Object.assign({t:r0.t||Math.floor(Date.now()/1000),tc:r0.tc||0,x:r0.m||0,m:me.hands.reduce((a,h)=>a+h.bet,0)+(me.ins||0),w:0,h:me.hands.map(h=>cstr(h.cards)),d:cstr(d),dt:d.length?tot(d).t:0,
+    s:G.sbR?G.sbR.map(x=>[x.k,x.bet,x.pay,x.name||'']):SIDE.filter(([k])=>G.sb[k]>0).map(([k])=>[k,G.sb[k],0,''])},o||{});
+  save();
+}
+function closePend(){
+  const p=S.pend;if(!p) return null;
+  S.pend=null;
+  const win=+p.w||0,net=win-p.m,sb=(Array.isArray(p.s)?p.s:[]).filter(x=>S.rt[x[0]]),side=sb.reduce((a,x)=>a+x[2]-x[1],0),old=Date.now()-p.t*1000>SES_GAP;
+  G.sbR=sb.map(([k,bet,pay,name])=>({k,bet,pay,name}));profitRecord(net,side,p.m,win);G.sbR=null;
+  if(old)S.ses={net:0,hands:0,t:0}; // it belonged to an earlier session
+  S.rounds++;
+  const rec={n:S.rounds,t:p.t,m:p.x||0,tc:p.tc||0,b:p.m,w:win,y:net,h:(p.h||[]).map(c=>[c,p.done?'':'Unfinished',net<0?'lose':net>0?'win':'push']),d:[p.d||'',p.dt||0,0],x:[]};
+  if(!p.done)rec.u=1;
+  if(sb.length)rec.s=sb;
+  S.hlog.unshift(rec);if(S.hlog.length>1000)S.hlog.length=1000;
+  CLOUD.log('hand',Object.assign({mode:S.mode,bank:S.bank,unfinished:!p.done},rec));
+  save();
+  return {bet:p.m,net,side,done:!!p.done};
+}
 function botRecord(bn,bp){
   for(const k of Object.keys(bn)){
     const i=+k,st=S.botst[i];if(!st)continue;const n=bn[k];
@@ -1286,6 +1310,7 @@ function hRow(r){
   if(r.id&&!r.id[1])nb.push('<span class="hb cor">Insurance ✗</span>');
   if(r.k&&!r.k[1])nb.push('<span class="hb cor">Bet ✗</span>');
   if(r.s){const v=r.s.reduce((a,x)=>a+x[2]-x[1],0);nb.push(`<span class="hb rb">Side bets <b class="${v>0?'gp':v<0?'gn':''}">${v?sgE(v):'€0'}</b></span>`)}
+  if(r.u)nb.push('<span class="hb cor">Unfinished</span>');
   if(r.m)nb.push('<span class="hb ex">Exam</span>');
   const you=r.h.map(h=>`<div class="hh1">${mcs(h[0])} <span class="hp ${h[2]}">${h[1]}</span></div>`).join('');
   return `<article class="he${r.c?' rbk':''}"><button class="hr" aria-expanded="false"><div class="hid"><b>#${r.n}</b><span>${dy} ${tm} · TC ${sg(r.tc)}</span></div><div class="hyou">${you}</div><div class="hdlr hdl2"><span class="hdl">Dealer</span>${mcs(r.d[0])} <span class="hp">${r.d[2]?'BJ':r.d[1]>21?'Bust':r.d[1]}</span></div><div class="hbw"><span>Bet</span> ${eur(r.b)}<br><span>Win</span> ${eur(r.w)}</div><div class="hnet ${r.y>0?'gp':r.y<0?'gn':''}">${r.y?sgE(r.y):'Push'}</div><div class="hnt">${nb.join('')}</div></button><div class="hd" hidden>${hDetail(r)}</div></article>`;
@@ -1305,7 +1330,7 @@ function renderRecord(){
   $('#pfbox').innerHTML=`<div class="cfs pf2">${box('Session',S.ses)}${box('Overall',S.tot)}</div><p class="mute">A new session starts after 30 minutes without a hand. Resetting the bankroll does not change these.</p>`}
   {const H=house(),row=(l,k,r,pf=r[1]-r[0])=>`<tr><th>${l}</th><td>${rtpGame(k).toFixed(2)}%</td><td><b>${rtpTxt(r)}</b></td><td>${eur(r[0])}</td><td class="${pfC(pf)}">${r[0]||pf?pfT(pf):'–'}</td></tr>`,bt=i=>[S.botst[i].b||0,S.botst[i].w||0];
   const late=[0,2].some(i=>Math.abs(S.botst[i].net-((S.botst[i].w||0)-(S.botst[i].b||0)))>.01);
-  $('#rtpbox').innerHTML=`<table class="cft rtt"><thead><tr><th></th><th>Game</th><th>RTP</th><th>Bet</th><th>Profit</th></tr></thead><tbody>${row('You',"m",S.rt.m)}${SIDE.map(([k,l])=>row('You · '+(k==='pp'?'Pairs':l),k,S.rt[k])).join('')}${row('Player 1','m',bt(2),S.botst[2].net)}${row('Player 2','m',bt(0),S.botst[0].net)}<tr class="pf"><th>House keeps</th><td>${H.exp.toFixed(2)}%</td><td><b>${H.b?pctM(H.keeps):'–'}</b></td><td>${eur(H.b)}</td><td class="${pfC(H.win)}">${H.b||H.win?pfT(H.win):'–'}</td></tr></tbody></table>${H.b?`<p>By the odds, your bets so far should have cost about <b>${eur(Math.round(expLoss()))}</b> (you are at <b>${pfT(S.tot.net)}</b>), and the house should have won about <b>${eur(Math.round(H.b*H.exp/100))}</b> (it is at <b>${pfT(H.win)}</b>). Profits count every finished hand; a bankroll reset does not change them.</p>`:''}<p class="mute">RTP is the share of the bets a game pays back on average. "Game" is the long-run figure for this table (${S.decks} decks, dealer ${S.s17?'stands on':'hits'} soft 17, ${S.sur?'with':'no'} surrender), every hand by the chart, flat bets. "RTP" is what the bets have paid back so far, doubles, splits and insurance included; over a few hundred hands it is mostly luck. The house keeps what is left of everybody's bets.${late?' Profits of Players 1 and 2 include their earlier hands; their bets and RTP are counted from the hand this table was added.':''}</p>`}
+  $('#rtpbox').innerHTML=`<table class="cft rtt"><thead><tr><th></th><th>Game</th><th>RTP</th><th>Bet</th><th>Profit</th></tr></thead><tbody>${row('You',"m",S.rt.m)}${SIDE.map(([k,l])=>row('You · '+(k==='pp'?'Pairs':l),k,S.rt[k])).join('')}${row('Player 1','m',bt(2),S.botst[2].net)}${row('Player 2','m',bt(0),S.botst[0].net)}<tr class="pf"><th>House keeps</th><td>${H.exp.toFixed(2)}%</td><td><b>${H.b?pctM(H.keeps):'–'}</b></td><td>${eur(H.b)}</td><td class="${pfC(H.win)}">${H.b||H.win?pfT(H.win):'–'}</td></tr></tbody></table>${H.b?`<p>By the odds, your bets so far should have cost about <b>${eur(Math.round(expLoss()))}</b> (you are at <b>${pfT(S.tot.net)}</b>), and the house should have won about <b>${eur(Math.round(H.b*H.exp/100))}</b> (it is at <b>${pfT(H.win)}</b>). Profits count every hand, also one left unfinished by closing the page (its bet is lost); a bankroll reset does not change them.</p>`:''}<p class="mute">RTP is the share of the bets a game pays back on average. "Game" is the long-run figure for this table (${S.decks} decks, dealer ${S.s17?'stands on':'hits'} soft 17, ${S.sur?'with':'no'} surrender), every hand by the chart, flat bets. "RTP" is what the bets have paid back so far, doubles, splits and insurance included; over a few hundred hands it is mostly luck. The house keeps what is left of everybody's bets.${late?' Profits of Players 1 and 2 include their earlier hands; their bets and RTP are counted from the hand this table was added.':''}</p>`}
   renderCF();
   $('#miss').innerHTML=S.miss.length?S.miss.slice(0,10).map(missLi).join(''):'<li class="mute">No mistakes yet.</li>';
   $('#exams').innerHTML=S.exams.length?S.exams.slice(0,6).map(r=>`<li><b>${new Date(r.t).toLocaleDateString('en-GB')}</b> · decisions ${r.dec[0]}/${r.dec[1]}, count ${r.cnt[0]}/${r.cnt[1]}, bets ${r.bet[0]}/${r.bet[1]}<br><span>Bankroll ${r.net>=0?'+':'−'}${eur(Math.abs(r.net))}</span></li>`).join(''):'<li class="mute">No exams yet. Pick "Exam" at the top: 20 hands, report at the end.</li>';
@@ -1478,19 +1503,20 @@ async function playRound(){
     const ord=order();G.ord=ord;
     G.seats.forEach(s=>{s.hands=[];s.ins=0;s.spot=0});
     ord.forEach(i=>{const b=i===1?G.bet:i===2?Math.min(MAXB,Math.max(BOTB,S.botst[2].bet)):BOTB;G.seats[i].hands=[{cards:[],bet:b}];G.seats[i].spot=b});
-    G.dealer.cards=[];render();
+    G.dealer.cards=[];openHand();render();
     await sleep(T(250));
     for(let k=0;k<2;k++){
       for(const i of ord){G.seats[i].hands[0].cards.push(draw(true));render();await sleep(D())}
       if(k===0){G.dealer.cards.push(draw(true));render();await sleep(D())}
     }
     const up=upCard(),me=G.seats[1];
+    openHand();
     await sideBets(me.hands[0].cards,up);
     if(isBJ(me.hands[0].cards)){banner(1,'BLACKJACK!','bj');SND.play('bj')}
     if(up.r==='A'&&S.bank>=G.bet/2){
       G.phase='ins';render();
       const a=await wait('ins');
-      if(a==='I'){me.ins=G.bet/2;S.bank-=me.ins;chipFly(bankEl(),spotEl(1),Math.max(5,me.ins))}
+      if(a==='I'){me.ins=G.bet/2;S.bank-=me.ins;openHand();chipFly(bankEl(),spotEl(1),Math.max(5,me.ins))}
       G.phase='deal';render();
     }
     for(const i of ord){
@@ -1518,10 +1544,10 @@ async function exec(s,hi,a,bot){
   const h=s.hands[hi],i=G.seats.indexOf(s);
   if(a==='S'){h.done=true;return false}
   if(a==='R'){h.sur=true;h.done=true;render();return false}
-  if(a==='H'){h.cards.push(draw(true));render();await sleep(D());if(tot(h.cards).t>21){h.bust=true;banner(i,'BUST','lose');if(!bot)SND.play('bust')}return true}
+  if(a==='H'){h.cards.push(draw(true));if(!bot)openHand();render();await sleep(D());if(tot(h.cards).t>21){h.bust=true;banner(i,'BUST','lose');if(!bot)SND.play('bust')}return true}
   if(a==='D'){
     if(!bot){S.bank-=h.bet;chipFly(bankEl(),spotEl(1),h.bet)}
-    h.bet*=2;h.dbl=true;s.spot=s.hands.reduce((x,y)=>x+y.bet,0);render();await sleep(T(250));
+    h.bet*=2;h.dbl=true;s.spot=s.hands.reduce((x,y)=>x+y.bet,0);if(!bot)openHand();render();await sleep(T(250));
     h.cards.push(draw(true));render();await sleep(D());
     if(tot(h.cards).t>21){h.bust=true;banner(i,'BUST','lose');if(!bot)SND.play('bust')}
     h.done=true;return false;
@@ -1531,7 +1557,7 @@ async function exec(s,hi,a,bot){
     const c2=h.cards.pop(),aces=c2.r==='A';
     h.split=true;h.splitAces=aces;
     s.hands.splice(hi+1,0,{cards:[c2],bet:h.bet,split:true,splitAces:aces});
-    s.spot=s.hands.reduce((x,y)=>x+y.bet,0);
+    s.spot=s.hands.reduce((x,y)=>x+y.bet,0);if(!bot)openHand();
     render();await sleep(D());
     h.cards.push(draw(true));render();await sleep(D());
     if(aces){h.done=true;return false}
@@ -1544,6 +1570,7 @@ async function sideBets(h,up){
   if(!R.length) return;
   G.sbR=R;const won=R.filter(x=>x.pay);
   R.forEach(x=>{S.bank+=x.pay;if(!x.pay)chipFly(sideEl(x.k),$('#rack'),x.bet)});
+  openHand();
   render();
   if(won.length){
     banner(1,won.map(x=>`${x.name.toUpperCase()} ${x.odds}:1 +${eur(x.pay-x.bet)}`).join(' · '),'bj');SND.play('bj');
@@ -1594,6 +1621,7 @@ async function settle(){
     if(i===1&&s.ins){myIns=s.ins;myBet+=s.ins;if(dbj)myWin+=s.ins*3;if(dbj){S.bank+=s.ins*3;net+=s.ins*2;spot+=s.ins*3}else{net-=s.ins;fly.push(chipFly(spotEl(1),$('#rack'),Math.max(5,s.ins),.6))}s.ins=0}
     s.spot=spot;
   }
+  openHand({m:myBet,w:myWin,done:1});
   G.turn=null;renderTable();
   if(dbj){
     const hs=G.seats[1].hands,more=hs.length>1||hs.some(h=>h.dbl);
@@ -1614,7 +1642,7 @@ async function settle(){
     if(G.lossStreak>=5) G.offer={why:`You lost ${G.lossStreak} hands in a row.`};
     else if(nbj>=2) G.offer={why:`The dealer had ${nbj} blackjacks in the last ${G.dbjHist.length} hands.`};
   }
-  G.lastNet=net;Object.assign(G.lastBW,{bet:myBet,win:myWin,ins:myIns});cfRecord();botRecord(bn,bp);const sideNet=(G.sbR||[]).reduce((a,x)=>a+x.pay-x.bet,0);profitRecord(net,sideNet,myBet,myWin);G.phase='over';G.since++;S.rounds++;G.round++;histRecord(myBet,myWin,net,myIns);
+  G.lastNet=net;Object.assign(G.lastBW,{bet:myBet,win:myWin,ins:myIns});cfRecord();botRecord(bn,bp);const sideNet=(G.sbR||[]).reduce((a,x)=>a+x.pay-x.bet,0);profitRecord(net,sideNet,myBet,myWin);G.phase='over';G.since++;S.rounds++;G.round++;S.pend=null;histRecord(myBet,myWin,net,myIns);
   if(E){E.n++;E.net+=net+sideNet}
   save();render();renderRecord();
 }
@@ -1782,8 +1810,10 @@ function start(){
   $('#spSub').textContent=`Bankroll ${eur(S.bank)} · ${S.rounds?`${S.rounds} hands played`:'first visit'}${window.matchMedia&&matchMedia('(pointer:coarse)').matches?'':' · press Enter'}`;
   $('#play').addEventListener('click',play);
   $('#coachP').addEventListener('click',e=>{if(!e.target.closest('button,a,input'))e.currentTarget.classList.toggle('open')});
+  const un=closePend();
   if(S.mode==='exam') startExam();
   else coach('<p class="head">Welcome to the table</p><p>Tap chips to bet, then Deal. In training I stop you on a wrong play and show the right one; your bets and your count are checked too.</p>','');
+  if(un&&!un.done) coach(`<p class="head">Unfinished hand: −${eur(un.bet)}</p><p>The page closed in the middle of a hand. As at a real table, the ${eur(un.bet)} you had bet counts as lost${un.side?`; the side bets came to <b>${sgE(un.side)}</b>`:''}.</p>`,'bad');
   startBetting();renderRecord();connect();
 }
 start();
