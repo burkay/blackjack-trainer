@@ -839,12 +839,21 @@ const SND={
   init(){
     if(this.ctx) {if(this.ctx.state==='suspended')this.ctx.resume();return}
     const AC=window.AudioContext||window.webkitAudioContext;if(!AC) return;
+    try{this.attach(new AC());this.vol();this.ambient()}catch(e){this.ctx=null}
+  },
+  // everything goes through out: straight to the master and, a little, through a short room reverb (a quiet casino, felt and wood)
+  attach(c){
+    this.ctx=c;this.master=c.createGain();this.master.connect(c.destination);
+    const sr=c.sampleRate,b=c.createBuffer(1,sr,sr),d=b.getChannelData(0);for(let i=0;i<sr;i++)d[i]=Math.random()*2-1;this.noise=b;
+    // a gentle tone stage: no rumble below 140 Hz, no hiss above 5 kHz
+    this.out=c.createGain();const hp=c.createBiquadFilter(),lp0=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=140;lp0.type='lowpass';lp0.frequency.value=5000;lp0.Q.value=.5;
+    this.out.connect(hp);hp.connect(lp0);lp0.connect(this.master);
     try{
-      this.ctx=new AC();this.master=this.ctx.createGain();this.master.connect(this.ctx.destination);this.vol();
-      const len=this.ctx.sampleRate,b=this.ctx.createBuffer(1,len,this.ctx.sampleRate),d=b.getChannelData(0);
-      for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
-      this.noise=b;this.ambient();
-    }catch(e){this.ctx=null}
+      const n=Math.floor(sr*.32),ir=c.createBuffer(2,n,sr);
+      for(let ch=0;ch<2;ch++){const x=ir.getChannelData(ch);let l=0;for(let i=0;i<n;i++){l+=.35*((Math.random()*2-1)-l);x[i]=l*Math.pow(1-i/n,3.2)}}
+      const cv=c.createConvolver(),wet=c.createGain(),lp=c.createBiquadFilter();cv.buffer=ir;lp.type='lowpass';lp.frequency.value=3800;wet.gain.value=.16;
+      this.out.connect(lp);lp.connect(cv);cv.connect(wet);wet.connect(this.master);
+    }catch(e){}
   },
   vol(){if(this.master)this.master.gain.value=S.sound?S.vol:0},
   ok(){return this.ctx&&S.sound&&S.vol>0},
@@ -852,20 +861,75 @@ const SND={
     const c=this.ctx,now=c.currentTime+t,s=c.createBufferSource(),fl=c.createBiquadFilter(),gn=c.createGain();
     s.buffer=this.noise;s.playbackRate.value=.85+Math.random()*.3;fl.type=type;fl.frequency.value=f;fl.Q.value=q;
     gn.gain.setValueAtTime(0,now);gn.gain.linearRampToValueAtTime(g,now+a);gn.gain.exponentialRampToValueAtTime(.0008,now+dur);
-    s.connect(fl);fl.connect(gn);gn.connect(this.master);s.start(now,Math.random()*.6);s.stop(now+dur+.03);
+    s.connect(fl);fl.connect(gn);gn.connect(this.out||this.master);s.start(now,Math.random()*.6);s.stop(now+dur+.03);
+  },
+  // a grain of filtered noise: f can glide to f2, pan places it left or right
+  grain({t=0,dur=.05,f=3000,f2=0,q=.8,type='bandpass',g=.2,a=.002,pan=0}){
+    const c=this.ctx,now=c.currentTime+t,s=c.createBufferSource(),fl=c.createBiquadFilter(),gn=c.createGain();
+    s.buffer=this.noise;s.playbackRate.value=.9+Math.random()*.2;fl.type=type;fl.Q.value=q;
+    fl.frequency.setValueAtTime(f,now);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,now+dur);
+    gn.gain.setValueAtTime(0,now);gn.gain.linearRampToValueAtTime(g,now+a);gn.gain.exponentialRampToValueAtTime(.0006,now+dur);
+    let last=gn;if(pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=pan;gn.connect(p);last=p}
+    s.connect(fl);fl.connect(gn);last.connect(this.out||this.master);s.start(now,Math.random()*.8);s.stop(now+dur+.02);
+  },
+  // air moving past a card in flight: rises and falls over the whole flight
+  whoosh({t=0,dur=.4,f1=800,f2=2400,g=.05,pan=0}){
+    const c=this.ctx,now=c.currentTime+t,s=c.createBufferSource(),fl=c.createBiquadFilter(),gn=c.createGain(),pk=now+dur*.55;
+    s.buffer=this.noise;s.loop=true;fl.type='bandpass';fl.Q.value=.9;
+    fl.frequency.setValueAtTime(f1,now);fl.frequency.exponentialRampToValueAtTime(f2,pk);fl.frequency.exponentialRampToValueAtTime(f1*1.1,now+dur);
+    gn.gain.setValueAtTime(.0006,now);gn.gain.exponentialRampToValueAtTime(g,pk);gn.gain.exponentialRampToValueAtTime(.0006,now+dur);
+    let last=gn;if(pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.setValueAtTime(pan,now);p.pan.linearRampToValueAtTime(0,now+dur);gn.connect(p);last=p}
+    s.connect(fl);fl.connect(gn);last.connect(this.out||this.master);s.start(now,Math.random()*.5);s.stop(now+dur+.02);
+  },
+  // the soft body of something landing on felt
+  thump({t=0,f=170,f2=105,dur=.07,g=.08}){
+    const c=this.ctx,now=c.currentTime+t,o=c.createOscillator(),gn=c.createGain();
+    o.type='sine';o.frequency.setValueAtTime(f,now);o.frequency.exponentialRampToValueAtTime(f2,now+dur);
+    gn.gain.setValueAtTime(0,now);gn.gain.linearRampToValueAtTime(g,now+.003);gn.gain.exponentialRampToValueAtTime(.0006,now+dur);
+    o.connect(gn);gn.connect(this.out||this.master);o.start(now);o.stop(now+dur+.02);
   },
   tone({t=0,f=440,f2=0,dur=.3,type='sine',g=.2,a=.008}){
     const c=this.ctx,now=c.currentTime+t,o=c.createOscillator(),gn=c.createGain();
     o.type=type;o.frequency.setValueAtTime(f,now);if(f2)o.frequency.exponentialRampToValueAtTime(f2,now+dur);
     gn.gain.setValueAtTime(0,now);gn.gain.linearRampToValueAtTime(g,now+a);gn.gain.exponentialRampToValueAtTime(.0008,now+dur);
-    o.connect(gn);gn.connect(this.master);o.start(now);o.stop(now+dur+.05);
+    o.connect(gn);gn.connect(this.out||this.master);o.start(now);o.stop(now+dur+.05);
   },
   fx:{
-    deal(s,o){const k=(o&&o.fast)?.6:1;s.burst({dur:.16*k,f:2200,q:.5,g:.32,a:.02});s.burst({t:.3*k,dur:.035,f:4200,type:'highpass',g:.28,a:.002})},
-    flip(s){s.burst({dur:.05,f:3600,type:'highpass',g:.3,a:.002});s.burst({t:.02,dur:.04,f:1800,q:1.2,g:.12})},
+    /* A card dealt from the shoe, timed to the animation: it scrapes out of the shoe, the air rushes past while it flies (fly = flight
+       time), it slaps the felt and slides to a stop. Every card is a little different, so a run of cards never sounds like a machine. */
+    deal(s,o){
+      o=o||{};const r=(a,b)=>a+Math.random()*(b-a),t=o.t||0,fly=Math.max(.06,o.fly==null?(o.fast?.22:.4):o.fly),v=r(.8,1.15)*1.8,pan=r(.15,.4);
+      s.grain({t,dur:r(.04,.06),f:r(2200,3000),q:.9,g:.06*v,a:.005,pan});
+      if(fly>.12)s.whoosh({t:t+.015,dur:fly,f1:r(700,950),f2:r(2100,2900),g:(fly>.3?.045:.03)*v,pan});
+      const L=t+fly;
+      s.grain({t:L-.004,dur:r(.035,.05),f:r(1200,1600),q:.6,g:.26*v,a:.003});
+      s.thump({t:L,f:r(190,220),f2:r(150,170),dur:.04,g:.01*v});
+      s.grain({t:L+.006,dur:(fly>.3?r(.1,.16):r(.06,.09)),f:r(2100,2700),f2:r(1100,1500),q:.7,g:.11*v,a:.012});
+    },
+    // turning a card over: a flick of the edge, then the face lands
+    flip(s){const r=(a,b)=>a+Math.random()*(b-a);s.grain({dur:.022,f:r(2800,3600),q:1,g:.2,a:.0015});s.grain({t:.045,dur:.04,f:r(1300,1600),q:.6,g:.36,a:.003});s.thump({t:.046,f:210,f2:160,dur:.035,g:.01})},
     chip(s,o){const g=(o&&o.g)||1;s.tone({f:3100+Math.random()*900,dur:.06,type:'triangle',g:.11*g,a:.001});s.tone({t:.01,f:4600+Math.random()*700,dur:.045,g:.07*g,a:.001});s.burst({dur:.025,f:6500,type:'highpass',g:.22*g,a:.001})},
-    sweep(s){for(let i=0;i<5;i++)s.burst({t:i*.05,dur:.14,f:1800+i*200,q:.5,g:.16,a:.02})},
-    shuffle(s){for(let i=0;i<30;i++)s.burst({t:i*.038+Math.random()*.01,dur:.045,f:2600+Math.random()*1800,q:1,g:.16,a:.002});s.burst({t:1.2,dur:.32,f:1600,q:.5,g:.3,a:.04})},
+    // the dealer sweeps the cards across the felt into the discard tray (d = how long the cards travel)
+    sweep(s,o){
+      const r=(a,b)=>a+Math.random()*(b-a),d=Math.max(.12,(o&&o.d)||.43);
+      for(let i=0;i<5;i++)s.grain({t:i*d*.09+r(0,.015),dur:d*r(.55,.75),f:r(1700,2400),f2:r(1000,1300),q:.6,g:r(.12,.16),a:.03,pan:r(-.3,.3)});
+      s.grain({t:d-.01,dur:.045,f:1500,q:.6,g:.2,a:.004});s.thump({t:d,f:200,f2:150,dur:.04,g:.01});
+    },
+    /* A riffle shuffle, timed to the animation (dur): the two halves riffle together in a burst of card edges that speeds up and slows down,
+       the cards are bridged back with a soft flutter, three times; then the deck is squared on the table. */
+    shuffle(s,o){
+      const r=(a,b)=>a+Math.random()*(b-a),dur=(o&&o.dur)||1.4,n=dur<.6?1:3,per=(dur-.18)/n;
+      for(let k=0;k<n;k++){
+        const st=k*per+.04,len=per*.68,m=n===1?22:40;
+        s.grain({t:st,dur:len,f:1800,q:.6,g:.17,a:len*.4});
+        for(let i=0;i<m;i++){const x=i/m,env=Math.pow(Math.sin(Math.PI*(x*.9+.05)),.7);
+          s.grain({t:st+len*(x+r(-.4,.4)/m),dur:r(.004,.009),f:r(2400,4200),q:1.1,g:r(.27,.4)*env,a:.0012,pan:i%2?-.3:.3})}
+        for(let i=0;i<12;i++)s.grain({t:st+len+.01+i*.0075,dur:.007,f:r(2200,3200),q:1.1,g:.2*(1-i/12),a:.0012});
+        s.grain({t:st+len+.11,dur:.035,f:1500,q:.6,g:.1,a:.004});
+      }
+      s.grain({t:dur-.12,dur:.05,f:1400,q:.6,g:.24,a:.004});s.thump({t:dur-.12,f:200,f2:150,dur:.04,g:.012});
+      s.grain({t:dur-.05,dur:.035,f:1600,q:.6,g:.11,a:.004});
+    },
     win(s){[523.25,659.25,783.99].forEach((f,i)=>s.tone({t:i*.09,f,dur:.55,type:'triangle',g:.11}));s.tone({t:.28,f:1567.98,dur:.6,g:.05})},
     bj(s){[523.25,659.25,783.99,1046.5,1318.5].forEach((f,i)=>s.tone({t:i*.08,f,dur:.7,type:'triangle',g:.11}));s.burst({t:.35,dur:.7,f:8000,type:'highpass',g:.06,a:.05})},
     lose(s){s.tone({f:233,f2:174,dur:.5,g:.14});s.tone({t:.06,f:196,f2:146,dur:.55,g:.1})},
@@ -1023,7 +1087,7 @@ function handBadge(h){
   if(!h.cards.length) return '';
   const {t,soft}=tot(h.cards);
   if(h.bj||(h.cards.length===2&&t===21&&!h.split)) return '<span class="tb bj">BJ</span>';
-  return `<span class="tb">${t>21?'Bust':(soft?'soft ':'')+t}</span>`;
+  return `<span class="tb">${t>21?'Bust':t}</span>`; // the felt shows the number only; "soft" is for the explanations
 }
 function renderTable(){
   const before=new Map();
@@ -1031,7 +1095,7 @@ function renderTable(){
   const newEls=[],dl=G.dealer.cards;
   syncCards($('#dealerCards'),dl,null,newEls);
   const dt=$('#dealerTot');
-  if(dl.length){dt.hidden=false;if(dl.some(c=>!c.up)){const v=val(dl[0]);dt.textContent=v===11?'A':String(v)}else{const {t,soft}=tot(dl);dt.textContent=t>21?'Bust':isBJ(dl)?'BJ':(soft&&t<21?'soft ':'')+t}}else dt.hidden=true;
+  if(dl.length){dt.hidden=false;if(dl.some(c=>!c.up)){const v=val(dl[0]);dt.textContent=v===11?'A':String(v)}else{const {t,soft}=tot(dl);dt.textContent=t>21?'Bust':isBJ(dl)?'BJ':String(t)}}else dt.hidden=true;
   const present=G.ord||order();
   [0,1,2].forEach(i=>{
     const el=seatEls[i],s=G.seats[i],on=present.includes(i),me=i===1;
@@ -1086,7 +1150,7 @@ function renderTable(){
     const m=center($('#shoeMouth').getBoundingClientRect());
     newEls.forEach((el,n)=>{
       const a=center(el.getBoundingClientRect()),dx=m.x-a.x,dy=m.y-a.y,dur=T(400);
-      el._flying=true;SND.play('deal',{fast:S.fast});
+      el._flying=true;SND.play('deal',{fast:S.fast,t:T(n*70)/1000,fly:dur/1000});
       anim(el,[{transform:`translate(${dx}px,${dy}px) rotate(-28deg) scale(.82)`},{transform:'translate(0,0) rotate(0) scale(1)'}],{duration:dur,delay:T(n*70),easing:'cubic-bezier(.15,.75,.25,1)',fill:'backwards'}).then(()=>{el._flying=false;if(el._card&&el._card.up)flipUp(el)});
     });
   }
@@ -1095,7 +1159,7 @@ async function collectCards(){
   const els=[...cardEls.values()].filter(e=>e.isConnected);
   if(els.length){
     const t=center($('#discard').getBoundingClientRect());
-    SND.play('sweep');
+    SND.play('sweep',{d:T(430)/1000});
     await Promise.all(els.map((el,i)=>{const a=center(el.getBoundingClientRect());return anim(el,[{transform:'translate(0,0)',opacity:1},{transform:`translate(${t.x-a.x}px,${t.y-a.y}px) rotate(${Math.round(Math.random()*50-25)}deg) scale(.5)`,opacity:.15}],{duration:T(430),delay:T(i*22),easing:'cubic-bezier(.5,0,.3,1)',fill:'forwards'})}));
   }
   els.forEach(e=>e.remove());cardEls.clear();
@@ -1574,7 +1638,7 @@ async function changeShoe(src){
 }
 async function shuffleFx(why){
   coach(`<p class="head">Shuffling</p><p>${why} Running count is back to 0.</p>`,'');
-  const el=$('#shuffleFx');el.hidden=false;void el.offsetWidth;el.classList.add('run');SND.play('shuffle');
+  const el=$('#shuffleFx');el.hidden=false;void el.offsetWidth;el.classList.add('run');SND.play('shuffle',{dur:(T(1400)||250)/1000});
   await sleep(T(1400)||250);el.classList.remove('run');el.hidden=true;
 }
 async function playRound(){
