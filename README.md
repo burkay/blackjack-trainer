@@ -17,14 +17,23 @@ Open any file straight in a browser to play, or play online on GitHub Pages:
 
 ## Table rules (Table Simulator)
 
-- 8 decks (6 optional), dealer stands on soft 17 (H17 optional), blackjack pays 3:2.
-- The dealer's second card is dealt face down. With an ace up the dealer offers insurance (2:1) and then checks for blackjack; with a ten up there is no check, and a dealer blackjack shows at the end and takes every bet, doubles and splits included.
-- Double on any two cards, also after a split. Split a pair once; split aces get one card each. Late surrender is optional (off by default).
-- By expected value that changes two plays in this game only: against a ten, 11 is hit (doubled only from true count +3) and 8,8 is not split. Fast Blackjack (the dealer checks for blackjack) and the two drills keep the standard chart.
+Pick a preset in the menu, or change any rule (that makes it Custom):
+
+| | Online live | US casino |
+|---|---|---|
+| Decks | 8 | 6 |
+| Dealer's second card | after the players (no hole card) | face down, checked for blackjack under an ace and a ten |
+| Dealer blackjack | takes every bet, doubles and splits included | ends the hand at once: only the first bet |
+| Splits | once | up to 4 hands |
+| Surrender | no | late |
+| Chart | against a ten or an ace: hit 11, do not split 8,8; against an ace do not split A,A; 11 vs 10 doubled only from true count +3 | the standard chart (as in the strategy test) |
+
+Always: blackjack pays 3:2, dealer stands on soft 17 (H17 optional), double on any two cards and after a split, split aces get one card, insurance 2:1 on an ace. Custom also allows a hole card checked under an ace only (a blackjack under a ten then shows at the end and takes every bet).
+
 - Side bets (can be switched off): Perfect Pairs 25:1 perfect, 12:1 coloured, 6:1 mixed; 21+3 100:1 suited trips, 40:1 straight flush, 30:1 three of a kind, 10:1 straight, 5:1 flush. Settled right after the first three cards.
-- RTP: the stats show the game's long-run return (8 decks: 99.46% for the main game, 95.90% Perfect Pairs, 96.30% 21+3) next to what your own bets, the other players' bets and the house have made so far; small RTP figures also sit under the names, the house profit on the chip rack.
+- RTP: the stats show the game's long-run return for the rules in force next to what your bets, the other players' bets and the house have made so far. Side bets: 95.90% Perfect Pairs and 96.30% 21+3 with 8 decks.
 - The shoe is shuffled once (crypto-random Fisher–Yates) and played to a cut card in the middle (45–55% left) or deep (20–25% left). Shoes alternate blue and red backs.
-- Player 1 bets reverse martingale (€10, double after a win, back to €10 after a loss); Player 2 bets flat €10. Both play basic strategy.
+- Player 1 bets reverse martingale (€10, double after a win, back to €10 after a loss); Player 2 bets flat €10. Both play basic strategy for the rules in force.
 
 ## "You vs the rule"
 

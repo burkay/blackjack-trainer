@@ -290,6 +290,7 @@ legend{font-weight:600;margin-bottom:6px;padding:0}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg label{position:relative}
 .seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg.rules{display:grid;gap:6px}.seg.rules label{display:block}.seg.rules span{display:grid;width:100%;border-radius:14px;padding:8px 14px;white-space:normal}.seg.rules b{font-size:16px}.seg.rules i{font-style:normal;font-size:13px;opacity:.8}.seg input:disabled+span{opacity:.55}.seg input:checked:disabled+span{opacity:1}
 .seg span{display:inline-flex;align-items:center;min-height:42px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;font-weight:500;white-space:nowrap}
 .seg input:checked+span{background:var(--kg);border-color:var(--kg);color:#04210f}
 .seg input:focus-visible+span{outline:3px solid var(--gold);outline-offset:2px}
@@ -573,7 +574,22 @@ body{-webkit-tap-highlight-color:transparent}
   <div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="t-set" aria-selected="true">Table</button><button class="tab" role="tab" data-tab="t-stat" aria-selected="false">Stats</button><button class="tab" role="tab" data-tab="t-snd" aria-selected="false">Sound</button></div>
   <div class="db">
     <div id="t-set">
-      <p class="mute">Every change is saved to your account and applies right away. A new deck count starts a fresh shoe on the next hand. Adding or removing players never reshuffles: they join or leave from the next hand and the shoe continues. A new cut card position applies from the next shoe.</p>
+      <p class="mute">Every change is saved. Rule changes apply from the next hand; a new deck count starts a fresh shoe. Adding or removing players never reshuffles: they join or leave from the next hand and the shoe continues. A new cut card position applies from the next shoe.</p>
+      <fieldset class="seg rules"><legend>Rules</legend>
+        <label><input type="radio" name="preset" id="pr-live" value="live"><span><b>Online live</b><i>8 decks · no hole card · split once · no surrender</i></span></label>
+        <label><input type="radio" name="preset" id="pr-us" value="us"><span><b>US casino</b><i>6 decks · dealer checks under ace and ten · split to 4 · surrender</i></span></label>
+        <label><input type="radio" name="preset" id="pr-custom" value="custom" disabled><span><b>Custom</b><i>your own mix: change any rule below</i></span></label>
+      </fieldset>
+      <p class="mute" id="chartNote"></p>
+      <fieldset class="seg"><legend>Dealer's second card</legend>
+        <label><input type="radio" name="peek" id="pk-both" value="both"><span>Face down, checked under ace and ten</span></label>
+        <label><input type="radio" name="peek" id="pk-ace" value="ace"><span>Face down, checked under an ace only</span></label>
+        <label><input type="radio" name="peek" id="pk-none" value="none"><span>After the players (no hole card)</span></label>
+      </fieldset>
+      <fieldset class="seg"><legend>Splitting</legend>
+        <label><input type="radio" name="splits" id="sp-2" value="2"><span>Once</span></label>
+        <label><input type="radio" name="splits" id="sp-4" value="4"><span>Up to 4 hands</span></label>
+      </fieldset>
       <fieldset class="seg"><legend>Dealer on soft 17</legend>
         <label><input type="radio" name="s17" id="r-h17" value="0"><span>Hits (H17)</span></label>
         <label><input type="radio" name="s17" id="r-s17" value="1"><span>Stands (S17)</span></label>
@@ -613,7 +629,7 @@ body{-webkit-tap-highlight-color:transparent}
       <label class="chk"><input type="checkbox" id="o-show">Show the count on screen</label>
       <label class="chk"><input type="checkbox" id="o-bet">Bet check (1 unit = €10, spread 1–8)</label>
       <label class="chk"><input type="checkbox" id="o-dev">Also check deviations (Illustrious 18 + Fab 4)</label>
-      <p class="mute">Other players use basic strategy. Player 1 bets reverse martingale: €10 to start, double after a win, back to €10 after a loss, same bet after a push; a double that would pass the €500 table limit goes back to €10. Their profit and loss shows under their names; reset it with the button above (a bankroll reset clears it too). Rules: blackjack pays 3:2. The dealer's second card is dealt face down. With an ace up the dealer offers insurance (2:1) and then checks for blackjack. With a ten up there is no check: a dealer blackjack shows at the end and takes every bet, double and split money too. Double on any two cards, also after a split. Split a pair once; split aces get one card each. Perfect Pairs pays 25:1 perfect, 12:1 coloured, 6:1 mixed; 21+3 pays 100:1 suited trips, 40:1 straight flush, 30:1 three of a kind, 10:1 straight, 5:1 flush. Because of the unchecked ten the chart here hits 11 against a ten and does not split 8,8 against a ten.</p>
+      <p class="mute">Other players use basic strategy. Player 1 bets reverse martingale: €10 to start, double after a win, back to €10 after a loss, same bet after a push; a double that would pass the €500 table limit goes back to €10. Their profit and loss shows under their names; reset it with the button above (a bankroll reset clears it too). <span id="rulesTxt"></span></p>
       <p class="mute">The shoe holds real decks (8 × 52 = 416 cards), shuffled with your browser's cryptographic random generator. The cut card goes in the middle (45–55% of the shoe left behind) or deep (20–25% left) as you choose, a little different every shoe; the shoe shows how far away it is. When it comes out the hand is finished, then the whole shoe is reshuffled. Between hands you can always ask for a new shoe.</p>
       <button class="ghost" id="resetBank">Reset bankroll to €1,000</button>
     </div>
@@ -716,17 +732,18 @@ const ACTN={H:['Hit','hit'],S:['Stand','stand'],D:['Double','double down'],P:['S
 const SUBT={H:'take a card',S:'stay',D:'double, one card',P:'make two hands',R:'give up half'};
 const HDEV=[[16,'10','S',0,0],[15,'10','S',4,4],[10,'10','D',4,4],[12,'3','S',2,2],[12,'2','S',3,3],[11,'A','D',-1,1],[9,'2','D',1,1],[10,'A','D',3,4],[9,'7','D',3,3],[16,'9','S',5,5],[13,'2','S',-1,-1],[12,'4','S',0,0],[12,'5','S',-2,-2],[12,'6','S',-3,-1],[13,'3','S',-2,-2]];
 function handName(cards){const {t,soft}=tot(cards),r=cards.map(c=>c.r).join(',');if(cards.length===2&&val(cards[0])===val(cards[1]))return `${r} (pair)`;return `${r} (${soft&&t<=21?'soft ':''}${t})`}
-/* x.enhc: the dealer checks for blackjack under an ace but not under a ten, and a blackjack hidden under a ten takes doubles and
-   splits too. By expected value that changes two plays, both against a ten: 11 hits (double only from true count +3; 10 never
-   doubles) and 8,8 is not split. A,A is still split. Against an ace everything is on the chart. */
-const ENHC=' (the dealer does not check under a ten: a hidden blackjack would take the extra bet too)';
+/* x.np10 / x.npA: the dealer does not check for blackjack under a ten / an ace, and such a hidden blackjack takes doubles and
+   splits too. By expected value (verified against the book indices for the checked case) that changes, against that card only:
+   11 hits (against a ten it doubles from true count +3), 10 never doubles, 8,8 is not split, and against an ace A,A is not split.
+   Everything else stays on the chart. With both checked (US rules) nothing changes. */
+const ENHC=' (no check for blackjack: a hidden blackjack would take the extra bet too)';
 function decide(cards,up,x){
-  const ui=upIdx(up),u=UP[ui],{t,soft}=tot(cards),tc=x.tc,name=handName(cards),nc=!!x.enhc&&u==='10';
+  const ui=upIdx(up),u=UP[ui],{t,soft}=tot(cards),tc=x.tc,name=handName(cards),nc=(u==='10'&&!!x.np10)||(u==='A'&&!!x.npA);
   const pv=cards.length===2&&val(cards[0])===val(cards[1])?val(cards[0]):0;
   if(pv&&x.canSplit){
     const k=pv===11?'A':pv===10?'T':String(pv);
     if(x.dev&&k==='T'&&(u==='5'||u==='6')){const i=u==='5'?5:4;if(tc>=i)return {act:'P',dev:true,why:`${name} vs ${u}: deviation, true count ${sg(tc)} ≥ ${sg(i)} → split.`}}
-    const c=nc&&k==='8'?'N':PAIR[k][ui];
+    const c=nc&&(k==='8'||(k==='A'&&u==='A'))?'N':PAIR[k][ui];
     if(c==='Y'||(c==='d'&&x.das)) return {act:'P',why:`${name} vs dealer ${u}: the chart says ${c==='Y'?'Y':'Y/N (double after split allowed)'} → split.`};
   }
   if(x.canSur&&!soft){
@@ -739,14 +756,14 @@ function decide(cards,up,x){
     if(r) return {act:'R',dev:dv,why:dv?`${name} vs ${u}: Fab 4, true count ${sg(tc)} ≥ ${sg(i)} → surrender.`:`${name} vs dealer ${u}: the chart says SUR${nc&&pv===8?ENHC:''} → surrender.`};
   }
   if(soft&&t===21) return {act:'S',why:`${name}: 21, stand.`};
-  if(soft&&t===12) return {act:'H',why:`${name}: soft 12, hit.`};
+  if(soft&&t===12) return {act:'H',why:`${name}: soft 12, hit${nc&&pv===11?ENHC:''}.`};
   if(soft){
     const k=t-11;let c=SOFT[k][ui],n='';
     if(x.s17&&((k===8&&u==='6')||(k===7&&u==='2'))){c='S';n=' (S17 difference)'}
     const act=c==='H'?'H':c==='S'?'S':x.canDouble?'D':c==='D'?'H':'S';
     return {act,why:`${name} vs dealer ${u}: the chart says ${TXT[c]}${n}${(c==='D'||c==='X')&&!x.canDouble?', but you can\'t double here':''} → ${ACTN[act][1]}.`};
   }
-  if(x.dev){const d=nc&&t===11?[11,'10','D',3,3]:nc&&t===10?null:HDEV.find(a=>a[0]===t&&a[1]===u);if(d){const i=d[x.s17?4:3];let act=tc>=i?d[2]:'H';if(act==='D'&&!x.canDouble)act='H';return {act,dev:true,why:`${name} vs ${u}: deviation index ${sg(i)}, true count ${sg(tc)} → ${ACTN[act][1]}.`}}}
+  if(x.dev){const d=nc&&t===11&&u==='10'?[11,'10','D',3,3]:nc&&(t===11||t===10)?null:HDEV.find(a=>a[0]===t&&a[1]===u);if(d){const i=d[x.s17?4:3];let act=tc>=i?d[2]:'H';if(act==='D'&&!x.canDouble)act='H';return {act,dev:true,why:`${name} vs ${u}: deviation index ${sg(i)}, true count ${sg(tc)} → ${ACTN[act][1]}.`}}}
   if(t>=17) return {act:'S',why:`${name}: always stand on 17 or more.`};
   if(t<=8) return {act:'H',why:`${name}: always hit 8 or less.`};
   let c=HARD[t][ui],n='';
@@ -768,21 +785,34 @@ function poker3(cs){
 }
 const SIDE=[['pp','Perfect Pairs','Pairs',h=>perfectPairs(h[0],h[1])],['t3','21+3','21+3',(h,up)=>poker3([h[0],h[1],up])]];
 /* Return to player, in percent of all money bet. Main game: 800 million hands per rule set with this chart (flat bet, no count, ±0.01).
-   Side bets: exact odds from a full shoe. Keys: decks, then S17/H17 + s for surrender. */
-const RTP={8:{S17:99.46,S17s:99.53,H17:99.27,H17s:99.34,pp:95.90,t3:96.30},6:{S17:99.48,S17s:99.55,H17:99.29,H17s:99.36,pp:93.89,t3:95.38}};
-const rtpGame=k=>RTP[S.decks===6?6:8][k==='m'?(S.s17?'S17':'H17')+(S.sur?'s':''):k];
+   Keys: soft 17 (S/H) + s for surrender, dealer check (both/ace/none), most hands after splitting (2/4). Side bets: exact odds. */
+const RTP={8:{'H-ace-2':99.26,'H-ace-4':99.32,'H-both-2':99.37,'H-both-4':99.42,'H-none-2':99.26,'H-none-4':99.32,'Hs-ace-2':99.35,'Hs-ace-4':99.39,'Hs-both-2':99.44,'Hs-both-4':99.49,'Hs-none-2':99.33,'Hs-none-4':99.38,'S-ace-2':99.46,'S-ace-4':99.51,'S-both-2':99.55,'S-both-4':99.61,'S-none-2':99.45,'S-none-4':99.50,'Ss-ace-2':99.52,'Ss-ace-4':99.57,'Ss-both-2':99.62,'Ss-both-4':99.66,'Ss-none-2':99.52,'Ss-none-4':99.57,pp:95.90,t3:96.30},
+  6:{'H-ace-2':99.29,'H-ace-4':99.35,'H-both-2':99.39,'H-both-4':99.44,'H-none-2':99.28,'H-none-4':99.33,'Hs-ace-2':99.36,'Hs-ace-4':99.41,'Hs-both-2':99.46,'Hs-both-4':99.51,'Hs-none-2':99.36,'Hs-none-4':99.40,'S-ace-2':99.47,'S-ace-4':99.53,'S-both-2':99.57,'S-both-4':99.63,'S-none-2':99.47,'S-none-4':99.52,'Ss-ace-2':99.54,'Ss-ace-4':99.59,'Ss-both-2':99.64,'Ss-both-4':99.68,'Ss-none-2':99.53,'Ss-none-4':99.58,pp:93.89,t3:95.38}};
+const rtpKey=()=>`${S.s17?'S':'H'}${S.sur?'s':''}-${S.peek}-${S.splits===4?4:2}`;
+const rtpGame=k=>RTP[S.decks===6?6:8][k==='m'?rtpKey():k];
 /*ENDSIDE*/
 const UNIT=10,SPREAD=8,MINB=10,MAXB=500,BOTB=10,START=1000,SES_GAP=30*60e3,SBMAX=100;
+/* Rule presets. peek: which up cards the dealer checks for blackjack ('both' = ace and ten, 'ace', 'none' = no hole card: the
+   second card comes after the players). A blackjack the dealer did not check for takes every bet. splits: most hands after splitting. */
+const PRESETS={
+  live:{name:'Online live',sub:'8 decks · no hole card · split once · no surrender',decks:8,s17:true,sur:false,peek:'none',splits:2},
+  us:{name:'US casino',sub:'6 decks · hole card, checked under ace and ten · split to 4 · late surrender',decks:6,s17:true,sur:true,peek:'both',splits:4}
+};
+const presetOf=s=>Object.keys(PRESETS).find(k=>['decks','s17','sur','peek','splits'].every(f=>PRESETS[k][f]===s[f]))||'custom';
+// the rules a round is played with (taken at the deal, so a change in the menu waits for the next hand)
+const rulesNow=()=>({pA:S.peek!=='none',p10:S.peek==='both',hole:S.peek!=='none',spl:S.splits===4?4:2});
 const fmtE=new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:2});
 const eur=n=>fmtE.format(Math.round(n*100)/100);
 const dec=x=>String(x);
 const KEY='bj-masa-v1';
-const DEF={sbo:true,mode:'train',s17:true,decks:8,sur:false,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
+const DEF={sbo:true,hr:1,peek:'both',splits:4,mode:'train',s17:true,decks:6,sur:true,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
 const STN={dec:'Decisions',cnt:'Count',bet:'Bets',ins:'Insurance'};
 const store={get(k){try{const x=localStorage.getItem(k);return x?JSON.parse(x):null}catch(e){return null}},set(k,x){try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}}};
 function normalize(src){
   const s=Object.assign(JSON.parse(JSON.stringify(DEF)),src&&typeof src==='object'?src:{});
-  if(s.hr!==1){s.sur=false;s.s17=true;s.hr=1} // house rules (2026-11): no surrender, dealer stands on all 17s; both can be changed in the menu
+  if(src&&src.hr!==1){s.sur=false;s.s17=true;s.hr=1} // house rules (2026-11): no surrender, dealer stands on all 17s; both can be changed in the menu
+  if(src&&src.peek===undefined){s.peek='ace';s.splits=2;s.decks=src.decks||8} // tables saved before the presets keep the rules they were played with
+  if(!['both','ace','none'].includes(s.peek))s.peek='both';if(s.splits!==2&&s.splits!==4)s.splits=4;
   if(!s.stats||typeof s.stats!=='object') s.stats={};
   for(const k in DEF.stats) if(!Array.isArray(s.stats[k])) s.stats[k]=[0,0];
   if(!Array.isArray(s.miss)) s.miss=[];
@@ -959,7 +989,7 @@ const SND={
 };
 
 /* ---------- game state ---------- */
-const G={shoe:[],pos:0,cut:0,rc:0,seats:[0,1,2].map(()=>({hands:[],ins:0,spot:0})),dealer:{cards:[]},phase:'bet',turn:null,ord:null,reshuffle:false,bet:10,lastBet:10,bt:'m',sb:{pp:0,t3:0},lastSb:{pp:0,t3:0},sbR:null,since:0,tried:false,force:false,betChecked:false,lastNet:null,round:0};
+const G={shoe:[],pos:0,cut:0,rc:0,seats:[0,1,2].map(()=>({hands:[],ins:0,spot:0})),dealer:{cards:[]},phase:'bet',turn:null,ord:null,reshuffle:false,bet:10,lastBet:10,bt:'m',rp:null,sb:{pp:0,t3:0},lastSb:{pp:0,t3:0},sbR:null,since:0,tried:false,force:false,betChecked:false,lastNet:null,round:0};
 let waiter=null,E=null,busy=false,coachFns={},UID=0,seatEls=[];
 const T=ms=>RM?0:Math.round(ms*(S.fast?.55:1));
 const D=()=>S.fast?280:560;
@@ -995,8 +1025,9 @@ const tcNow=()=>Math.floor(G.rc/decksLeft());
 const order=()=>[2,1,0].filter(i=>i===1||(i===2&&S.bots>=1)||(i===0&&S.bots>=2));
 const upCard=()=>G.dealer.cards[0];
 function ctxFor(s,h,bot){
+  const rp=G.rp||rulesNow();
   const two=h.cards.length===2,afford=bot||S.bank>=h.bet;
-  return {canDouble:two&&!h.splitAces&&afford,canSplit:two&&val(h.cards[0])===val(h.cards[1])&&s.hands.length<2&&!h.splitAces&&afford,canSur:S.sur&&two&&s.hands.length===1&&!h.split,das:true,enhc:true,s17:S.s17,tc:tcNow(),dev:S.dev&&!bot};
+  return {canDouble:two&&!h.splitAces&&afford,canSplit:two&&val(h.cards[0])===val(h.cards[1])&&s.hands.length<rp.spl&&!h.splitAces&&afford,canSur:S.sur&&two&&s.hands.length===1&&!h.split,das:true,np10:!rp.p10,npA:!rp.pA,s17:S.s17,tc:tcNow(),dev:S.dev&&!bot};
 }
 
 /* ---------- card faces (drawn here, SVG) ---------- */
@@ -1230,8 +1261,15 @@ const sgE=n=>(n>0?'+':n<0?'−':'')+eur(Math.abs(n));
 function cfSnap(hi,rule,pick,h){
   const ord=G.ord||order(),me=ord.indexOf(1),seat=G.seats[1];
   return {hi,rule,pick,desc:`${handName(h.cards)} vs ${UP[upIdx(upCard())]}`,shoe:G.shoe,pos:G.pos,rc:G.rc,bank:S.bank,
-    me:seat.hands.map(cpHand),ins:seat.ins||0,up:upCard(),dealer:G.dealer.cards.slice(),
+    me:seat.hands.map(cpHand),ins:seat.ins||0,up:upCard(),dealer:G.dealer.cards.slice(),rp:G.rp||rulesNow(),
     before:ord.slice(0,me).map(i=>G.seats[i].hands.map(cpHand)),after:ord.slice(me+1).map(i=>G.seats[i].hands.map(cpHand))};
+}
+/* What the dealer still draws once the players are done: 2 = plays the hand out, 1 = only the second card (no hole card: insurance,
+   or a blackjack or surrender that a dealer blackjack could still beat), 0 = nothing. With a hole card it is already on the table. */
+function dealerNeeds(hands,ins,up,hole){
+  if(hands.some(h=>!h.bust&&!h.sur&&!h.bj))return 2;
+  if(hole)return 0;
+  return ins||(val(up)>=10&&hands.some(h=>!h.bust))?1:0;
 }
 function seatNet(hands,d,ins){
   const dt=tot(d).t,dbj=isBJ(d),dbust=dt>21;
@@ -1247,9 +1285,9 @@ function seatNet(hands,d,ins){
    goes on to the next player and the dealer, who play the rest of the round from the same shoe. Only your result is recorded. */
 function cfRun(c,first){
   let pos=c.pos,rc=c.rc,bank=c.bank,ok=true;
-  const shoe=c.shoe,up=c.up;
+  const shoe=c.shoe,up=c.up,rp=c.rp||{pA:true,p10:false,hole:c.dealer.length>1,spl:2};
   const drw=()=>{if(pos>=shoe.length){ok=false;return {r:'2',s:'♠'}}const k=shoe[pos++];rc+=hv(k);return k};
-  const ctx=(hands,h,bot)=>{const two=h.cards.length===2,af=bot||bank>=h.bet;return {canDouble:two&&!h.splitAces&&af,canSplit:two&&val(h.cards[0])===val(h.cards[1])&&hands.length<2&&!h.splitAces&&af,canSur:S.sur&&two&&hands.length===1&&!h.split,das:true,enhc:true,s17:S.s17,tc:Math.floor(rc/Math.max(.5,Math.round((shoe.length-pos)/52*2)/2)),dev:S.dev&&!bot}};
+  const ctx=(hands,h,bot)=>{const two=h.cards.length===2,af=bot||bank>=h.bet;return {canDouble:two&&!h.splitAces&&af,canSplit:two&&val(h.cards[0])===val(h.cards[1])&&hands.length<rp.spl&&!h.splitAces&&af,canSur:S.sur&&two&&hands.length===1&&!h.split,das:true,np10:!rp.p10,npA:!rp.pA,s17:S.s17,tc:Math.floor(rc/Math.max(.5,Math.round((shoe.length-pos)/52*2)/2)),dev:S.dev&&!bot}};
   const act=(hands,hi,a,bot)=>{const h=hands[hi];
     if(a==='S'){h.done=true;return false}
     if(a==='R'){h.sur=true;h.done=true;return false}
@@ -1264,7 +1302,9 @@ function cfRun(c,first){
   rest(me,c.hi+1,false);
   const after=c.after.map(hs=>{const x=hs.map(cpHand);rest(x,0,true);return x});
   const d=c.dealer.slice();
-  if([...c.before,me,...after].some(hs=>hs.some(h=>!h.bust&&!h.sur&&!h.bj))){while(true){const {t,soft}=tot(d);if(!(t<17||(t===17&&soft&&!S.s17)))break;d.push(drw())}}
+  const need=dealerNeeds([...c.before,me,...after].flat(),c.ins,up,d.length>1);
+  if(need===1)d.push(drw());
+  if(need===2){if(d.length<2)d.push(drw());while(true){const {t,soft}=tot(d);if(!(t<17||(t===17&&soft&&!S.s17)))break;d.push(drw())}}
   return ok?{net:seatNet(me,d,c.ins),me,d}:null;
 }
 function cfRecord(){
@@ -1658,6 +1698,7 @@ async function playRound(){
     G.phase='deal';renderAct();
     if(G.pos>=G.cut||G.reshuffle){const why=G.reshuffle?'New deck count: fresh shoe.':`The cut card came out after ${dec(Math.round(G.pos/52*10)/10)} of ${S.decks} decks.`;newShoe();G.reshuffle=false;render();await shuffleFx(why)}
     G.rec0={t:Math.floor(Date.now()/1000),tc:tcNow(),m:S.mode==='exam'?1:0};G.decs=[];G.insD=null;
+    G.rp=rulesNow();
     G.lastBet=G.bet;G.lastSb=Object.assign({},G.sb);G.bt='m';S.bank-=G.bet+sideSum(G.sb);G.sbR=null;G.cf=null;G.lastCF=null;
     const ord=order();G.ord=ord;
     G.seats.forEach(s=>{s.hands=[];s.ins=0;s.spot=0});
@@ -1666,7 +1707,7 @@ async function playRound(){
     await sleep(T(250));
     for(let k=0;k<2;k++){
       for(const i of ord){G.seats[i].hands[0].cards.push(draw(true));render();await sleep(D())}
-      G.dealer.cards.push(draw(k===0));render();await sleep(D());
+      if(k===0||G.rp.hole){G.dealer.cards.push(draw(k===0));render();await sleep(D())}
     }
     const up=upCard(),me=G.seats[1];
     openHand();
@@ -1678,7 +1719,8 @@ async function playRound(){
       if(a==='I'){me.ins=G.bet/2;S.bank-=me.ins;openHand();chipFly(bankEl(),spotEl(1),Math.max(5,me.ins))}
       G.phase='deal';render();
     }
-    if(up.r==='A'){
+    // the dealer checks the face-down card for blackjack where the rules say so
+    if((up.r==='A'&&G.rp.pA)||(val(up)===10&&G.rp.p10)){
       await sleep(T(450));
       if(isBJ(G.dealer.cards)){reveal(G.dealer.cards[1]);render();await sleep(D());await settle();return}
       banner('c','NO BLACKJACK','push');await sleep(T(500));
@@ -1696,9 +1738,10 @@ async function playRound(){
     }
     G.turn=null;G.phase='dealer';render();
     await sleep(T(250));
-    reveal(G.dealer.cards[1]);render();await sleep(D());
-    const live=ord.some(i=>G.seats[i].hands.some(h=>!h.bust&&!h.sur&&!h.bj));
-    if(live){while(dealerHits()){G.dealer.cards.push(draw(true));render();await sleep(D())}}
+    const need=dealerNeeds(ord.flatMap(i=>G.seats[i].hands),me.ins,up,G.rp.hole);
+    if(G.rp.hole){reveal(G.dealer.cards[1]);render();await sleep(D())}
+    else if(need){G.dealer.cards.push(draw(true));render();await sleep(D())}
+    if(need===2){while(dealerHits()){G.dealer.cards.push(draw(true));render();await sleep(D())}}
     if(tot(G.dealer.cards).t>21){banner('c','DEALER BUSTS','win')}
     await settle();
   }finally{busy=false}
@@ -1790,8 +1833,10 @@ async function settle(){
   if(dbj){
     const hs=G.seats[1].hands,more=hs.length>1||hs.some(h=>h.dbl);
     banner('c','DEALER BLACKJACK','lose');
-    const what=hs.every(h=>h.bj)?'Your blackjack pushes':d[0].r==='A'?'The hand is over':`It takes every bet${more?', your double and split money too':''}`;
-    coach(`<p class="head">Dealer blackjack</p><p>${d[0].r==='A'?'The dealer checked under the ace: blackjack.':'With a ten up the dealer does not check, so the blackjack shows at the end.'} ${what}${myIns?'; your insurance pays 2:1':''}.</p>`,'');
+    const rp=G.rp||rulesNow(),checked=d[0].r==='A'?rp.pA:rp.p10;
+    const what=hs.every(h=>h.bj)?'Your blackjack pushes':checked?'The hand is over':`It takes every bet${more?', your double and split money too':''}`;
+    const how=checked?`The dealer checked under the ${d[0].r==='A'?'ace':'ten'}: blackjack.`:!rp.hole?"There is no hole card: the dealer's second card came after everyone had played.":`With ${d[0].r==='A'?'an ace':'a ten'} up the dealer does not check, so the blackjack shows at the end.`;
+    coach(`<p class="head">Dealer blackjack</p><p>${how} ${what}${myIns?'; your insurance pays 2:1':''}.</p>`,'');
   }
   if(anyBJ){banner(1,`BLACKJACK +${eur(net)}`,'bj');SND.play('bj')}
   else if(net>0){banner(1,`WIN +${eur(net)}`,'win');SND.play('win')}
@@ -1857,9 +1902,23 @@ function setMode(m){
   if(m==='exam'){startExam()}else{E=null;coach('<p class="head">Training</p><p>I stop you on a wrong play and show the right one.</p>','')}
   if(['over','report','bet','check','broke'].includes(G.phase)&&!busy) startBetting(); else render();
 }
+// plain words for the rules in force and what the chart does differently because of them
+function rulesText(){
+  const pk={both:"The dealer's second card is dealt face down; with an ace or a ten up the dealer checks it for blackjack (after offering insurance on an ace), so a dealer blackjack only takes your first bet.",
+    ace:"The dealer's second card is dealt face down. With an ace up the dealer offers insurance and then checks for blackjack; with a ten up there is no check, and a blackjack that shows at the end takes every bet, double and split money too.",
+    none:"There is no hole card: the dealer takes the second card after everyone has played, so a dealer blackjack (under an ace or a ten) takes every bet, double and split money too. Insurance on an ace is settled with that card."}[S.peek];
+  return `Blackjack pays 3:2. ${pk} Double on any two cards, also after a split. ${S.splits===4?'Split up to 4 hands':'Split a pair once'}; split aces get one card each. ${S.sur?'Late surrender allowed.':'No surrender.'} Dealer ${S.s17?'stands on':'hits'} soft 17, ${S.decks} decks.`;
+}
+function chartText(){
+  const c=[];
+  if(S.peek!=='both')c.push('against a ten: hit 11 (double only from true count +3), never double 10, do not split 8,8');
+  if(S.peek==='none')c.push('against an ace: hit 11 and 10, do not split 8,8 or A,A');
+  return c.length?`Because the dealer does not always check for blackjack, the coach's chart changes: ${c.join('; ')}. Everything else is the standard chart (the strategy test and Hi-Lo trainer teach the standard one).`:'The dealer checks for blackjack, so the coach uses the standard chart, the same one the strategy test and Hi-Lo trainer teach.';
+}
 function syncControls(){
+  {const a=$('#rulesTxt'),b=$('#chartNote');if(a)a.textContent=rulesText();if(b)b.textContent=chartText()}
   const chk=sel=>{const e=document.querySelector(sel);if(e)e.checked=true};
-  chk(S.s17?'#r-s17':'#r-h17');chk(S.sur?'#su-1':'#su-0');chk(S.sbo?'#sbo-1':'#sbo-0');chk('#cp-'+S.cutPos);chk('#d-'+S.decks);chk('#b-'+S.bots);chk('#cc-'+S.cc);chk(S.fast?'#f-1':'#f-0');
+  chk('#pr-'+presetOf(S));chk('#pk-'+S.peek);chk('#sp-'+(S.splits===4?4:2));chk(S.s17?'#r-s17':'#r-h17');chk(S.sur?'#su-1':'#su-0');chk(S.sbo?'#sbo-1':'#sbo-0');chk('#cp-'+S.cutPos);chk('#d-'+S.decks);chk('#b-'+S.bots);chk('#cc-'+S.cc);chk(S.fast?'#f-1':'#f-0');
   $('#o-show').checked=S.show;$('#o-offer').checked=S.offer;$('#o-bet').checked=S.betCheck;$('#o-dev').checked=S.dev;
   $('#o-sound').checked=S.sound;$('#vol').value=Math.round(S.vol*100);$('#o-amb').checked=S.amb;
 }
@@ -1898,8 +1957,16 @@ function bind(){
   $('#coach').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;const fn=coachFns[b.dataset.c];coachFns={};const row=b.closest('.cbs');if(row)row.remove();if(fn)fn()});
   $('#pop').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(b)closePop(b.dataset.p)});
   const radio=(name,fn)=>document.querySelectorAll(`input[name=${name}]`).forEach(el=>el.addEventListener('change',()=>{fn(el.value);save();render();SND.play('click')}));
-  radio('s17',v=>{S.s17=v==='1';renderRecord()});radio('sur',v=>{S.sur=v==='1';renderRecord()});radio('cutPos',v=>{S.cutPos=v;coach(`<p class="head">Cut card</p><p>${v==='mid'?'From the next shoe the cut card goes in the middle: about half of the shoe is played.':'From the next shoe the cut card goes deep: play continues until 1.6–2 decks are left.'} The shoe in play is not reshuffled.</p>`,'')});
-  radio('decks',v=>{S.decks=+v;renderRecord();if(!busy&&['bet','check','over','broke'].includes(G.phase)&&!cardEls.size){newShoe();G.reshuffle=false;coach(`<p class="head">Fresh shoe</p><p>${S.decks} decks, running count back to 0.</p>`,'')}else{G.reshuffle=true;coach(`<p class="head">${S.decks} decks</p><p>A fresh shoe starts with the next hand.</p>`,'')}});
+  const ruleSet=(o,quiet)=>{
+    const decks=o.decks!==undefined&&o.decks!==S.decks;Object.assign(S,o);
+    if(decks){if(!busy&&['bet','check','over','broke'].includes(G.phase)&&!cardEls.size){newShoe();G.reshuffle=false}else G.reshuffle=true}
+    save();syncControls();renderRecord();render();
+    if(!quiet)coach(`<p class="head">${PRESETS[presetOf(S)]?PRESETS[presetOf(S)].name:'Custom rules'}</p><p>${busy?'From the next hand: ':''}${rulesText()}</p>`,'');
+  };
+  radio('preset',v=>{const p=PRESETS[v];if(p)ruleSet({decks:p.decks,s17:p.s17,sur:p.sur,peek:p.peek,splits:p.splits})});
+  radio('peek',v=>ruleSet({peek:v}));radio('splits',v=>ruleSet({splits:+v}));
+  radio('s17',v=>ruleSet({s17:v==='1'}));radio('sur',v=>ruleSet({sur:v==='1'}));radio('cutPos',v=>{S.cutPos=v;coach(`<p class="head">Cut card</p><p>${v==='mid'?'From the next shoe the cut card goes in the middle: about half of the shoe is played.':'From the next shoe the cut card goes deep: play continues until 1.6–2 decks are left.'} The shoe in play is not reshuffled.</p>`,'')});
+  radio('decks',v=>{S.decks=+v;renderRecord();syncControls();if(!busy&&['bet','check','over','broke'].includes(G.phase)&&!cardEls.size){newShoe();G.reshuffle=false;coach(`<p class="head">Fresh shoe</p><p>${S.decks} decks, running count back to 0.</p>`,'')}else{G.reshuffle=true;coach(`<p class="head">${S.decks} decks</p><p>A fresh shoe starts with the next hand.</p>`,'')}});
   radio('bots',v=>{S.bots=+v;coach(`<p class="head">Players</p><p>${busy?'From the next hand':'Now'} ${S.bots?`${S.bots} other player${S.bots>1?'s':''} at the table`:'you play alone'}. The shoe continues; no reshuffle.</p>`,'')});
   radio('sbo',v=>{S.sbo=v==='1';G.bt='m';if(!S.sbo&&G.phase==='bet')G.sb={pp:0,t3:0}});
   radio('cc',v=>S.cc=+v);radio('fast',v=>S.fast=v==='1');

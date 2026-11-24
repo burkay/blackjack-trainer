@@ -4,7 +4,7 @@ const { read, check, done } = require('../_util');
 const src = read('table');
 const grab = (a, b) => src.slice(src.indexOf(a), src.indexOf(b));
 const code = "const UP=['2','3','4','5','6','7','8','9','10','A'];\n" + grab('/*LOGIC*/', '/*END*/') +
-  '\nconst cpHand=h=>Object.assign({},h,{cards:h.cards.slice()});\n' + grab('function seatNet(', '/* Real card order') + grab('function cfRun(', 'function cfRecord(');
+  '\nconst cpHand=h=>Object.assign({},h,{cards:h.cards.slice()});\n' + grab('/* What the dealer still draws', '/* Real card order') + grab('function cfRun(', 'function cfRecord(');
 const S = { sur: true, s17: true, dev: false };
 const { cfRun } = new Function('S', code + ';return {cfRun};')(S);
 const C = x => ({ r: x.slice(0, -1), s: x.slice(-1) }), H = (...a) => a.map(C);
@@ -52,20 +52,31 @@ const snap = o => Object.assign({ hi: 0, pos: 0, rc: 0, bank: 1000, orig: 100, i
   const z = snap({ shoe: H('K♥', '9♥'), me: [{ cards: H('9♠', '7♦'), bet: 100 }], up: C('6♦'), dealer: H('6♦', '5♠') });
   check('everybody bust: the dealer takes no more cards', cfRun(z, 'H').d.length === 2 && cfRun(z, 'H').net === -100, cfRun(z, 'H').d.length);
 }
-// The chart under that rule: exactly two plays change, both against a ten.
+// The chart for each way the dealer checks: only these plays change, and only against the card that is not checked.
 {
   const { decide } = new Function(code.slice(0, code.indexOf('\nconst cpHand')) + ';return {decide};')();
-  const V = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'], UPS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A'], diff = new Set();
-  for (const s17 of [true, false]) for (const a of V) for (const b of V) for (const u of UPS) for (const canSur of [true, false]) {
-    const x = { canDouble: true, canSplit: a === b, canSur, das: true, s17, tc: 0, dev: false };
-    const hand = [a, b].map(r => ({ r, s: '♠' })), up = { r: u, s: '♠' };
-    const old = decide(hand, up, x).act, now = decide(hand, up, Object.assign({}, x, { enhc: true })).act;
-    if (old !== now) diff.add(`${a === b ? `${a},${b}` : 'hard ' + (+a + +b)} vs ${u}${canSur ? ' sur' : ''}: ${old}→${now}`);
-  }
-  const want = ['8,8 vs 10 sur: P→R', '8,8 vs 10: P→H', 'hard 11 vs 10 sur: D→H', 'hard 11 vs 10: D→H'].sort();
-  check('only 11 and 8,8 against a ten change', JSON.stringify([...diff].sort()) === JSON.stringify(want), [...diff].sort());
-  const at = (cards, u, tc, enhc = true) => decide(cards.map(r => ({ r, s: '♠' })), { r: u, s: '♠' }, { canDouble: true, canSplit: false, canSur: false, das: true, s17: true, tc, dev: true, enhc }).act;
-  check('with deviations: 11 vs 10 doubles from +3, 10 vs 10 never', at(['5', '6'], '10', 2) === 'H' && at(['5', '6'], '10', 3) === 'D' && [4, 9].every(tc => at(['4', '6'], '10', tc) === 'H'));
-  check('against an ace the deviations are the usual ones', [-3, 0, 1, 4, 6].every(tc => at(['5', '6'], 'A', tc) === at(['5', '6'], 'A', tc, false) && at(['4', '6'], 'A', tc) === at(['4', '6'], 'A', tc, false)) && at(['5', '6'], 'A', 1) === 'D');
+  const V = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'], UPS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A'];
+  const changes = flags => {
+    const diff = new Set();
+    for (const s17 of [true, false]) for (const a of V) for (const b of V) for (const u of UPS) for (const canSur of [true, false]) {
+      const x = { canDouble: true, canSplit: a === b, canSur, das: true, s17, tc: 0, dev: false };
+      const hand = [a, b].map(r => ({ r, s: '♠' })), up = { r: u, s: '♠' };
+      const old = decide(hand, up, x).act, now = decide(hand, up, Object.assign({}, x, flags)).act;
+      if (old !== now) diff.add(`${a === b ? `${a},${b}` : 'hard ' + (+a + +b)} vs ${u}${canSur ? ' sur' : ''}${s17 ? '' : ' H17'}: ${old}→${now}`);
+    }
+    return [...diff].sort();
+  };
+  const ten = [];
+  for (const h of ['', ' H17']) for (const s of ['', ' sur']) ten.push(`hard 11 vs 10${s}${h}: D→H`, `8,8 vs 10${s}${h}: P→${s ? 'R' : 'H'}`);
+  const ace = [];
+  for (const h of ['', ' H17']) for (const s of ['', ' sur']) { ace.push(`8,8 vs A${s}${h}: P→${s ? 'R' : 'H'}`, `A,A vs A${s}${h}: P→H`); if (h) ace.push(`hard 11 vs A${s}${h}: D→H`); }
+  check('US (checks both): the standard chart', changes({ np10: false, npA: false }).length === 0);
+  check('ace checked, ten not: only 11 and 8,8 against a ten', JSON.stringify(changes({ np10: true, npA: false })) === JSON.stringify(ten.sort()), changes({ np10: true, npA: false }));
+  check('no hole card: also 8,8, A,A and (H17) 11 against an ace', JSON.stringify(changes({ np10: true, npA: true })) === JSON.stringify(ten.concat(ace).sort()), changes({ np10: true, npA: true }));
+  const at = (cards, u, tc, f) => decide(cards.map(r => ({ r, s: '♠' })), { r: u, s: '♠' }, Object.assign({ canDouble: true, canSplit: false, canSur: false, das: true, s17: true, tc, dev: true }, f)).act;
+  const T = { np10: true }, B = { np10: true, npA: true };
+  check('deviations, ten not checked: 11 vs 10 doubles from +3, 10 vs 10 never', at(['5', '6'], '10', 2, T) === 'H' && at(['5', '6'], '10', 3, T) === 'D' && [4, 9].every(tc => at(['4', '6'], '10', tc, T) === 'H'));
+  check('deviations, ace checked: the usual 11 vs A (+1) and 10 vs A (+4)', at(['5', '6'], 'A', 1, T) === 'D' && at(['5', '6'], 'A', 0, T) === 'H' && at(['4', '6'], 'A', 4, T) === 'D');
+  check('deviations, no hole card: 11 and 10 vs A never double', [1, 4, 9].every(tc => at(['5', '6'], 'A', tc, B) === 'H' && at(['4', '6'], 'A', tc, B) === 'H'));
 }
 done();
