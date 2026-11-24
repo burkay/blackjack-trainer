@@ -40,8 +40,9 @@ async function hand(t, want) { if (want) stack(t.w.__G, want); const b0 = t.S().
   check('profit counts everything; the streak only the hand', s.ses.net === 1350 && s.tot.net === 1350 && s.str === 1, [s.ses.net, s.str]);
   check('the end of the hand shows them', /Perfect pair 25:1 \+€250/.test(t.q('#act').textContent) && /Suited trips 100:1 \+€1,000/.test(t.q('#act').textContent));
   check('your RTP per game', JSON.stringify(s.rt) === JSON.stringify({ m: [100, 200], pp: [10, 260], t3: [10, 1010] }), s.rt);
+  check('each side bet shows its RTP above its circle, and both together under yours', t.q('.sbs.pp .srt').textContent === 'RTP 2600.0%' && t.q('.sbs.t3 .srt').textContent === 'RTP 10100.0%' && t.q('#s-rtps').textContent === 'side bets 6350.0%', [t.q('.sbs.pp .srt').textContent, t.q('#s-rtps').textContent]);
   check('the RTP table shows game and own figures', /99\.46%/.test(t.q('#rtpbox').textContent) && /95\.90%/.test(t.q('#rtpbox').textContent) && /96\.30%/.test(t.q('#rtpbox').textContent) && /200\.0%/.test(t.q('#rtpbox').textContent), t.q('#rtpbox').textContent.slice(0, 120));
-  check('next hand repeats the bet and the side bets', /Next Hand with €100 \+ €20/.test(t.q('#nxSame').textContent), t.q('#nxSame').textContent);
+  check('next hand repeats the bet and the side bets', /€100 \+ €20, deal now/.test(t.q('#nxSame').textContent), t.q('#nxSame').textContent);
   // Losing side bets, winning hand: streak goes to 2.
   t.q('#nextR').click(); await t.toBet();
   net = await hand(t, ['10♠', '6♦', 'K♥', '10♣', 'J♥']);

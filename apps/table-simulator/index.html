@@ -19,7 +19,7 @@
    COLOUR fixed night room #05110f, teal felt, walnut leather rail, gold accents; actions keep the strategy chart colours
    TYPE Barlow Condensed 800/700 for display and numbers + Barlow for text
    LAYOUT top bar, table, control dock (controls left, coach right); settings and stats in a side drawer. Phone: same order, stacked dock */
-:root{color-scheme:dark;--ink:#eef6f3;--mute:#9fb8b3;--glass:rgba(9,26,24,.86);--line:rgba(255,255,255,.12);--gold:#f3c552;--gold2:#b8861f;--red:#c8102e;--kg:#2fb466;--ky:#f2c511;--kt:#3cbcb3;--coral:#f28b6b;--tmax:clamp(1240px,calc((100vh - 330px)*1.93),2200px);--tw:min(96vw,var(--tmax));--cw:clamp(46px,calc(var(--tw)*.064),140px)}
+:root{color-scheme:dark;--ink:#eef6f3;--mute:#9fb8b3;--glass:rgba(9,26,24,.86);--line:rgba(255,255,255,.12);--gold:#f3c552;--gold2:#b8861f;--red:#c8102e;--kg:#2fb466;--ky:#f2c511;--kt:#3cbcb3;--coral:#f28b6b;--tmax:clamp(740px,calc((100vh - 380px)*1.93),2200px);--tw:min(96vw,var(--tmax));--cw:clamp(46px,calc(var(--tw)*.064),140px)}
 *{box-sizing:border-box;min-width:0}
 [hidden]{display:none!important}
 html,body{margin:0;min-height:100%}
@@ -28,7 +28,7 @@ button{font:inherit;color:inherit}
 a{color:inherit;text-underline-offset:3px}
 .bc{font-family:"Barlow Condensed",Barlow,system-ui,sans-serif}
 /* top bar */
-.topbar{max-width:calc(var(--tmax) + 40px);margin:0 auto;padding:10px max(2.5vw,12px) 6px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+.topbar{max-width:calc(max(var(--tmax),1240px) + 40px);margin:0 auto;padding:10px max(2.5vw,12px) 6px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
 .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
 .brand svg{width:38px;height:38px;flex:none}
 .brand b{display:block;font:800 26px/1 "Barlow Condensed",sans-serif;letter-spacing:.04em}
@@ -38,7 +38,7 @@ a{color:inherit;text-underline-offset:3px}
 .modes button[aria-pressed=true]{background:linear-gradient(180deg,#ffd979,#e0a92f);color:#2a1a00}
 .kpi{display:grid;line-height:1.05}
 .kpi span{font-size:12px;color:var(--mute)}
-.kpi.rtp em{display:none}.kpi em{font-style:normal;font-size:12px;color:var(--mute)}
+.kpi.rtp em{display:none}.kpi.rtp #s-rtps{display:block;font-size:11px;line-height:1.1;margin-top:1px}.kpi.rtp #s-rtps:empty{display:none}.kpi em{font-style:normal;font-size:12px;color:var(--mute)}
 @media(max-width:1180px){.topbar .kpi.rtp{display:none}}
 /* side bets */
 .betrow:has(.sbt){gap:10px 12px}.betrow:has(.sbt) .chips{gap:6px}
@@ -52,6 +52,7 @@ a{color:inherit;text-underline-offset:3px}
 .sbs.won{border:2px solid #9ef0b9;box-shadow:0 0 14px rgba(47,180,102,.7)}
 .sbs span{position:absolute;top:calc(100% + 2px);left:50%;translate:-50% 0;font:800 clamp(12px,calc(var(--cw)*.16),17px)/1.25 "Barlow Condensed",sans-serif;color:#04210f;background:var(--kg);border-radius:999px;padding:0 7px;white-space:nowrap}
 .sbs span:empty{display:none}
+.sbs .srt{position:absolute;bottom:calc(100% + 3px);left:50%;translate:-50% 0;font:600 clamp(10.5px,calc(var(--cw)*.13),14px)/1.2 Barlow,sans-serif;font-style:normal;color:rgba(255,255,255,.8);white-space:nowrap;font-variant-numeric:tabular-nums}.sbs .srt.up{color:#9ef0b9}.sbs .srt:empty{display:none}
 #act>.mute{margin:6px 0 0}
 .kpi i{font-style:normal}.kpi span::first-letter{text-transform:uppercase}
 .kpi.ses b.gp,.kpi.totp b.gp{color:#9ef0b9}.kpi.ses b.gn,.kpi.totp b.gn{color:#ffb4a6}
@@ -64,7 +65,7 @@ a{color:inherit;text-underline-offset:3px}
 .icon:hover{background:rgba(255,255,255,.08)}
 /* table */
 .stage{padding:2px max(2vw,6px) 0}
-.rail{position:relative;max-width:var(--tmax);margin:0 auto;aspect-ratio:16/8.3;min-height:480px;border-radius:36px 36px 50% 50%/36px 36px 33% 33%;padding:16px;background:linear-gradient(180deg,#4a301d 0%,#2a190e 30%,#170d06 100%);box-shadow:0 34px 70px rgba(0,0,0,.65),inset 0 2px 1px rgba(255,255,255,.14),inset 0 -10px 24px rgba(0,0,0,.7)}
+.rail{position:relative;max-width:var(--tmax);margin:0 auto;aspect-ratio:16/8.3;min-height:330px;border-radius:36px 36px 50% 50%/36px 36px 33% 33%;padding:16px;background:linear-gradient(180deg,#4a301d 0%,#2a190e 30%,#170d06 100%);box-shadow:0 34px 70px rgba(0,0,0,.65),inset 0 2px 1px rgba(255,255,255,.14),inset 0 -10px 24px rgba(0,0,0,.7)}
 .rail::before{content:"";position:absolute;inset:6px;border-radius:32px 32px 50% 50%/32px 32px 33% 33%;border:1.5px dashed rgba(255,220,170,.18);pointer-events:none}
 .felt{position:absolute;inset:16px;border-radius:24px 24px 50% 50%/24px 24px 32% 32%;background:radial-gradient(90% 70% at 50% 30%,#35c3b0 0%,#1aa596 30%,#10867a 62%,#0a6157 100%);overflow:hidden;box-shadow:inset 0 0 0 2px rgba(0,0,0,.4),inset 0 0 90px rgba(0,0,0,.5)}
 .felt::before{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.28;mix-blend-mode:overlay;pointer-events:none}
@@ -163,7 +164,7 @@ a{color:inherit;text-underline-offset:3px}
 @keyframes rl{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(-30%) rotate(-12deg)}}
 @keyframes rr{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(30%) rotate(12deg)}}
 /* dock */
-.dock{max-width:calc(var(--tmax) + 40px);margin:12px auto 0;padding:0 max(2.5vw,12px) 18px;display:grid;gap:12px}
+.dock{max-width:calc(max(var(--tmax),1240px) + 40px);margin:12px auto 0;padding:0 max(2.5vw,12px) 18px;display:grid;gap:12px}
 @media(min-width:960px){.dock{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
 .panel{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);backdrop-filter:blur(8px)}
 .ask{margin:0 0 10px;font:700 25px/1.1 "Barlow Condensed",sans-serif}
@@ -241,6 +242,8 @@ a{color:inherit;text-underline-offset:3px}
 .mute{color:var(--mute);font-size:14px}
 .offer{margin-top:10px;padding:12px 14px;border-radius:14px;background:rgba(243,197,82,.1);box-shadow:inset 0 0 0 1.5px rgba(243,197,82,.55)}
 .offer p{margin:0 0 4px}
+p.offer{margin:0 0 10px;padding:8px 12px;font-size:14px}
+#act>:first-child{margin-top:0}#act>.nxt:first-child,#act>.row:first-child{margin-bottom:12px}
 .ml{list-style:none;margin:0;padding:0}
 .ml li{padding:8px 0;border-bottom:1px solid var(--line)}
 .ml li span{color:var(--mute);font-size:14px}
@@ -319,7 +322,7 @@ legend{font-weight:600;margin-bottom:6px;padding:0}
 .kpi.rb:hover span,.kpi.rtp:hover span{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .kpi.rb:focus-visible,.kpi.rtp:focus-visible,.sbt button:focus-visible,#btnHist:focus-visible,.hr:focus-visible,.hfil button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .hist{position:fixed;inset:0;z-index:80;background:rgba(3,10,9,.97);overflow:auto;overscroll-behavior:contain;animation:pfade .18s ease-out}
-.hwrap{max-width:calc(var(--tmax) + 40px);margin:0 auto;padding:0 max(2.5vw,12px) 40px}
+.hwrap{max-width:calc(max(var(--tmax),1240px) + 40px);margin:0 auto;padding:0 max(2.5vw,12px) 40px}
 .hh{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;padding:14px 0 10px;background:rgba(3,10,9,.97)}
 .hh h2{margin:0 auto 0 0;font:800 34px/1 "Barlow Condensed",sans-serif;letter-spacing:.02em}
 .hsumm{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px}
@@ -438,7 +441,7 @@ body{-webkit-tap-highlight-color:transparent}
   .row{margin-top:8px;gap:6px}.row .ghost{min-height:42px;padding:4px 12px}.row .go{flex:1 1 110px;min-height:42px;padding:4px 14px;font-size:19px}
   .hres{gap:6px 10px;flex-wrap:nowrap}.hres .ask{font-size:19px}
   .hsum{flex:1 1 auto;flex-wrap:nowrap;gap:6px}.hsum div{flex:1;min-width:0;padding:2px 8px}.hsum div:nth-child(3){display:none}.hsum b{font-size:19px}.hsum span,.hsum i{font-size:11px}.hsum i{display:inline;margin-left:5px}
-  .nxt{grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:6px;margin-top:6px}.nxt .act{min-height:46px;padding:4px}.nxt .act b{font-size:16px;line-height:1.05}
+  .nxt{grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:6px;margin-top:6px}#act>.nxt:first-child,#act>.row:first-child{margin-bottom:8px}p.offer{margin:0 0 8px;padding:6px 10px;font-size:12px}.nxt .act{min-height:46px;padding:4px}.nxt .act b{font-size:16px;line-height:1.05}
   .cfl{font-size:14px}
   .mstat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px max(2.5vw,12px) max(18px,env(safe-area-inset-bottom));padding:12px;background:var(--glass);border:1px solid var(--line);border-radius:16px}
   .mstat h2{grid-column:1/-1;margin:0;font:700 20px/1.1 "Barlow Condensed",sans-serif}
@@ -448,6 +451,8 @@ body{-webkit-tap-highlight-color:transparent}
   .mstat .modes{grid-column:1/-1;order:9}.mstat .modes button{flex:1}
 }
 @media(max-width:410px){.brand div{display:none}}
+/* short desktop screens: the table is small, so the shoe and tray labels would sit under the players' cards */
+@media(min-width:601px) and (max-height:800px) and (min-aspect-ratio:4/3){.shoe .tlab,.discard .tlab{display:none}}
 @media(max-width:359px){.acts{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px) and (max-height:700px){.shoe .tlab,.discard .tlab{display:none}}
 /* phone, landscape: table on the left, controls on the right */
@@ -510,7 +515,7 @@ body{-webkit-tap-highlight-color:transparent}
   <div class="kpi bank"><span>Bankroll</span><b id="s-bank">€1,000</b></div>
   <div class="kpi ses"><span>Session<i> profit</i></span><b id="s-ses">€0</b></div>
   <div class="kpi totp"><span>Overall<i> profit</i></span><b id="s-tot">€0</b></div>
-  <button class="kpi rtp" id="k-rtp" aria-label="Return to player: open the stats"><span>Your RTP</span><b id="s-rtp">–</b><em id="s-rtpg"></em></button>
+  <button class="kpi rtp" id="k-rtp" aria-label="Return to player: open the stats"><span>Your RTP</span><b id="s-rtp">–</b><em id="s-rtps"></em><em id="s-rtpg"></em></button>
   <div class="kpi acc"><span><i>Decision </i>accuracy</span><b id="s-dec">–</b></div>
   <div class="kpi" id="st-ex" hidden><span>Exam</span><b id="s-ex">1/20</b></div>
   <button class="kpi rb" id="k-rb" aria-label="Rule breaking result: open the hand history"><span>Rule<i> breaking</i></span><b id="s-rb">–</b></button>
@@ -1068,7 +1073,7 @@ const bankEl=()=>$('#s-bank');
 
 /* ---------- table rendering (keyed, animated) ---------- */
 function buildSeats(){
-  $('#seats').innerHTML=[0,1,2].map(i=>`<div class="seat s${i}${i===1?' me':''}" data-i="${i}"><div class="hands"></div><div class="spot"><div class="stack"></div><div class="insc" hidden></div>${i===1?SIDE.map(x=>`<div class="sbs ${x[0]}" data-sb="${x[0]}" hidden><em>${x[0]==='pp'?'PP':'21+3'}</em><div class="stack"></div><span></span></div>`).join(''):''}</div><span class="sl"></span><span class="sx"><span class="stk"></span><span class="rtx"></span></span><span class="spl"></span><div class="banner" aria-hidden="true"></div></div>`).join('');
+  $('#seats').innerHTML=[0,1,2].map(i=>`<div class="seat s${i}${i===1?' me':''}" data-i="${i}"><div class="hands"></div><div class="spot"><div class="stack"></div><div class="insc" hidden></div>${i===1?SIDE.map(x=>`<div class="sbs ${x[0]}" data-sb="${x[0]}" hidden><em>${x[0]==='pp'?'PP':'21+3'}</em><div class="stack"></div><span></span><i class="srt"></i></div>`).join(''):''}</div><span class="sl"></span><span class="sx"><span class="stk"></span><span class="rtx"></span></span><span class="spl"></span><div class="banner" aria-hidden="true"></div></div>`).join('');
   seatEls=[...document.querySelectorAll('#seats .seat')];
 }
 function syncCards(box,cards,hand,newEls){
@@ -1125,6 +1130,7 @@ function renderTable(){
       se.hidden=!S.sbo&&!bet&&!r;se.classList.toggle('won',!!(r&&r.pay));
       if(se._amt!==bet){se._amt=bet;se.querySelector('.stack').innerHTML=bet?chipsHTML(bet):''}
       const txt=r?(r.pay?'+'+eur(r.pay-r.bet):''):'';if(se._t!==txt){se._t=txt;se.querySelector('span').textContent=txt}
+      const rt=S.rt[k][0]?`RTP ${rtpTxt(S.rt[k])}`:'',ri=se.querySelector('.srt');if(ri._t!==rt){ri._t=rt;ri.textContent=rt;ri.classList.toggle('up',S.rt[k][1]>S.rt[k][0])}
     });
     const wn=on?(me?S.str:S.botst[i]&&S.botst[i].str)||0:0,sk=el.querySelector('.stk');
     if(sk._n!==wn){sk._n=wn;sk.classList.toggle('hot',wn>1);sk.title=wn?`${wn} win${wn>1?'s':''} in a row`:'';sk.innerHTML=wn?`${wn>1?'<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#s-fire"/></svg>':''}<b>${wn}</b>`:''}
@@ -1201,7 +1207,9 @@ function renderAct(){
     const bw=G.lastBW||{bet:0,win:0},det=[bw.n>1?`${bw.n} hands`:'',bw.dbl?(bw.dbl>1?`${bw.dbl} doubles`:'doubled'):'',bw.sur?'surrendered':'',bw.ins?`insurance ${eur(bw.ins)}`:''].filter(Boolean).join(' · ');
     const sbTxt=(G.sbR||[]).map(x=>`${x.label}${x.pay?` <b class="gp">${x.name} ${x.odds}:1 +${eur(x.pay-x.bet)}</b>`:` <b class="gn">−${eur(x.bet)}</b>`}`).join(' · ');
     const note=[sbTxt,E?`Exam ${E.n}/${E.len}`:'',G.pos>=G.cut?'The cut card is out: the shoe is shuffled before the next hand.':''].filter(Boolean).join(' · ');
-    el.innerHTML=`<div class="hres"><p class="ask">${n>0?`This hand: +${eur(n)}`:n<0?`This hand: −${eur(-n)}`:'This hand: push'}</p><div class="hsum"><div><span>Bet</span><b>${eur(bw.bet)}</b>${det?`<i>${det}</i>`:''}</div><div class="w${bw.win?'':' zero'}"><span>Win</span><b>${eur(bw.win)}</b></div><div><span>Bankroll</span><b>${eur(S.bank)}</b></div></div></div>${note?`<p class="mute">${note}</p>`:''}${G.lastCF&&!E?cfLine(G.lastCF):''}${G.offer?`<div class="offer"><p class="head">New shoe?</p><p>${G.offer.why} You can ask the dealer for a freshly shuffled shoe.</p><div class="row"><button class="go" id="shoeYes">NEW SHOE</button><button class="ghost" id="shoeNo">Keep this shoe<span class="kh"> (Enter)</span></button></div></div>`:(E&&E.n>=E.len?'<div class="row"><button class="go" id="nextR">SEE EXAM RESULTS</button></div>':nextHTML())}`;
+    const ctl=E&&E.n>=E.len?'<div class="row first"><button class="go" id="nextR">SEE EXAM RESULTS</button></div>'
+      :nextHTML()+(G.offer?`<p class="offer"><b>New shoe?</b> ${G.offer.why} The dealer offers a freshly shuffled shoe: <b>Change Shoe</b>. Your bets stay as they are.</p>`:'');
+    el.innerHTML=`${ctl}<div class="hres"><p class="ask">${n>0?`This hand: +${eur(n)}`:n<0?`This hand: −${eur(-n)}`:'This hand: push'}</p><div class="hsum"><div><span>Bet</span><b>${eur(bw.bet)}</b>${det?`<i>${det}</i>`:''}</div><div class="w${bw.win?'':' zero'}"><span>Win</span><b>${eur(bw.win)}</b></div><div><span>Bankroll</span><b>${eur(S.bank)}</b></div></div></div>${note?`<p class="mute">${note}</p>`:''}${G.lastCF&&!E?cfLine(G.lastCF):''}`;
   } else if(p==='broke'){
     el.innerHTML=`<p class="ask">Out of chips</p><p class="mute">Play money left: ${eur(S.bank)}. Reset and keep going.</p><div class="row"><button class="go" id="refill">CONTINUE WITH €1,000</button></div>`;
   } else if(p==='report'){
@@ -1430,7 +1438,7 @@ function renderTop(){
   renderBank();
   const [o,n]=S.stats.dec;$('#s-dec').textContent=n?`${Math.round(o/n*100)}%`:'–';
   {const f=S.cf,d=f.you-f.rule,el=$('#s-rb');el.textContent=f.n?sgE(d):'–';el.className=f.n&&d?(d>0?'gp':'gn'):''}
-  $('#s-rtp').textContent=rtpTxt(S.rt.m);$('#s-rtpg').textContent=`game ${rtpGame('m').toFixed(2)}%`;
+  $('#s-rtp').textContent=rtpTxt(S.rt.m);{const sb=[S.rt.pp[0]+S.rt.t3[0],S.rt.pp[1]+S.rt.t3[1]];$('#s-rtps').textContent=sb[0]?`side bets ${rtpTxt(sb)}`:''}$('#s-rtpg').textContent=`game ${rtpGame('m').toFixed(2)}%`;
   {const h=house();pft('#s-hse',h.win);$('#s-hseg').textContent=h.b?`keeps ${pctM(h.keeps)} of all bets`:''}
   pft('#s-ses',S.ses.net);pft('#s-tot',S.tot.net);
   $('#st-ex').hidden=!E;if(E)$('#s-ex').textContent=`${Math.min(E.n+(['over','report'].includes(G.phase)?0:1),E.len)}/${E.len}`;
@@ -1453,10 +1461,12 @@ function record(kind,ok,miss){
 /* ---------- round flow ---------- */
 // the same side bets again, if the option is on and the bankroll still covers them
 const nextSb=bet=>S.sbo&&bet+sideSum(G.lastSb)<=S.bank?Object.assign({},G.lastSb):{pp:0,t3:0};
+// after a hand: continue with the same bet (and side bets), change the bet, or change the shoe and continue with the same bet
 function nextHTML(){
-  const same=Math.max(MINB,Math.min(G.lastBet,S.bank,MAXB)),canSame=S.bank>=MINB,canShoe=G.pos<G.cut;
+  const same=Math.max(MINB,Math.min(G.lastBet,S.bank,MAXB)),canSame=S.bank>=MINB,canShoe=G.pos<G.cut,side=sideSum(nextSb(same));
+  const stake=eur(same)+(side?` + ${eur(side)}`:'');
   const btn=(cls,id,t,sub,k)=>`<button class="act ${cls}" id="${id}"><b>${t}</b><span>${sub}</span><kbd>${k}</kbd></button>`;
-  const list=[canSame?btn('n-same','nxSame',`Next Hand with ${eur(same)}${sideSum(nextSb(same))?` + ${eur(sideSum(nextSb(same)))}`:''}`,'same bet, deal now','Enter'):'',btn('n-bet','nextR','Next Hand with Change Bet','set a new bet first',canSame?'B':'Enter'),canShoe?btn('n-shoe','newShoe','Change Shoe',`fresh ${S.decks}-deck shoe`,'N'):''].filter(Boolean);
+  const list=[canSame?btn('n-same','nxSame','Continue with same bet',`${stake}, deal now`,'Enter'):'',btn('n-bet','nextR','Change Bet','set a new bet first',canSame?'B':'Enter'),canShoe?btn('n-shoe'+(G.offer?' hint':''),'newShoe','Change Shoe',canSame?`fresh shoe, ${stake}`:`fresh ${S.decks}-deck shoe`,'N'):''].filter(Boolean);
   return `<div class="nxt" style="--c:${list.length}">${list.join('')}</div>`;
 }
 async function nextSame(){
@@ -1661,7 +1671,7 @@ async function playRound(){
     const up=upCard(),me=G.seats[1];
     openHand();
     await sideBets(me.hands[0].cards,up);
-    if(isBJ(me.hands[0].cards)){banner(1,'BLACKJACK!','bj');SND.play('bj')}
+    // no fanfare yet for your blackjack: the dealer may have one too; settle() celebrates it once it is paid
     if(up.r==='A'&&S.bank>=G.bet/2){
       G.phase='ins';render();
       const a=await wait('ins');
@@ -1879,9 +1889,7 @@ function bind(){
       case 'ccgo':submitCheck();break;
       case 'nextR':SND.play('click');startBetting();break;
       case 'nxSame':nextSame();break;
-      case 'newShoe':SND.play('click');changeShoe('player');break;
-      case 'shoeYes':SND.play('click');changeShoe('offer');break;
-      case 'shoeNo':SND.play('click');startBetting();break;
+      case 'newShoe':{SND.play('click');const after=G.phase==='over'&&S.bank>=MINB;changeShoe(G.offer?'offer':'player').then(()=>{if(after&&G.phase==='bet')tryDeal(false,true)});break}
       case 'refill':S.bank=START;save();startBetting();break;
       case 'newExam':S.mode='exam';startExam();startBetting();break;
       case 'toTrain':setMode('train');break;
@@ -1935,9 +1943,9 @@ function bind(){
     if(G.phase==='ins'){const m={y:'I',n:'N'}[k];if(m){e.preventDefault();onIns(m)}return}
     if(k==='enter'||k===' '){
       if(G.phase==='bet'){e.preventDefault();SND.play('click');tryDeal()}
-      else if(G.phase==='over'){e.preventDefault();if(G.offer||(E&&E.n>=E.len)||!$('#nxSame'))startBetting();else nextSame()}
+      else if(G.phase==='over'){e.preventDefault();if((E&&E.n>=E.len)||!$('#nxSame'))startBetting();else nextSame()}
     }
-    if(G.phase==='over'&&!G.offer&&!(E&&E.n>=E.len)){if(k==='b'){e.preventDefault();SND.play('click');startBetting()}else if(k==='n'&&$('#newShoe')){e.preventDefault();SND.play('click');changeShoe('player')}}
+    if(G.phase==='over'&&!(E&&E.n>=E.len)){if(k==='b'){e.preventDefault();SND.play('click');startBetting()}else if(k==='n'&&$('#newShoe')){e.preventDefault();$('#newShoe').click()}}
   });
 }
 function buildFan(){

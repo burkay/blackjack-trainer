@@ -14,7 +14,7 @@ function table(settings = {}, before, patch) {
   t.toBet = async () => {
     for (let i = 0; i < 4000 && !ask().startsWith('Place your bet'); i++) {
       await sleep(1);
-      const x = q('#shoeNo') || q('#newExam') || q('#nextR');
+      const x = q('#newExam') || q('#nextR');
       if (x) x.click();
     }
     return ask().startsWith('Place your bet');
