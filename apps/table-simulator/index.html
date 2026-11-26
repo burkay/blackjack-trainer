@@ -286,6 +286,7 @@ p.offer{margin:0 0 10px;padding:8px 12px;font-size:14px}
 .cft thead th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);font-weight:600}
 .cft tr.pf th,.cft tr.pf td{border-top:1px solid rgba(242,139,107,.35);font-weight:800}
 .cft td.gp{color:#9ef0b9}.cft td.gn{color:#ffb4a6}
+.cfe{display:block;margin-top:6px;font-size:14px}.cfluck{margin:4px 0 8px;font-size:15px}
 .cfr{display:block;margin-top:6px;padding-top:6px;border-top:1px solid rgba(242,139,107,.3);font-size:13px;color:var(--mute)}
 .cfl{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:rgba(242,139,107,.1);box-shadow:inset 0 0 0 1px rgba(242,139,107,.45);font-size:15px}
 .gp{color:#9ef0b9}.gn{color:#ffb4a6}
@@ -586,6 +587,7 @@ body{-webkit-tap-highlight-color:transparent}
     <div id="t-set">
       <p class="mute">Every change is saved. Rule changes apply from the next hand; a new deck count starts a fresh shoe. Adding or removing players never reshuffles: they join or leave from the next hand and the shoe continues. A new cut card position applies from the next shoe.</p>
       <fieldset class="seg rules"><legend>Rules</legend>
+        <label><input type="radio" name="preset" id="pr-hidden" value="hidden"><span><b>Hidden blackjack</b><i>8 decks · checked under an ace only: under a ten you play first, the blackjack shows at the end · split once</i></span></label>
         <label><input type="radio" name="preset" id="pr-live" value="live"><span><b>Online live</b><i>8 decks · no hole card · split once · no surrender</i></span></label>
         <label><input type="radio" name="preset" id="pr-us" value="us"><span><b>US casino</b><i>6 decks · dealer checks under ace and ten · split to 4 · surrender</i></span></label>
         <label><input type="radio" name="preset" id="pr-custom" value="custom" disabled><span><b>Custom</b><i>your own mix: change any rule below</i></span></label>
@@ -802,10 +804,57 @@ const RTP={8:{'H-ace-2':99.26,'H-ace-4':99.32,'H-both-2':99.37,'H-both-4':99.42,
 const rtpKey=()=>`${S.s17?'S':'H'}${S.sur?'s':''}-${S.peek}-${S.splits===4?4:2}`;
 const rtpGame=k=>RTP[S.decks===6?6:8][k==='m'?rtpKey():k];
 /*ENDSIDE*/
+/*EV*/
+/* Expected value of each play, in units of the hand's bet, so a move off the chart gets a price. Many-deck model: card odds from
+   a full shoe, tilted by the true count when the deviations are on. The dealer plays by the table rules. Where the dealer checked
+   for blackjack (or cannot have one) the values assume there is none; where not, a hidden blackjack takes every bet on the table.
+   Splits are valued as one split with double after split. */
+const EV_V=[2,3,4,5,6,7,8,9,10,11],EV_C=new Map();
+function evAdd(t,s,v){let n=t+v,q=s;if(v===11){if(n>21)n-=10;else q=true}if(n>21&&q){n-=10;q=false}return [n,q]}
+function evModel(up,tc,s17){
+  tc=Math.max(-10,Math.min(10,Math.round(tc||0)));
+  const key=up+'|'+tc+'|'+(s17?1:0);let m=EV_C.get(key);if(m)return m;
+  const p={},hi=(20+tc/2)/20,lo=(20-tc/2)/20;let sum=0;
+  for(const v of EV_V){p[v]=(v===10?16:4)/52*(v>=10?hi:v<=6?lo:1);sum+=p[v]}for(const v of EV_V)p[v]/=sum;
+  const pb=up===10?p[11]:up===11?p[10]:0,dm={};
+  const dd=(t,s)=>{ // dealer's final total from (t,s): probabilities of 17..21 and bust
+    if(t>21)return [0,0,0,0,0,1];
+    if(t>17||(t===17&&(s17||!s))){const r=[0,0,0,0,0,0];r[t-17]=1;return r}
+    const k=t*2+(s?1:0);if(dm[k])return dm[k];
+    const r=[0,0,0,0,0,0];for(const v of EV_V){const [n,q]=evAdd(t,s,v),x=dd(n,q);for(let i=0;i<6;i++)r[i]+=p[v]*x[i]}
+    return dm[k]=r;
+  };
+  const fin=[0,0,0,0,0,0];
+  for(const v of EV_V){if((up===10&&v===11)||(up===11&&v===10))continue;const [n,q]=evAdd(up,up===11,v),x=dd(n,q);for(let i=0;i<6;i++)fin[i]+=p[v]/(1-pb)*x[i]}
+  const stand=t=>{if(t>21)return -1;let e=fin[5];for(let f=17;f<=21;f++)e+=fin[f-17]*(t>f?1:t<f?-1:0);return e};
+  const bm={};
+  const best=(t,s)=>{if(t>21)return -1;const k=t*2+(s?1:0);if(bm[k]!==undefined)return bm[k];return bm[k]=t===21?stand(21):Math.max(stand(t),hit(t,s))};
+  const hit=(t,s)=>{let e=0;for(const v of EV_V){const [n,q]=evAdd(t,s,v);e+=p[v]*best(n,q)}return e};
+  const dbl=(t,s)=>{let e=0;for(const v of EV_V){const [n]=evAdd(t,s,v);e+=p[v]*(n>21?-1:stand(n))}return 2*e};
+  const split=v=>{let e=0;for(const c of EV_V){const [n,q]=evAdd(v,v===11,c);e+=p[c]*(v===11?stand(n):Math.max(best(n,q),dbl(n,q)))}return 2*e};
+  m={pb,stand,hit,dbl,split};EV_C.set(key,m);return m;
+}
+// EV of every play open to this hand; x is the same context decide() gets
+function evPlays(cards,up,x){
+  const u=val(up),m=evModel(u,x.dev?x.tc:0,x.s17),{t,soft}=tot(cards);
+  const pb=(u===10&&x.np10)||(u===11&&x.npA)?m.pb:0,e=(v,risk)=>(1-pb)*v-pb*risk;
+  const o={S:e(m.stand(t),1),H:e(m.hit(t,soft),1)};
+  if(x.canDouble)o.D=e(m.dbl(t,soft),2);
+  if(x.canSplit&&cards.length===2&&val(cards[0])===val(cards[1]))o.P=e(m.split(val(cards[0])),2);
+  if(x.canSur)o.R=e(-.5,1);
+  return o;
+}
+// what playing `pick` instead of the chart's `rule` costs on average, in euros (0 if the model sees no loss)
+function evCost(cards,up,x,rule,pick,bet){
+  try{const o=evPlays(cards,up,x);if(o[rule]==null||o[pick]==null)return 0;const c=(o[rule]-o[pick])*bet;return c>bet*.001?Math.round(c*100)/100:0}catch(e){return 0}
+}
+const costTxt=(c,bet)=>`about <b class="gn">${eur(c)}</b> on average (${(c/bet*100).toFixed(1)}% of the bet)`;
+/*ENDEV*/
 const UNIT=10,SPREAD=8,MINB=10,MAXB=500,BOTB=10,START=1000,SES_GAP=30*60e3,SBMAX=100,TOPUP=1000;
 /* Rule presets. peek: which up cards the dealer checks for blackjack ('both' = ace and ten, 'ace', 'none' = no hole card: the
    second card comes after the players). A blackjack the dealer did not check for takes every bet. splits: most hands after splitting. */
 const PRESETS={
+  hidden:{name:'Hidden blackjack',sub:'8 decks · dealer checks under an ace only; a blackjack under a ten shows at the end · split once · no surrender',decks:8,s17:true,sur:false,peek:'ace',splits:2},
   live:{name:'Online live',sub:'8 decks · no hole card · split once · no surrender',decks:8,s17:true,sur:false,peek:'none',splits:2},
   us:{name:'US casino',sub:'6 decks · hole card, checked under ace and ten · split to 4 · late surrender',decks:6,s17:true,sur:true,peek:'both',splits:4}
 };
@@ -816,13 +865,15 @@ const fmtE=new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR',minimu
 const eur=n=>fmtE.format(Math.round(n*100)/100);
 const dec=x=>String(x);
 const KEY='bj-masa-v1';
-const DEF={drama:true,sbo:true,hr:1,peek:'both',splits:4,mode:'train',s17:true,decks:6,sur:true,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
+const DEF={drama:true,sbo:true,hr:1,hrv:2,peek:'ace',splits:2,mode:'train',s17:true,decks:8,sur:false,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
 const STN={dec:'Decisions',cnt:'Count',bet:'Bets',ins:'Insurance'};
 const store={get(k){try{const x=localStorage.getItem(k);return x?JSON.parse(x):null}catch(e){return null}},set(k,x){try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}}};
 function normalize(src){
   const s=Object.assign(JSON.parse(JSON.stringify(DEF)),src&&typeof src==='object'?src:{});
   if(src&&src.hr!==1){s.sur=false;s.s17=true;s.hr=1} // house rules (2026-11): no surrender, dealer stands on all 17s; both can be changed in the menu
   if(src&&src.peek===undefined){s.peek='ace';s.splits=2;s.decks=src.decks||8} // tables saved before the presets keep the rules they were played with
+  // US casino was the default for two days; those tables move to Hidden blackjack once (Burkay: under a ten, play first)
+  if(src&&src.hrv!==2){if(src.peek==='both'&&src.splits===4&&src.decks===6&&src.sur===true&&src.s17!==false)Object.assign(s,{peek:'ace',splits:2,decks:8,sur:false});s.hrv=2}
   if(!['both','ace','none'].includes(s.peek))s.peek='both';if(s.splits!==2&&s.splits!==4)s.splits=4;
   if(!s.stats||typeof s.stats!=='object') s.stats={};
   for(const k in DEF.stats) if(!Array.isArray(s.stats[k])) s.stats[k]=[0,0];
@@ -1135,11 +1186,13 @@ function syncCards(box,cards,hand,newEls){
   });
   while(box.children.length>cards.length) box.lastChild.remove();
 }
+// a card counts in a total once it shows its face on the table, not while it flies face down or is being turned
+const shown=c=>c.up&&!((cardEls.get(c.uid)||{}).classList||{contains:()=>false}).contains('down');
 function handBadge(h){
   if(h.res) return `<span class="tb ${h.cls}">${h.res}</span>`;
-  if(!h.cards.length) return '';
-  const {t,soft}=tot(h.cards);
-  if(h.bj||(h.cards.length===2&&t===21&&!h.split)) return '<span class="tb bj">BJ</span>';
+  const cs=h.cards.filter(shown);if(!cs.length) return '';
+  const {t}=tot(cs);
+  if(cs.length===h.cards.length&&(h.bj||(h.cards.length===2&&t===21&&!h.split))) return '<span class="tb bj">BJ</span>';
   return `<span class="tb">${t>21?'Bust':t}</span>`; // the felt shows the number only; "soft" is for the explanations
 }
 function renderTable(){
@@ -1148,7 +1201,7 @@ function renderTable(){
   const newEls=[],dl=G.dealer.cards;
   syncCards($('#dealerCards'),dl,null,newEls);
   const dt=$('#dealerTot');
-  if(dl.length){dt.hidden=false;if(dl.some(c=>!c.up)){const up=dl.filter(c=>c.up);if(up.length===1){const v=val(up[0]);dt.textContent=v===11?'A':String(v)}else dt.textContent=String(tot(up).t)}else{const {t,soft}=tot(dl);dt.textContent=t>21?'Bust':isBJ(dl)?'BJ':String(t)}}else dt.hidden=true;
+  if(dl.length){const sh=dl.filter(shown);dt.hidden=!sh.length;if(sh.length<dl.length){if(sh.length===1){const v=val(sh[0]);dt.textContent=v===11?'A':String(v)}else if(sh.length)dt.textContent=String(tot(sh).t)}else{const {t}=tot(dl);dt.textContent=t>21?'Bust':isBJ(dl)?'BJ':String(t)}}else dt.hidden=true;
   const present=G.ord||order();
   [0,1,2].forEach(i=>{
     const el=seatEls[i],s=G.seats[i],on=present.includes(i),me=i===1;
@@ -1205,7 +1258,7 @@ function renderTable(){
     newEls.forEach((el,n)=>{
       const a=center(el.getBoundingClientRect()),dx=m.x-a.x,dy=m.y-a.y,dur=T(400);
       el._flying=true;SND.play('deal',{fast:S.fast,t:T(n*70)/1000,fly:dur/1000});
-      anim(el,[{transform:`translate(${dx}px,${dy}px) rotate(-28deg) scale(.82)`},{transform:'translate(0,0) rotate(0) scale(1)'}],{duration:dur,delay:T(n*70),easing:'cubic-bezier(.15,.75,.25,1)',fill:'backwards'}).then(()=>{el._flying=false;if(el._card&&el._card.up)flipUp(el)});
+      anim(el,[{transform:`translate(${dx}px,${dy}px) rotate(-28deg) scale(.82)`},{transform:'translate(0,0) rotate(0) scale(1)'}],{duration:dur,delay:T(n*70),easing:'cubic-bezier(.15,.75,.25,1)',fill:'backwards'}).then(()=>{el._flying=false;if(el._card&&el._card.up){flipUp(el);renderTable()}});
     });
   }
 }
@@ -1328,12 +1381,13 @@ function cfRecord(){
   const c=G.cf;G.cf=null;if(!c)return;
   const r=cfRun(c,c.rule);if(!r)return;
   if(window.__cfdbg){const m=cfRun(c,c.pick);window.__cfdbg.push({you:G.lastNet,mirror:m&&m.net,rule:r.net})}
-  const you=G.lastNet,rule=r.net,f=S.cf;
+  const you=G.lastNet,rule=r.net,f=S.cf,ev=(G.decs||[]).reduce((a,d)=>a+(d[4]||0),0);
+  f.ev=(f.ev||0)+ev;f.evn=(f.evn||0)+1;f.evr=(f.evr||0)+you-rule;
   f.n++;f.you+=you;f.rule+=rule;if(you>rule)f.better++;else if(you<rule)f.worse++;else f.same++;
   const endPos=G.pos,mk=k=>k.r+(c.shoe.indexOf(k)>=endPos?'*':'');
   const fmtH=hs=>hs.map(h=>`${h.cards.map(mk).join(',')} (${h.sur?'surrender':tot(h.cards).t>21?'bust':tot(h.cards).t})`).join(' | ');
   const yb=(G.lastBW&&G.lastBW.bet)||0,rb=r.me.reduce((a,h)=>a+h.bet,0)+(c.ins||0);
-  f.log.unshift({t:new Date().toISOString(),desc:c.desc,pick:c.pick,rule:c.rule,you,ruleNet:rule,yb,rb,rh:fmtH(r.me),rd:`${r.d.map(mk).join(',')} (${tot(r.d).t>21?'bust':isBJ(r.d)?'BJ':tot(r.d).t})`});
+  f.log.unshift({t:new Date().toISOString(),desc:c.desc,pick:c.pick,rule:c.rule,you,ruleNet:rule,yb,rb,ev:Math.round(ev*100)/100,eb:G.lastBet,rh:fmtH(r.me),rd:`${r.d.map(mk).join(',')} (${tot(r.d).t>21?'bust':isBJ(r.d)?'BJ':tot(r.d).t})`});
   f.log=f.log.slice(0,30);
   G.lastCF=f.log[0];save();
 }
@@ -1391,11 +1445,12 @@ function cfText(pick,rule,you,rn,yb,rb){
 }
 function cfReplay(rh,rd){return `<span class="cfr">Replay by the rule: your hand ${rh} · dealer ${rd}${/\*/.test(rh+rd)?'<br>* still in the shoe: never dealt on the table, but it is the card that would have come next':''}</span>`}
 function cfLine(x){
-  return `<div class="cfl">Rule broken: <b>${ACTN[x.pick][0]}</b> instead of <b>${ACTN[x.rule][0]}</b> (${x.desc}).<br>${cfText(x.pick,x.rule,x.you,x.ruleNet,x.yb,x.rb)}${x.rh?cfReplay(x.rh,x.rd):''}</div>`;
+  return `<div class="cfl">Rule broken: <b>${ACTN[x.pick][0]}</b> instead of <b>${ACTN[x.rule][0]}</b> (${x.desc}).<br>${cfText(x.pick,x.rule,x.you,x.ruleNet,x.yb,x.rb)}${x.ev!=null?`<span class="cfe">${x.ev?`Expected cost of breaking the rule: ${costTxt(x.ev,x.eb||x.yb||1)}.`:'By the odds this move costs next to nothing.'} One hand is mostly luck; the expected cost is what it does to you in the long run.</span>`:''}${x.rh?cfReplay(x.rh,x.rd):''}</div>`;
 }
 function renderCF(){
   const f=S.cf,diff=f.you-f.rule,c=v=>v>0?'gp':v<0?'gn':'';
-  $('#cfbox').innerHTML=f.n?`<div class="cfs"><div><span>Effect of breaking the rules</span><b class="${c(diff)}">${sgE(diff)}</b></div><div><span>Your way</span><b class="${c(f.you)}">${sgE(f.you)}</b></div><div><span>By the rule</span><b class="${c(f.rule)}">${sgE(f.rule)}</b></div></div><p class="mute">${f.n} hand${f.n>1?'s':''} off the chart: breaking the rule did better ${f.better}, worse ${f.worse}, no difference ${f.same}. Each one is replayed in real card order: from that moment your hand follows the chart, and the cards you would not have taken go on to the next player and the dealer. A few hands are luck; over thousands the chart comes out ahead.</p><ul class="ml">${f.log.slice(0,10).map(x=>{const d=x.you-x.ruleNet;return `<li><b>${x.desc}</b> · ${ACTN[x.pick][0]} instead of ${ACTN[x.rule][0]} · <b class="${c(d)}">${d?sgE(d):'no difference'}</b><br><span>You ${sgE(x.you)} · rule ${sgE(x.ruleNet)} (rule hand ${x.rh}, dealer ${x.rd})</span></li>`}).join('')}</ul>`:'<p class="mute">No hands off the chart yet. When you play against the chart, the round is replayed in real card order as if you had followed it, and both results for your hand are kept here.</p>';
+  const evB=f.evn?`<p class="cfluck">Over the last ${f.evn} hand${f.evn>1?'s':''} off the chart, breaking the rules ${f.evr>0?`gained you <b class="gp">${eur(f.evr)}</b>`:f.evr<0?`cost you <b class="gn">${eur(-f.evr)}</b>`:'made no difference'}; by the odds it should have cost about <b class="gn">${eur(f.ev)}</b>. ${f.evr>-f.ev?'So far luck was on your side; in the long run the chart wins it back.':'Luck went against you on top of that.'}</p>`:'';
+  $('#cfbox').innerHTML=f.n?evB+`<div class="cfs"><div><span>Effect of breaking the rules</span><b class="${c(diff)}">${sgE(diff)}</b></div><div><span>Your way</span><b class="${c(f.you)}">${sgE(f.you)}</b></div><div><span>By the rule</span><b class="${c(f.rule)}">${sgE(f.rule)}</b></div></div><p class="mute">${f.n} hand${f.n>1?'s':''} off the chart: breaking the rule did better ${f.better}, worse ${f.worse}, no difference ${f.same}. Each one is replayed in real card order: from that moment your hand follows the chart, and the cards you would not have taken go on to the next player and the dealer. A few hands are luck; over thousands the chart comes out ahead.</p><ul class="ml">${f.log.slice(0,10).map(x=>{const d=x.you-x.ruleNet;return `<li><b>${x.desc}</b> · ${ACTN[x.pick][0]} instead of ${ACTN[x.rule][0]} · <b class="${c(d)}">${d?sgE(d):'no difference'}</b><br><span>You ${sgE(x.you)} · rule ${sgE(x.ruleNet)} (rule hand ${x.rh}, dealer ${x.rd})</span></li>`}).join('')}</ul>`:'<p class="mute">No hands off the chart yet. When you play against the chart, the round is replayed in real card order as if you had followed it, and both results for your hand are kept here.</p>';
 }
 /* ---------- hand history ---------- */
 let HF='all',HN=50;
@@ -1406,6 +1461,7 @@ function histRecord(bet,win,net,ins){
   const rec={n:S.rounds,t:r0.t||Math.floor(Date.now()/1000),m:r0.m||0,tc:r0.tc||0,b:bet,w:win,y:net,
     h:me.hands.map(h=>[cstr(h.cards),h.res||'',h.cls||'']),d:[cstr(d),tot(d).t,isBJ(d)?1:0],x:G.decs||[]};
   if(G.sbR&&G.sbR.length)rec.s=G.sbR.map(x=>[x.k,x.bet,x.pay,x.name||'']);
+  {const e=(G.decs||[]).reduce((a,d)=>a+(d[4]||0),0);if(e)rec.e=Math.round(e*100)/100}
   if(ins)rec.i=ins;if(G.insD)rec.id=G.insD;if(G.bcD)rec.k=G.bcD;
   if(G.lastCF){const c=G.lastCF;rec.c=[c.pick,c.rule,c.you,c.ruleNet,c.rh,c.rd,c.yb||0,c.rb||0]}
   S.hlog.unshift(rec);if(S.hlog.length>1000)S.hlog.length=1000;
@@ -1424,7 +1480,7 @@ function hDetail(r){
   const L=[],cls=v=>v>0?'gp':v<0?'gn':'';
   if(r.k)L.push(`<li>Bet check: true count ${sg(r.tc)} called for ${eur(r.k[0])}, you bet ${eur(r.k[2])} ${r.k[1]?'<span class="ok">✓</span>':'<span class="no">✗</span>'}</li>`);
   if(r.id)L.push(`<li>Insurance: you ${r.id[0]==='I'?'took it':'declined it'} ${r.id[1]?'<span class="ok">✓</span>':'<span class="no">✗</span>'}${r.i?` (${eur(r.i)})`:''}</li>`);
-  r.x.forEach(([dd,a,c,f])=>L.push(`<li>${dd}: <b>${ACTN[a][0]}</b> ${a===c?'<span class="ok">✓ chart</span>':`<span class="no">✗ chart says ${ACTN[c][0]}</span>`}${f?` <span class="mute">(first tried ${ACTN[f][0]}, then corrected)</span>`:''}</li>`));
+  r.x.forEach(([dd,a,c,f,e])=>L.push(`<li>${dd}: <b>${ACTN[a][0]}</b> ${a===c?'<span class="ok">✓ chart</span>':`<span class="no">✗ chart says ${ACTN[c][0]}</span>${e?` <span class="mute">expected cost ${eur(e)}</span>`:''}`}${f?` <span class="mute">(first tried ${ACTN[f][0]}, then corrected)</span>`:''}</li>`));
   if(!r.x.length)L.push(`<li class="mute">No decisions to make in this hand${r.d[2]?' (dealer blackjack)':r.h.some(h=>/^BJ/.test(h[1]))?' (blackjack)':''}.</li>`);
   (r.s||[]).forEach(([k,b,p,n])=>L.push(`<li>${(SIDE.find(x=>x[0]===k)||['',k])[1]}: bet ${eur(b)}, ${p?`${n}, <b class="gp">+${eur(p-b)}</b>`:`<b class="gn">−${eur(b)}</b>`}</li>`));
   if(r.c)L.push(`<li>Rule broken: <b>${ACTN[r.c[0]][0]}</b> instead of <b>${ACTN[r.c[1]][0]}</b>. By the rule your hand would be ${r.c[4]} against the dealer's ${r.c[5]}${/\*/.test(r.c[4]+r.c[5])?' (* = still in the shoe, never dealt on the table)':''}.<br>${cfText(r.c[0],r.c[1],r.c[2],r.c[3],r.c[6],r.c[7])}</li>`);
@@ -1433,7 +1489,7 @@ function hDetail(r){
 function hRow(r){
   const dt=new Date(r.t*1000),tm=dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),dy=dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
   const nb=[];
-  if(r.c){const df=r.c[2]-r.c[3];nb.push(`<span class="hb rb">Rule broken ${df?`<b class="${df>0?'gp':'gn'}">${sgE(df)}</b>`:'· no difference'}</span>`)}
+  if(r.c){const df=r.c[2]-r.c[3];nb.push(`<span class="hb rb">Rule broken ${df?`<b class="${df>0?'gp':'gn'}">${sgE(df)}</b>`:'· no difference'}${r.e?` · expected <b class="gn">−${eur(r.e)}</b>`:''}</span>`)}
   else if(r.x.some(x=>x[3]))nb.push('<span class="hb cor">Corrected</span>');
   else if(r.x.length)nb.push('<span class="hb ok">By the chart</span>');
   if(r.id&&!r.id[1])nb.push('<span class="hb cor">Insurance ✗</span>');
@@ -1790,8 +1846,8 @@ async function squeeze(){
   G.dealer.cards.push(c);render();await sleep(D());
   felt.classList.add('suspense');SND.play('tension',{dur:(hold+turn*.7)/1000});
   await sleep(hold);
-  const el=cardEls.get(c.uid);if(el)el.classList.add('peel');
-  reveal(c);render();await sleep(turn);
+  const el=cardEls.get(c.uid);if(el){el.classList.add('peel');flipUp(el)} // the face turns; the total waits until it has
+  await sleep(turn);reveal(c);render();
   felt.classList.remove('suspense');if(el)el.classList.remove('peel');
 }
 function dealerHits(){const {t,soft}=tot(G.dealer.cards);return t<17||(t===17&&soft&&!S.s17)}
@@ -1909,7 +1965,7 @@ function onAction(a){
   if(G.phase!=='play'||!waiter||waiter.kind!=='act') return;
   const s=G.seats[1],h=s.hands[G.turn.hi],x=ctxFor(s,h,false),b=$('#a-'+a);
   if(!b||b.disabled) return;
-  const right=decide(h.cards,upCard(),x),ok=a===right.act;
+  const right=decide(h.cards,upCard(),x),ok=a===right.act,cost=ok?0:evCost(h.cards,upCard(),x,right.act,a,h.bet);
   if(!G.tried){
     G.tried=true;G.first=a;
     record('dec',ok,ok?null:{type:'Play',desc:`${handName(h.cards)} vs dealer ${UP[upIdx(upCard())]}${S.dev?`, TC ${sg(x.tc)}`:''}`,pick:ACTN[a][0],act:ACTN[right.act][0]});
@@ -1917,18 +1973,18 @@ function onAction(a){
   if(!ok&&S.mode==='train'&&!G.force){
     SND.play('error');
     document.querySelectorAll('#act .act').forEach(e=>e.classList.toggle('hint',e.dataset.a===right.act));
-    coach(`<p class="head">Stop: the play is ${ACTN[right.act][0]}</p><p>${right.why}</p>`,'bad',[{label:ACTN[right.act][0],main:true,fn:()=>{G.force=true;onAction(right.act)}},{label:`${ACTN[a][0]} anyway`,fn:()=>{G.force=true;onAction(a)}}]);
+    coach(`<p class="head">Stop: the play is ${ACTN[right.act][0]}</p><p>${right.why}</p>${cost?`<p>${ACTN[a][0]} here costs ${costTxt(cost,h.bet)}.</p>`:''}`,'bad',[{label:ACTN[right.act][0],main:true,fn:()=>{G.force=true;onAction(right.act)}},{label:`${ACTN[a][0]} anyway`,fn:()=>{G.force=true;onAction(a)}}]);
     return;
   }
   SND.play('click');
   if(S.mode==='train'){
     if(ok&&!G.force) coach(`<p class="head">Correct: ${ACTN[a][0]}</p><p>${right.why}</p>`,'good');
     else if(ok) coach(`<p class="head">${ACTN[a][0]}</p><p>${right.why}</p>`,'good');
-    else coach(`<p class="head">You chose ${ACTN[a][0]}</p><p>Recorded as a mistake. ${right.why}</p>`,'bad');
+    else coach(`<p class="head">You chose ${ACTN[a][0]}</p><p>Recorded as a mistake. ${right.why}${cost?` On average it costs ${costTxt(cost,h.bet)}.`:''}</p>`,'bad');
   }
   G.force=false;
   if(!ok&&!G.cf) G.cf=cfSnap(G.turn.hi,right.act,a,h);
-  if(G.decs)G.decs.push([`${handName(h.cards)} vs ${UP[upIdx(upCard())]}`,a,right.act,G.first&&G.first!==a?G.first:0]);
+  if(G.decs)G.decs.push([`${handName(h.cards)} vs ${UP[upIdx(upCard())]}`,a,right.act,G.first&&G.first!==a?G.first:0].concat(cost?[cost]:[]));
   resolveWait('act',a);
 }
 function onIns(a){

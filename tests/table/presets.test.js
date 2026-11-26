@@ -4,7 +4,7 @@ const { check, done } = require('../_util');
 const { load } = require('../_util');
 const { table } = require('./_table');
 
-const US = { decks: 6, s17: true, sur: true, peek: 'both', splits: 4 }, LIVE = { decks: 8, s17: true, sur: false, peek: 'none', splits: 2 };
+const US = { hrv: 2, decks: 6, s17: true, sur: true, peek: 'both', splits: 4 }, LIVE = { decks: 8, s17: true, sur: false, peek: 'none', splits: 2 };
 // Dealing order with no other players: you, dealer, you, (dealer's face-down card), then the draws.
 async function deal(rules, ranks, press = [], o = {}) {
   const t = table(Object.assign({ bots: 0, bank: 1000 }, rules, o), null, s => s.replace('const G={', 'const G=window.__G={'));
@@ -29,10 +29,14 @@ async function deal(rules, ranks, press = [], o = {}) {
   {
     const fresh = load('table'); await fresh.sleep(40);
     const s = fresh.state('bj-masa-v1') || {};
-    check('a new table starts on US casino', fresh.q('#pr-us').checked && /checks it for blackjack/.test(fresh.q('#rulesTxt').textContent), fresh.q('#rulesTxt').textContent.slice(0, 60));
-    check('…with the standard chart', /standard chart/.test(fresh.q('#chartNote').textContent));
+    check('a new table starts on Hidden blackjack', fresh.q('#pr-hidden').checked && /with a ten up there is no check/.test(fresh.q('#rulesTxt').textContent), fresh.q('#rulesTxt').textContent.slice(0, 90));
+    check('…and the menu says how the chart differs', /against a ten: hit 11/.test(fresh.q('#chartNote').textContent));
+    const us0 = load('table', { 'bj-masa-v1': { hr: 1, peek: 'both', splits: 4, decks: 6, sur: true, s17: true, bank: 900 } }); await us0.sleep(40);
+    check('a table on the old US default moves to Hidden blackjack once', us0.q('#pr-hidden').checked && us0.q('#pk-ace').checked && us0.q('#d-8').checked);
+    const us1 = load('table', { 'bj-masa-v1': { hr: 1, hrv: 2, peek: 'both', splits: 4, decks: 6, sur: true, s17: true, bank: 900 } }); await us1.sleep(40);
+    check('…but US casino chosen after that stays', us1.q('#pr-us').checked);
     const old = load('table', { 'bj-masa-v1': { hr: 1, sur: false, s17: true, decks: 8, bank: 900 } }); await old.sleep(40);
-    check('a table saved before the presets keeps its rules: Custom', old.q('#pr-custom').checked && old.q('#pk-ace').checked && old.q('#sp-2').checked && old.q('#d-8').checked);
+    check('a table saved before the presets keeps its rules, which are Hidden blackjack', old.q('#pr-hidden').checked && old.q('#pk-ace').checked && old.q('#sp-2').checked && old.q('#d-8').checked);
     const live = old.q('#pr-live'); live.checked = true; live.dispatchEvent(new old.w.Event('change', { bubbles: true }));
     const st = old.state('bj-masa-v1');
     check('choosing Online live sets all its rules', st.peek === 'none' && st.splits === 2 && st.decks === 8 && st.sur === false && st.s17 === true && old.q('#pr-live').checked);
