@@ -47,6 +47,24 @@ async function deal(rules, ranks, press = [], o = {}) {
   // US casino: the dealer checks under a ten too, so a blackjack there only takes the bet and ends the hand.
   let r = await deal(US, ['9', 'K', '8', 'A']);
   check('US: blackjack under a ten is checked at once, no move, −€100', r.net === -100 && r.offered.length === 0 && /checked under the ten/.test(r.coach), [r.net, r.offered, r.coach.slice(0, 60)]);
+  {
+    const t = table(Object.assign({ bots: 0, bank: 1000 }, US), null, s => s.replace('const G={', 'const G=window.__G={'));
+    await t.start(); await t.toBet(); t.bet(100);
+    const G = t.w.__G, seen = [];
+    ['9', 'K', '8', '7'].forEach((r, k) => { const i = G.pos + k, j = G.shoe.findIndex((c, n) => n >= i && c.r === r); [G.shoe[i], G.shoe[j]] = [G.shoe[j], G.shoe[i]]; });
+    new t.w.MutationObserver(() => { const x = t.q('#cban').textContent; if (x) seen.push(x); }).observe(t.q('#cban'), { childList: true, characterData: true, subtree: true });
+    t.q('#deal').click();
+    for (let i = 0; i < 3000 && !(t.q('#a-S') && !t.q('#a-S').disabled); i++) await t.sleep(1);
+    check('US: the check under a ten is silent when there is no blackjack', !seen.some(x => /NO BLACKJACK/.test(x)), seen);
+    const u = table(Object.assign({ bots: 0, bank: 1000 }, US), null, s => s.replace('const G={', 'const G=window.__G={'));
+    await u.start(); await u.toBet(); u.bet(100);
+    const H = u.w.__G, saw = [];
+    ['9', 'A', '8', '7'].forEach((r, k) => { const i = H.pos + k, j = H.shoe.findIndex((c, n) => n >= i && c.r === r); [H.shoe[i], H.shoe[j]] = [H.shoe[j], H.shoe[i]]; });
+    new u.w.MutationObserver(() => { const x = u.q('#cban').textContent; if (x) saw.push(x); }).observe(u.q('#cban'), { childList: true, characterData: true, subtree: true });
+    u.q('#deal').click();
+    for (let i = 0; i < 3000 && !(u.q('#a-S') && !u.q('#a-S').disabled); i++) { await u.sleep(1); const n = u.q('#a-N'); if (n && !n.disabled) n.click(); }
+    check('US: after insurance under an ace, NO BLACKJACK is shown', saw.some(x => /NO BLACKJACK/.test(x)), saw);
+  }
   r = await deal(US, ['2', 'K', '9', '7', 'Q'], ['D']);
   check('US: 11 vs 10 doubles (the standard chart)', r.hist.x[0][2] === 'D' && r.net === 200, [r.hist.x[0], r.net]);
   r = await deal(US, ['8', '6', '8', 'K', '8', '8', 'K', 'K', 'K', 'K'], ['P', 'P', 'P', 'S', 'S', 'S', 'S']);

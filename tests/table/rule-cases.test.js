@@ -3,7 +3,7 @@ const { read, check, done } = require('../_util');
 
 const src = read('table');
 const grab = (a, b) => src.slice(src.indexOf(a), src.indexOf(b));
-const code = "const UP=['2','3','4','5','6','7','8','9','10','A'];\n" + grab('/*LOGIC*/', '/*END*/') +
+const code = "const UP=['2','3','4','5','6','7','8','9','10','A'];const MINB=10,TOPUP=1000;\n" + grab('/*LOGIC*/', '/*END*/') +
   '\nconst cpHand=h=>Object.assign({},h,{cards:h.cards.slice()});\n' + grab('/* What the dealer still draws', '/* Real card order') + grab('function cfRun(', 'function cfRecord(');
 const S = { sur: true, s17: true, dev: false };
 const { cfRun } = new Function('S', code + ';return {cfRun};')(S);

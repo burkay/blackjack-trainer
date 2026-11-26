@@ -26,7 +26,7 @@ function table(settings = {}, before, patch) {
       await sleep(1);
       if (ask().startsWith('This hand')) return true;
       const pop = q('#pop');
-      if (pop && !pop.hidden) { q('#pop [data-p=any]').click(); continue; }
+      if (pop && !pop.hidden) { (q('#pop [data-p=any]') || q('#pop [data-p=ok]')).click(); continue; }
       const stop = all('#coach .cb');
       if (stop.length === 2 && /Stop:/.test(q('#coach').textContent)) { (onStop ? onStop(stop) : stop[0]).click(); continue; }
       const ib = q('#a-I');
