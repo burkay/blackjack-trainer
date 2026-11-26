@@ -28,7 +28,11 @@ button{font:inherit;color:inherit}
 a{color:inherit;text-underline-offset:3px}
 .bc{font-family:"Barlow Condensed",Barlow,system-ui,sans-serif}
 /* top bar */
-.topbar{max-width:calc(max(var(--tmax),1240px) + 40px);margin:0 auto;padding:10px max(2.5vw,12px) 6px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+.topbar{max-width:calc(max(var(--tmax),1240px) + 40px);margin:0 auto;padding:10px max(2.5vw,12px) 6px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.topbar>.icon{flex:none}
+/* narrower desktops: short labels and no subtitle, so the bar stays on one line */
+@media(min-width:721px) and (max-width:1500px){.topbar .brand span,.topbar .kpi i{display:none}.topbar{gap:8px 14px}}
+@media(min-width:721px) and (max-width:1100px){.topbar .brand div{display:none}.topbar .icon{width:40px;height:40px}}
 .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
 .brand svg{width:38px;height:38px;flex:none}
 .brand b{display:block;font:800 26px/1 "Barlow Condensed",sans-serif;letter-spacing:.04em}
@@ -131,6 +135,13 @@ a{color:inherit;text-underline-offset:3px}
 .sx{display:inline-flex;align-items:center;gap:5px;min-height:clamp(18px,calc(var(--cw)*.247),30px)}
 .sx.nil+.spl{translate:0 calc(-1*clamp(18px,var(--cw)*.247,30px))}
 .stk:empty,.rtx:empty{display:none}
+/* simple view: the figures wait for the end of the hand (and fade in then) */
+:root[data-view=simple] #felt:not(.handend) :is(.rtx,.spl,.srt){display:none}
+:root[data-view=simple] #felt:not(.handend) .sx:not(:has(.stk:not(:empty))){display:none}
+:root[data-view=simple] #felt:not(.handend) .house{visibility:hidden}
+:root[data-view=simple] #felt.handend :is(.rtx,.spl,.srt,.house){animation:dfade .4s ease-out}
+@keyframes dfade{from{opacity:0}}
+#btnView[aria-pressed=true]{background:rgba(243,197,82,.18);border-color:rgba(243,197,82,.6);color:var(--gold)}
 .rtx{font:600 clamp(11px,calc(var(--cw)*.135),15px)/1.25 Barlow,sans-serif;color:rgba(255,255,255,.82);background:rgba(0,0,0,.3);border-radius:999px;padding:0 7px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .rtx .gp{color:#9ef0b9}.rtx .gn{color:#ffb4a6}
 .house{position:absolute;top:3px;left:50%;translate:-50% 0;z-index:2;font:600 clamp(10.5px,calc(var(--cw)*.135),15px)/1.25 Barlow,sans-serif;color:rgba(255,255,255,.8);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -530,6 +541,7 @@ body{-webkit-tap-highlight-color:transparent}
   <div class="kpi acc"><span><i>Decision </i>accuracy</span><b id="s-dec">–</b></div>
   <div class="kpi" id="st-ex" hidden><span>Exam</span><b id="s-ex">1/20</b></div>
   <button class="kpi rb" id="k-rb" aria-label="Rule breaking result: open the hand history"><span>Rule<i> breaking</i></span><b id="s-rb">–</b></button>
+  <button class="icon" id="btnView" aria-pressed="false" aria-label="Details on the table" title="Details on the table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
   <button class="icon" id="btnHist" aria-label="Hand history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 7v5l3 2"/></svg></button>
   <button class="icon" id="btnSound" aria-label="Sound on" aria-pressed="true"></button>
   <button class="icon" id="btnMenu" aria-label="Settings and stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -1150,7 +1162,7 @@ const fmtE=new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR',minimu
 const eur=n=>fmtE.format(Math.round(n*100)/100);
 const dec=x=>String(x);
 const KEY='bj-masa-v1';
-const DEF={drama:true,sbo:true,hr:1,hrv:2,peek:'ace',splits:2,mode:'train',s17:true,decks:8,sur:false,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
+const DEF={view:'simple',drama:true,sbo:true,hr:1,hrv:2,peek:'ace',splits:2,mode:'train',s17:true,decks:8,sur:false,offer:true,cutPos:'mid',bots:2,cc:0,fast:true,show:false,betCheck:true,dev:false,sound:true,vol:.7,amb:false,bank:START,rounds:0,stats:{dec:[0,0],cnt:[0,0],bet:[0,0],ins:[0,0]},miss:[],exams:[]};
 const STN={dec:'Decisions',cnt:'Count',bet:'Bets',ins:'Insurance'};
 const store={get(k){try{const x=localStorage.getItem(k);return x?JSON.parse(x):null}catch(e){return null}},set(k,x){try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}}};
 function normalize(src){
@@ -1467,7 +1479,14 @@ const TableView={
     if(cs.length===h.cards.length&&(h.bj||(h.cards.length===2&&t===21&&!h.split))) return '<span class="tb bj">BJ</span>';
     return `<span class="tb">${t>21?'Bust':t}</span>`; // the felt shows the number only; "soft" is for the explanations
   },
+  /* Simple view: names, bets, streaks and totals only; RTP, profit and the house show at the end of a hand. Detailed: always. */
+  view(){
+    const d=S.view==='detail',b=$('#btnView');document.documentElement.dataset.view=d?'detail':'simple';
+    if(b){b.setAttribute('aria-pressed',String(d));b.setAttribute('aria-label',d?'Details on the table: on':'Details on the table: at the end of a hand');b.title=b.getAttribute('aria-label')}
+    $('#felt').classList.toggle('handend',['over','report','broke'].includes(G.phase));
+  },
   render(){
+    TableView.view();
     const before=new Map();
     Cards.els.forEach((el,uid)=>{if(el.isConnected)before.set(uid,el.getBoundingClientRect())});
     const newEls=[],dl=G.dealer.cards;
@@ -1867,6 +1886,7 @@ const HistoryView={
     $('#hMore').hidden=rows.length<=HN;$('#hCount').textContent=rows.length?`Showing ${Math.min(HN,rows.length)} of ${rows.length}`:'';
   },
   bind(){
+    $('#btnView').addEventListener('click',()=>{S.view=S.view==='detail'?'simple':'detail';save();TableView.view();SND.play('click')});
     $('#btnHist').addEventListener('click',()=>HistoryView.open(true,'all'));
     $('#k-rb').addEventListener('click',()=>HistoryView.open(true,'rb'));
     $('#histClose').addEventListener('click',()=>HistoryView.open(false));
@@ -1883,7 +1903,7 @@ const Layout={
   place(narrow){
     const bar=$('.topbar'),box=$('#mstat'),st=[$('.kpi.ses'),$('.kpi.totp'),$('.kpi.acc'),$('#k-rb'),$('#k-rtp')];
     if(narrow){st.forEach(e=>box.appendChild(e));box.appendChild($('.modes'))}
-    else{bar.insertBefore($('.modes'),$('.kpi.bank'));[st[0],st[1],st[4],st[2],$('#st-ex'),st[3]].forEach(e=>bar.insertBefore(e,$('#btnHist')))}
+    else{bar.insertBefore($('.modes'),$('.kpi.bank'));[st[0],st[1],st[4],st[2],$('#st-ex'),st[3]].forEach(e=>bar.insertBefore(e,$('#btnView')))}
   },
   // measured only at the top of the page, so the table never resizes while you scroll to the stats
   vh(){if(Layout.w===innerWidth&&scrollY>4)return;Layout.w=innerWidth;document.documentElement.style.setProperty('--vh',innerHeight+'px')},
