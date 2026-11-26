@@ -814,12 +814,14 @@ const RTP={8:{'H-ace-2':99.26,'H-ace-4':99.32,'H-both-2':99.37,'H-both-4':99.42,
   6:{'H-ace-2':99.29,'H-ace-4':99.35,'H-both-2':99.39,'H-both-4':99.44,'H-none-2':99.28,'H-none-4':99.33,'Hs-ace-2':99.36,'Hs-ace-4':99.41,'Hs-both-2':99.46,'Hs-both-4':99.51,'Hs-none-2':99.36,'Hs-none-4':99.40,'S-ace-2':99.47,'S-ace-4':99.53,'S-both-2':99.57,'S-both-4':99.63,'S-none-2':99.47,'S-none-4':99.52,'Ss-ace-2':99.54,'Ss-ace-4':99.59,'Ss-both-2':99.64,'Ss-both-4':99.68,'Ss-none-2':99.53,'Ss-none-4':99.58,pp:93.89,t3:95.38}};
 /*ENDSIDE*/
 /*EV*/
-/* Expected value of each play, in units of the hand's bet, so a move off the chart gets a price. Many-deck model: card odds from
-   a full shoe, tilted by the true count when the deviations are on. The dealer plays by the table rules. Where the dealer checked
-   for blackjack (or cannot have one) the values assume there is none; where not, a hidden blackjack takes every bet on the table.
-   Splits are valued as one split with double after split. */
+/* Expected value of each play, in units of the hand's bet, so a move off the chart gets a price. The same block is in the Table
+   Simulator, the strategy test and the Hi-Lo trainer (tests/ev-parity.test.js keeps it identical). Many-deck model: card odds from
+   a full shoe, tilted by the true count. The dealer plays by the rules given. Where the dealer checked for blackjack (or cannot have
+   one) the values assume there is none; where not (x.np10 / x.npA), a hidden blackjack takes every bet on the table. Splits are
+   valued as one split (double after split if x.das). Cards are values: 2–10, ace 11. */
 const EV_V=[2,3,4,5,6,7,8,9,10,11],EV_C=new Map();
 function evAdd(t,s,v){let n=t+v,q=s;if(v===11){if(n>21)n-=10;else q=true}if(n>21&&q){n-=10;q=false}return [n,q]}
+function evTot(vs){let t=0,a=0;for(const v of vs){t+=v;if(v===11)a++}while(t>21&&a){t-=10;a--}return {t,soft:a>0}}
 function evModel(up,tc,s17){
   tc=Math.max(-10,Math.min(10,Math.round(tc||0)));
   const key=up+'|'+tc+'|'+(s17?1:0);let m=EV_C.get(key);if(m)return m;
@@ -840,25 +842,30 @@ function evModel(up,tc,s17){
   const best=(t,s)=>{if(t>21)return -1;const k=t*2+(s?1:0);if(bm[k]!==undefined)return bm[k];return bm[k]=t===21?stand(21):Math.max(stand(t),hit(t,s))};
   const hit=(t,s)=>{let e=0;for(const v of EV_V){const [n,q]=evAdd(t,s,v);e+=p[v]*best(n,q)}return e};
   const dbl=(t,s)=>{let e=0;for(const v of EV_V){const [n]=evAdd(t,s,v);e+=p[v]*(n>21?-1:stand(n))}return 2*e};
-  const split=v=>{let e=0;for(const c of EV_V){const [n,q]=evAdd(v,v===11,c);e+=p[c]*(v===11?stand(n):Math.max(best(n,q),dbl(n,q)))}return 2*e};
+  const split=(v,das)=>{let e=0;for(const c of EV_V){const [n,q]=evAdd(v,v===11,c);e+=p[c]*(v===11?stand(n):Math.max(best(n,q),das?dbl(n,q):-9))}return 2*e};
   m={pb,stand,hit,dbl,split};EV_C.set(key,m);return m;
 }
-// EV of every play open to this hand; x is the same context decide() gets
-function evPlays(cards,up,x){
-  const u=val(up),m=evModel(u,x.dev?x.tc:0,x.s17),{t,soft}=tot(cards);
-  const pb=(u===10&&x.np10)||(u===11&&x.npA)?m.pb:0,e=(v,risk)=>(1-pb)*v-pb*risk;
+// EV of every play open to the hand: vals = card values, up = dealer's card value, x = {canDouble,canSplit,canSur,das,s17,tc,np10,npA}
+function evPlaysV(vals,up,x){
+  const m=evModel(up,x.tc,x.s17),{t,soft}=evTot(vals);
+  const pb=(up===10&&x.np10)||(up===11&&x.npA)?m.pb:0,e=(v,risk)=>(1-pb)*v-pb*risk;
   const o={S:e(m.stand(t),1),H:e(m.hit(t,soft),1)};
   if(x.canDouble)o.D=e(m.dbl(t,soft),2);
-  if(x.canSplit&&cards.length===2&&val(cards[0])===val(cards[1]))o.P=e(m.split(val(cards[0])),2);
+  if(x.canSplit&&vals.length===2&&vals[0]===vals[1])o.P=e(m.split(vals[0],x.das!==false),2);
   if(x.canSur)o.R=e(-.5,1);
   return o;
 }
+// insurance (half the bet) against an ace, as a share of the main bet: positive from true count +3 or so
+const evInsurance=tc=>.5*(3*evModel(11,tc,true).pb-1);
+/*ENDEV*/
+// table wrappers: card objects in, euros out
+function evPlays(cards,up,x){return evPlaysV(cards.map(val),val(up),Object.assign({},x,{tc:x.dev?x.tc:0,das:true}))}
 // what playing `pick` instead of the chart's `rule` costs on average, in euros (0 if the model sees no loss)
 function evCost(cards,up,x,rule,pick,bet){
   try{const o=evPlays(cards,up,x);if(o[rule]==null||o[pick]==null)return 0;const c=(o[rule]-o[pick])*bet;return c>bet*.001?Math.round(c*100)/100:0}catch(e){return 0}
 }
 const costTxt=(c,bet)=>`about <b class="gn">${eur(c)}</b> on average (${(c/bet*100).toFixed(1)}% of the bet)`;
-/*ENDEV*/
+/*ENDEVT*/
 /*ENGINE*/
 /* ---------- the game engine (no DOM) ----------
    Card and Shoe, Hand, Seat (with a betting and a playing strategy), Dealer, Rules, Bankroll and Stats, and Round: one round as a

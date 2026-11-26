@@ -4,7 +4,7 @@ const { table } = require('./_table');
 
 const src = read('table');
 const g = (a, b) => src.slice(src.indexOf(a), src.indexOf(b));
-const { evPlays, evCost } = new Function('eur', "const UP=['2','3','4','5','6','7','8','9','10','A'];" + g('/*LOGIC*/', '/*END*/') + g('/*EV*/', '/*ENDEV*/') + ';return {evPlays,evCost};')(n => '€' + n);
+const { evPlays, evCost } = new Function('eur', "const UP=['2','3','4','5','6','7','8','9','10','A'];" + g('/*LOGIC*/', '/*END*/') + g('/*EV*/', '/*ENDEVT*/') + ';return {evPlays,evCost};')(n => '€' + n);
 const C = r => ({ r, s: '♠' }), X = o => Object.assign({ canDouble: true, canSplit: true, canSur: false, s17: true, tc: 0, dev: false }, o);
 const ev = (cards, up, o) => evPlays(cards.map(C), C(up), X(o));
 const near = (a, b) => Math.abs(a - b) < .0015;

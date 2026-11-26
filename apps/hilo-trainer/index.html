@@ -224,6 +224,7 @@ body{-webkit-tap-highlight-color:transparent}
 }
 @media(max-width:600px){.tabs{flex-wrap:nowrap;overflow-x:auto;margin:10px -16px 0;padding:0 16px 4px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button{min-height:38px;padding:4px 14px;font-size:15px;flex:none}.rail{min-height:230px}.card{width:clamp(52px,15vw,70px)}}
 @media(orientation:landscape) and (max-height:520px){.tabs{flex-wrap:nowrap;overflow-x:auto;margin-top:8px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button{min-height:34px;padding:2px 14px;font-size:15px;flex:none}.rail{min-height:200px}.card{width:clamp(44px,calc((100svh - 150px)*.2),62px)}}
+.cost{margin:6px 0 10px;font-size:15px;color:#ffd3c7}.cost b{color:#ffb4a6}
 </style>
 </head>
 <body>
@@ -448,6 +449,57 @@ const rcard=()=>({r:pick(RANKS),s:pick(SUITS)});
 const vcard=v=>({r:v==='A'?'A':v===10||v==='10'?pick(['10','J','Q','K']):String(v),s:pick(SUITS)});
 const fine=()=>window.matchMedia&&matchMedia('(pointer:fine)').matches;
 const ixOf=d=>d.ix[S.rule==='h17'?0:1];
+/*EV*/
+/* Expected value of each play, in units of the hand's bet, so a move off the chart gets a price. The same block is in the Table
+   Simulator, the strategy test and the Hi-Lo trainer (tests/ev-parity.test.js keeps it identical). Many-deck model: card odds from
+   a full shoe, tilted by the true count. The dealer plays by the rules given. Where the dealer checked for blackjack (or cannot have
+   one) the values assume there is none; where not (x.np10 / x.npA), a hidden blackjack takes every bet on the table. Splits are
+   valued as one split (double after split if x.das). Cards are values: 2–10, ace 11. */
+const EV_V=[2,3,4,5,6,7,8,9,10,11],EV_C=new Map();
+function evAdd(t,s,v){let n=t+v,q=s;if(v===11){if(n>21)n-=10;else q=true}if(n>21&&q){n-=10;q=false}return [n,q]}
+function evTot(vs){let t=0,a=0;for(const v of vs){t+=v;if(v===11)a++}while(t>21&&a){t-=10;a--}return {t,soft:a>0}}
+function evModel(up,tc,s17){
+  tc=Math.max(-10,Math.min(10,Math.round(tc||0)));
+  const key=up+'|'+tc+'|'+(s17?1:0);let m=EV_C.get(key);if(m)return m;
+  const p={},hi=(20+tc/2)/20,lo=(20-tc/2)/20;let sum=0;
+  for(const v of EV_V){p[v]=(v===10?16:4)/52*(v>=10?hi:v<=6?lo:1);sum+=p[v]}for(const v of EV_V)p[v]/=sum;
+  const pb=up===10?p[11]:up===11?p[10]:0,dm={};
+  const dd=(t,s)=>{ // dealer's final total from (t,s): probabilities of 17..21 and bust
+    if(t>21)return [0,0,0,0,0,1];
+    if(t>17||(t===17&&(s17||!s))){const r=[0,0,0,0,0,0];r[t-17]=1;return r}
+    const k=t*2+(s?1:0);if(dm[k])return dm[k];
+    const r=[0,0,0,0,0,0];for(const v of EV_V){const [n,q]=evAdd(t,s,v),x=dd(n,q);for(let i=0;i<6;i++)r[i]+=p[v]*x[i]}
+    return dm[k]=r;
+  };
+  const fin=[0,0,0,0,0,0];
+  for(const v of EV_V){if((up===10&&v===11)||(up===11&&v===10))continue;const [n,q]=evAdd(up,up===11,v),x=dd(n,q);for(let i=0;i<6;i++)fin[i]+=p[v]/(1-pb)*x[i]}
+  const stand=t=>{if(t>21)return -1;let e=fin[5];for(let f=17;f<=21;f++)e+=fin[f-17]*(t>f?1:t<f?-1:0);return e};
+  const bm={};
+  const best=(t,s)=>{if(t>21)return -1;const k=t*2+(s?1:0);if(bm[k]!==undefined)return bm[k];return bm[k]=t===21?stand(21):Math.max(stand(t),hit(t,s))};
+  const hit=(t,s)=>{let e=0;for(const v of EV_V){const [n,q]=evAdd(t,s,v);e+=p[v]*best(n,q)}return e};
+  const dbl=(t,s)=>{let e=0;for(const v of EV_V){const [n]=evAdd(t,s,v);e+=p[v]*(n>21?-1:stand(n))}return 2*e};
+  const split=(v,das)=>{let e=0;for(const c of EV_V){const [n,q]=evAdd(v,v===11,c);e+=p[c]*(v===11?stand(n):Math.max(best(n,q),das?dbl(n,q):-9))}return 2*e};
+  m={pb,stand,hit,dbl,split};EV_C.set(key,m);return m;
+}
+// EV of every play open to the hand: vals = card values, up = dealer's card value, x = {canDouble,canSplit,canSur,das,s17,tc,np10,npA}
+function evPlaysV(vals,up,x){
+  const m=evModel(up,x.tc,x.s17),{t,soft}=evTot(vals);
+  const pb=(up===10&&x.np10)||(up===11&&x.npA)?m.pb:0,e=(v,risk)=>(1-pb)*v-pb*risk;
+  const o={S:e(m.stand(t),1),H:e(m.hit(t,soft),1)};
+  if(x.canDouble)o.D=e(m.dbl(t,soft),2);
+  if(x.canSplit&&vals.length===2&&vals[0]===vals[1])o.P=e(m.split(vals[0],x.das!==false),2);
+  if(x.canSur)o.R=e(-.5,1);
+  return o;
+}
+// insurance (half the bet) against an ace, as a share of the main bet: positive from true count +3 or so
+const evInsurance=tc=>.5*(3*evModel(11,tc,true).pb-1);
+/*ENDEV*/
+// what a wrong answer costs on average, in words: share of the bet and on a €100 bet
+function costTR(c){
+  if(!(c>.001)) return '<p class="cost">Ortalamada iki oyun arasında neredeyse fark yok; tablo yine de bunu söylüyor.</p>';
+  const p=(c*100).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1}),e=c*100;
+  return `<p class="cost">Bu hatanın ortalama maliyeti: bahsin <b>%${p}</b> kadarı (100 €'luk bahiste ${e.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} €).</p>`;
+}
 
 function cardHTML(c,i,cls){
   const k=cls?' '+cls:'';
@@ -624,7 +676,7 @@ const M={
       const it=pick(DEV), ix=ixOf(it), T=ix+pick([-2,-1,-1,0,0,1,1,2]);
       const pc=pick(COMB[it.h]).map(vcard);if(Math.random()<.5)pc.reverse();
       const label=it.h==='TT'?'10,10 çifti':`Hard ${pc.reduce((s,c)=>s+(c.r==='A'?11:['J','Q','K','10'].includes(c.r)?10:+c.r),0)}`;
-      cur={it,ix,T,label,want:T>=ix?it.play:it.base};phase='ask';devHL=null;renderDev();
+      cur={it,ix,T,label,want:T>=ix?it.play:it.base,vals:pc.map(c=>c.r==='A'?11:['J','Q','K','10'].includes(c.r)?10:+c.r)};phase='ask';devHL=null;renderDev();
       const upv=it.up==='A'?'A':+it.up;
       rail(`<div class="row2"><div><p class="cap">Krupiye</p><div class="hand">${cardHTML(vcard(upv),0,'anim')}${cardHTML(null,1)}</div></div><div class="plaque sm"><span>True count</span><b>${sg(T)}</b></div></div><div><div class="hand p">${pc.map((c,j)=>cardHTML(c,j+2,'anim')).join('')}</div><p class="hl">${label}</p></div><div class="badges"><span class="badge">${S.rule.toUpperCase()}</span><span class="badge">${it.sur?'Late surrender var':'Surrender yok'}</span></div>`);
       if(it.play==='I'){
@@ -638,13 +690,19 @@ const M={
     answer(a){
       if(phase!=='ask') return;
       const b=document.querySelector(`#q [data-a="${a}"]`);if(!b||b.disabled) return;
-      const {it,ix,T,label,want}=cur, ok=a===want;
-      record(ok,{dev:it.id,hand:label,tc:T,pick:a,want});mark('a',a,want);devHL=it.id;renderDev();
+      const {it,ix,T,label,want,vals}=cur, ok=a===want;
+      // the cost of the wrong answer at this true count (share of the bet)
+      let cost=0;
+      if(!ok)try{
+        if(it.play==='I'){const ev=evInsurance(T);cost=Math.abs(ev)}
+        else{const o=evPlaysV(vals,it.up==='A'?11:+it.up,{canDouble:true,canSplit:it.h==='TT',canSur:!!it.sur,das:true,s17:S.rule==='s17',tc:T});cost=o[want]==null||o[a]==null?0:Math.max(0,o[want]-o[a])}
+      }catch(e){}
+      record(ok,{dev:it.id,hand:label,tc:T,pick:a,want,cost:Math.round(cost*1e4)/1e4});mark('a',a,want);devHL=it.id;renderDev();
       let why;
       if(it.play==='I') why=`Sigorta indeksi <b>${sg(ix)}</b>: true count ${sg(ix)} ve üstünde sigorta al, altında alma. Şu an ${sg(T)} → <b>${want==='I'?'al':'alma'}</b>.`;
       else why=`${label} – krupiye ${it.up}, ${S.rule.toUpperCase()}: indeks <b>${sg(ix)}</b>. True count ${sg(ix)} ve üstünde ${ACTN[it.play][1]}, altında ${ACTN[it.base][1]}. Şu an ${sg(T)} → <b>${ACTN[want][1]}</b>.`;
       if(!it.sur&&it.h===16) why+=' Late surrender olsaydı 16\'yı bu karta karşı her sayıda teslim ederdin.';
-      fb(verdict(ok,`doğrusu ${ACTN[want][0]}`)+`<p class="why">${why}</p>`+nextBtn('Sonraki el<span class="kh"> (Enter)</span>'));
+      fb(verdict(ok,`doğrusu ${ACTN[want][0]}`)+`<p class="why">${why}</p>`+(ok?'':costTR(cost))+nextBtn('Sonraki el<span class="kh"> (Enter)</span>'));
       finish(ok,1600);
     }
   },

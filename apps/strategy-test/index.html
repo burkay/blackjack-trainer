@@ -205,6 +205,7 @@ body{-webkit-tap-highlight-color:transparent}
 }
 @media(max-width:600px){.card{width:clamp(50px,14.5vw,64px)}.cn{font-size:17px}.pip{font-size:28px}.hand{gap:10px}.print{width:min(100%,280px)}.hl{font-size:16px}.zl{font-size:13px}}
 @media(orientation:landscape) and (max-height:520px){.card{width:clamp(42px,calc((100svh - 150px)*.2),60px)}.cn{font-size:15px}.pip{font-size:24px}.print{width:min(100%,240px)}.hl{font-size:15px}.zl{font-size:12px}.zone{gap:4px}}
+.cost{margin:6px 0 10px;font-size:15px;color:#ffd3c7}.cost b{color:#ffb4a6}
 </style>
 </head>
 <body>
@@ -389,6 +390,62 @@ const SURR={16:'-------RRR',15:'--------R-',14:'----------'};
 const ACT={H:['Hit','kart çek'],S:['Stand','dur'],D:['Double','ikiye katla'],P:['Split','böl'],R:['Surrender','teslim ol']};
 let S={das:true,dbl:true,sur:true};
 const v=x=>x==='A'?11:x;
+/*EV*/
+/* Expected value of each play, in units of the hand's bet, so a move off the chart gets a price. The same block is in the Table
+   Simulator, the strategy test and the Hi-Lo trainer (tests/ev-parity.test.js keeps it identical). Many-deck model: card odds from
+   a full shoe, tilted by the true count. The dealer plays by the rules given. Where the dealer checked for blackjack (or cannot have
+   one) the values assume there is none; where not (x.np10 / x.npA), a hidden blackjack takes every bet on the table. Splits are
+   valued as one split (double after split if x.das). Cards are values: 2–10, ace 11. */
+const EV_V=[2,3,4,5,6,7,8,9,10,11],EV_C=new Map();
+function evAdd(t,s,v){let n=t+v,q=s;if(v===11){if(n>21)n-=10;else q=true}if(n>21&&q){n-=10;q=false}return [n,q]}
+function evTot(vs){let t=0,a=0;for(const v of vs){t+=v;if(v===11)a++}while(t>21&&a){t-=10;a--}return {t,soft:a>0}}
+function evModel(up,tc,s17){
+  tc=Math.max(-10,Math.min(10,Math.round(tc||0)));
+  const key=up+'|'+tc+'|'+(s17?1:0);let m=EV_C.get(key);if(m)return m;
+  const p={},hi=(20+tc/2)/20,lo=(20-tc/2)/20;let sum=0;
+  for(const v of EV_V){p[v]=(v===10?16:4)/52*(v>=10?hi:v<=6?lo:1);sum+=p[v]}for(const v of EV_V)p[v]/=sum;
+  const pb=up===10?p[11]:up===11?p[10]:0,dm={};
+  const dd=(t,s)=>{ // dealer's final total from (t,s): probabilities of 17..21 and bust
+    if(t>21)return [0,0,0,0,0,1];
+    if(t>17||(t===17&&(s17||!s))){const r=[0,0,0,0,0,0];r[t-17]=1;return r}
+    const k=t*2+(s?1:0);if(dm[k])return dm[k];
+    const r=[0,0,0,0,0,0];for(const v of EV_V){const [n,q]=evAdd(t,s,v),x=dd(n,q);for(let i=0;i<6;i++)r[i]+=p[v]*x[i]}
+    return dm[k]=r;
+  };
+  const fin=[0,0,0,0,0,0];
+  for(const v of EV_V){if((up===10&&v===11)||(up===11&&v===10))continue;const [n,q]=evAdd(up,up===11,v),x=dd(n,q);for(let i=0;i<6;i++)fin[i]+=p[v]/(1-pb)*x[i]}
+  const stand=t=>{if(t>21)return -1;let e=fin[5];for(let f=17;f<=21;f++)e+=fin[f-17]*(t>f?1:t<f?-1:0);return e};
+  const bm={};
+  const best=(t,s)=>{if(t>21)return -1;const k=t*2+(s?1:0);if(bm[k]!==undefined)return bm[k];return bm[k]=t===21?stand(21):Math.max(stand(t),hit(t,s))};
+  const hit=(t,s)=>{let e=0;for(const v of EV_V){const [n,q]=evAdd(t,s,v);e+=p[v]*best(n,q)}return e};
+  const dbl=(t,s)=>{let e=0;for(const v of EV_V){const [n]=evAdd(t,s,v);e+=p[v]*(n>21?-1:stand(n))}return 2*e};
+  const split=(v,das)=>{let e=0;for(const c of EV_V){const [n,q]=evAdd(v,v===11,c);e+=p[c]*(v===11?stand(n):Math.max(best(n,q),das?dbl(n,q):-9))}return 2*e};
+  m={pb,stand,hit,dbl,split};EV_C.set(key,m);return m;
+}
+// EV of every play open to the hand: vals = card values, up = dealer's card value, x = {canDouble,canSplit,canSur,das,s17,tc,np10,npA}
+function evPlaysV(vals,up,x){
+  const m=evModel(up,x.tc,x.s17),{t,soft}=evTot(vals);
+  const pb=(up===10&&x.np10)||(up===11&&x.npA)?m.pb:0,e=(v,risk)=>(1-pb)*v-pb*risk;
+  const o={S:e(m.stand(t),1),H:e(m.hit(t,soft),1)};
+  if(x.canDouble)o.D=e(m.dbl(t,soft),2);
+  if(x.canSplit&&vals.length===2&&vals[0]===vals[1])o.P=e(m.split(vals[0],x.das!==false),2);
+  if(x.canSur)o.R=e(-.5,1);
+  return o;
+}
+// insurance (half the bet) against an ace, as a share of the main bet: positive from true count +3 or so
+const evInsurance=tc=>.5*(3*evModel(11,tc,true).pb-1);
+/*ENDEV*/
+// what a wrong answer costs on average, in words: share of the bet and on a €100 bet
+function costTR(c){
+  if(!(c>.001)) return '<p class="cost">Ortalamada iki oyun arasında neredeyse fark yok; tablo yine de bunu söylüyor.</p>';
+  const p=(c*100).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1}),e=c*100;
+  return `<p class="cost">Bu hatanın ortalama maliyeti: bahsin <b>%${p}</b> kadarı (100 €'luk bahiste ${e.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} €).</p>`;
+}
+// the cost of answering `pick` here instead of the chart's play (share of the bet; this chart is for a dealer who hits soft 17)
+function costOf(q,right,pick){
+  try{const o=evPlaysV([v(q.a),v(q.b)],UP[q.ui]==='A'?11:+UP[q.ui],{canDouble:S.dbl,canSplit:q.a===q.b,canSur:S.sur,das:S.das,s17:false,tc:0});
+    return o[right]==null||o[pick]==null?0:Math.max(0,o[right]-o[pick])}catch(e){return 0}
+}
 const nm=x=>x==='A'?'A':String(x);
 function handLabel(q){
   const {a,b}=q;
@@ -613,7 +670,7 @@ function renderStats(){
   $('#cat').innerHTML=Object.keys(CATN).map(k=>{const [o,n]=S.stats[k],pc=n?Math.round(o/n*100):0;
     return `<div class="sr"><span>${CATN[k]}</span><div class="bar"><i style="width:${pc}%"></i></div><span class="num">${n?'%'+pc:'–'}</span><span class="num mute">${o}/${n}</span></div>`}).join('');
 }
-const missLi=m=>`<li><b>${m.label}</b> – krupiye ${m.up}<br><span>Senin cevabın: ${ACT[m.pick][0]} · Doğrusu: ${ACT[m.act][0]} (${ACT[m.act][1]})</span></li>`;
+const missLi=m=>`<li><b>${m.label}</b> – krupiye ${m.up}<br><span>Senin cevabın: ${ACT[m.pick][0]} · Doğrusu: ${ACT[m.act][0]} (${ACT[m.act][1]})${m.c>.001?` · maliyet: bahsin %${(m.c*100).toLocaleString('tr-TR',{maximumFractionDigits:1})} kadarı`:''}</span></li>`;
 function renderMiss(){$('#miss').innerHTML=S.miss.length?S.miss.slice(0,10).map(missLi).join(''):'<li class="mute">Henüz hata yok.</li>'}
 function top(){
   $('#s-ok').textContent=`${ses.ok}/${ses.n}`;
@@ -699,8 +756,8 @@ function answer(act){
   if(answered||ended||!q||stage!=='act') return;
   const b=$('#b-'+act);if(b.disabled) return;
   answered=true;qn++;
-  const ok=act===sol.act, st=S.stats[q.cat];
-  CLOUD.log('answer',{mode:S.mode,cat:q.cat,hand:handLabel(q),up:UP[q.ui],pick:act,right:sol.act,ok,test:S.len?[test.n+1,S.len]:null,ms:Math.round(performance.now()-qT0)});
+  const ok=act===sol.act, st=S.stats[q.cat], cost=ok?0:costOf(q,sol.act,act);
+  CLOUD.log('answer',{mode:S.mode,cat:q.cat,hand:handLabel(q),up:UP[q.ui],pick:act,right:sol.act,ok,cost:Math.round(cost*1e4)/1e4,test:S.len?[test.n+1,S.len]:null,ms:Math.round(performance.now()-qT0)});
   st[1]++;ses.n++;
   curKey=q.a===q.b?`pair|${q.a==='A'?'A':q.a===10?'T':q.a}|${q.ui}`:`${sol.tab}|${sol.row}|${q.ui}`;
   const cell=Array.isArray(S.cells[curKey])?S.cells[curKey]:(S.cells[curKey]=[0,0,0]);
@@ -709,7 +766,7 @@ function answer(act){
   else{
     ses.streak=0;
     queue.push({q:{cat:q.cat,a:q.a,b:q.b,ui:q.ui},due:qn+3});
-    const m={label:handLabel(q),up:UP[q.ui],pick:act,act:sol.act,k:curKey,t:new Date().toISOString()};
+    const m={label:handLabel(q),up:UP[q.ui],pick:act,act:sol.act,k:curKey,c:Math.round(cost*1e4)/1e4,t:new Date().toISOString()};
     S.miss.unshift(m);S.miss=S.miss.slice(0,30);
     if(S.len) test.miss.push(m);
   }
@@ -718,7 +775,7 @@ function answer(act){
   $('#b-'+sol.act).classList.add('right');
   if(!ok) b.classList.add('wrong');
   const lastQ=S.len&&test.n>=S.len;
-  $('#fb').innerHTML=`<p class="verdict ${ok?'good':'bad'}">${ok?'Doğru':`Yanlış · doğrusu: ${ACT[sol.act][0]} (${ACT[sol.act][1]})`}</p><p class="why">${sol.why}</p>${miniRow(sol)}<p class="rule"><b>Kural</b> · ${(p=>`${p.title}: ${p.body}`)(phraseInfo(q.a,q.b))}.</p><button class="next" id="next">${lastQ?'Sonuçları gör':'Sonraki el<span class="kh"> (Enter)</span>'}</button>`;
+  $('#fb').innerHTML=`<p class="verdict ${ok?'good':'bad'}">${ok?'Doğru':`Yanlış · doğrusu: ${ACT[sol.act][0]} (${ACT[sol.act][1]})`}</p><p class="why">${sol.why}</p>${ok?'':costTR(cost)}${miniRow(sol)}<p class="rule"><b>Kural</b> · ${(p=>`${p.title}: ${p.body}`)(phraseInfo(q.a,q.b))}.</p><button class="next" id="next">${lastQ?'Sonuçları gör':'Sonraki el<span class="kh"> (Enter)</span>'}</button>`;
   if(document.activeElement&&document.activeElement.classList.contains('act')) $('#next').focus({preventScroll:true});
   renderChart();renderStats();renderMiss();renderWeak();top();
   if(ok&&S.auto) timer=setTimeout(goNext,1400);
