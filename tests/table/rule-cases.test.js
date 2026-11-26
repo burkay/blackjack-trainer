@@ -3,12 +3,14 @@ const { read, check, done } = require('../_util');
 
 const src = read('table');
 const grab = (a, b) => src.slice(src.indexOf(a), src.indexOf(b));
-const code = "const UP=['2','3','4','5','6','7','8','9','10','A'];const MINB=10,TOPUP=1000;\n" + grab('/*LOGIC*/', '/*END*/') +
-  '\nconst cpHand=h=>Object.assign({},h,{cards:h.cards.slice()});\n' + grab('/* What the dealer still draws', '/* Real card order') + grab('function cfRun(', 'function cfRecord(');
+const logic = "const UP=['2','3','4','5','6','7','8','9','10','A'];\n" + grab('/*LOGIC*/', '/*END*/');
 const S = { sur: true, s17: true, dev: false };
-const { cfRun } = new Function('S', code + ';return {cfRun};')(S);
+// the replay is the game engine's own Round, run from a snapshot (Round.replay)
+const { Round } = new Function(logic + grab('/*ENGINE*/', '/*ENDENGINE*/') + ';return {Round};')();
+const cfRun = (c, first) => Round.replay(c, first, S.dev);
 const C = x => ({ r: x.slice(0, -1), s: x.slice(-1) }), H = (...a) => a.map(C);
-const snap = o => Object.assign({ hi: 0, pos: 0, rc: 0, bank: 1000, orig: 100, ins: 0, before: [], after: [] }, o);
+// the table's rules for these hands: hole card checked under an ace only, split once
+const snap = o => Object.assign({ hi: 0, pos: 0, rc: 0, bank: 1000, orig: 100, ins: 0, before: [], after: [], rules: { decks: 8, s17: S.s17, sur: S.sur, peek: 'ace', splits: 2 } }, o);
 
 // 3,8 vs Q (hole 4), rule Double, played Hit. Player after you holds 9,K. Shoe continues 2 A 5 A 8.
 {
@@ -54,7 +56,7 @@ const snap = o => Object.assign({ hi: 0, pos: 0, rc: 0, bank: 1000, orig: 100, i
 }
 // The chart for each way the dealer checks: only these plays change, and only against the card that is not checked.
 {
-  const { decide } = new Function(code.slice(0, code.indexOf('\nconst cpHand')) + ';return {decide};')();
+  const { decide } = new Function(logic + ';return {decide};')();
   const V = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'], UPS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A'];
   const changes = flags => {
     const diff = new Set();

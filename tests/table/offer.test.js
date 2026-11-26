@@ -5,7 +5,7 @@ const { table } = require('./_table');
 
 async function over(offer, o = {}) {
   const t = table(Object.assign({ bots: 0, sur: false, sbo: true, offer: true, bank: 5000, mode: 'exam' }, o), null,
-    s => s.replace('const G={', 'const G=window.__G={').replace('function renderAct(){', 'window.__ra=()=>renderAct();function renderAct(){'));
+    s => s.replace('const G={', 'const G=window.__G={').replace('const Dock={', 'window.__ra=()=>Dock.render();const Dock={'));
   await t.start(); await t.toBet();
   t.bet(100); t.q('[data-bt=pp]').click(); t.q('[data-chip="10"]').click(); t.q('[data-bt=t3]').click(); t.q('[data-chip="5"]').click();
   t.q('#deal').click(); await t.playOut(en => en.find(b => b.dataset.a === 'S') || en[0]);
